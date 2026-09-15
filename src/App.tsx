@@ -303,8 +303,8 @@ export function DayMap({
           html: cover
             ? `<span><b><img src="${photoUrl}" alt="" style="object-position:${crop.x}% ${crop.y}%;transform:translate(-50%,-50%) scale(${crop.zoom});transform-origin:${crop.x}% ${crop.y}%"></b></span>`
             : `<span style="background:${postMarkerBorderColor}"><i style="background:${background}"></i></span>`,
-          iconSize: cover ? [52, 58] : [28, 28],
-          iconAnchor: cover ? [26, 58] : [14, 14],
+          iconSize: cover ? [64, 72] : [28, 28],
+          iconAnchor: cover ? [32, 72] : [14, 14],
         }),
       })
         .bindTooltip(p.place!.name || "記録した場所")

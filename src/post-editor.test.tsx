@@ -560,7 +560,8 @@ describe("日別地図の投稿ピン", () => {
       expect.objectContaining({
         className: "post-map-marker photo-post-map-marker",
         html: expect.stringContaining('<img src="blob:post-image"'),
-        iconSize: [52, 58],
+        iconSize: [64, 72],
+        iconAnchor: [32, 72],
       }),
     );
   });
