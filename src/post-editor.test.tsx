@@ -858,8 +858,6 @@ describe("ぬいぐるみのテーマカラー設定", () => {
     const disabled = screen.getByRole("radio", {
       name: "テーマカラーを設定しない",
     });
-    const color = screen.getByLabelText("テーマカラー");
-
     expect(
       screen.queryByText(
         "画像を選ぶと、円形アイコンのプレビューを調整できます。",
@@ -867,14 +865,18 @@ describe("ぬいぐるみのテーマカラー設定", () => {
     ).not.toBeInTheDocument();
     expect(disabled).toBeChecked();
     expect(enabled).not.toBeChecked();
-    expect(color).toBeDisabled();
+    expect(screen.queryByLabelText("テーマカラー")).not.toBeInTheDocument();
 
     fireEvent.click(enabled);
 
+    const color = screen.getByLabelText("テーマカラー");
     expect(enabled).toBeChecked();
     expect(disabled).not.toBeChecked();
     expect(color).toBeEnabled();
     expect(color).toHaveValue("#9a5438");
+    expect(enabled.closest("label")?.nextElementSibling).toContainElement(
+      color,
+    );
   });
 
   it("登録済みのテーマカラーを編集画面へ反映する", () => {

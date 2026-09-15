@@ -1092,6 +1092,20 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
             />
             テーマカラーを設定する
           </label>
+          {themeColor !== DEFAULT_PLUSH_THEME_COLOR ? (
+            <label>
+              アイコンを囲う色
+              <input
+                aria-label="テーマカラー"
+                type="color"
+                value={opaqueThemeColor}
+                onChange={(event) => {
+                  setOpaqueThemeColor(event.target.value);
+                  setThemeColor(event.target.value);
+                }}
+              />
+            </label>
+          ) : null}
           <label className="check">
             <input
               type="radio"
@@ -1100,19 +1114,6 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
               onChange={() => setThemeColor(DEFAULT_PLUSH_THEME_COLOR)}
             />
             テーマカラーを設定しない
-          </label>
-          <label>
-            アイコンを囲う色
-            <input
-              aria-label="テーマカラー"
-              type="color"
-              value={opaqueThemeColor}
-              disabled={themeColor === DEFAULT_PLUSH_THEME_COLOR}
-              onChange={(event) => {
-                setOpaqueThemeColor(event.target.value);
-                setThemeColor(event.target.value);
-              }}
-            />
           </label>
         </fieldset>
         {busy ? <p role="status">画像を準備しています…</p> : null}
