@@ -1,0 +1,44 @@
+import Dexie, { type EntityTable } from "dexie";
+import type { Journal, Plush, Post, Settings } from "./types";
+import { DEFAULT_SETTINGS } from "./domain";
+class NuitoDatabase extends Dexie {
+  posts!: EntityTable<Post, "id">;
+  plushes!: EntityTable<Plush, "id">;
+  journals!: EntityTable<Journal, "logicalDate">;
+  settings!: EntityTable<Settings, "id">;
+  constructor() {
+    super("nuito");
+    this.version(1).stores({
+      posts: "id,createdAt,updatedAt,timeMode,manualLogicalDate",
+      plushes: "id,name,hidden",
+      journals: "logicalDate,updatedAt",
+      settings: "id",
+    });
+  }
+}
+export const db = new NuitoDatabase();
+export async function getSettings() {
+  return (await db.settings.get("settings")) ?? DEFAULT_SETTINGS;
+}
+export async function initialize() {
+  if (!(await db.settings.get("settings")))
+    await db.settings.put(DEFAULT_SETTINGS);
+}
+export async function deleteAllData() {
+  await db.transaction(
+    "rw",
+    db.posts,
+    db.plushes,
+    db.journals,
+    db.settings,
+    async () => {
+      await Promise.all([
+        db.posts.clear(),
+        db.plushes.clear(),
+        db.journals.clear(),
+        db.settings.clear(),
+      ]);
+      await db.settings.put(DEFAULT_SETTINGS);
+    },
+  );
+}

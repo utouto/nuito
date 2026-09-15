@@ -2,7 +2,28 @@
 
 ぬいぐるみと一緒に出かけた記録を、写真・ひとこと・場所・時刻とともに残し、地図と日記で振り返るスマートフォン向けWebアプリです。
 
-現在は要件定義段階です。プロダクト要件の正本は [`docs/requirements/README.md`](docs/requirements/README.md) を参照してください。
+MVPのローカル実行版を実装しています。プロダクト要件の正本は [`docs/requirements/README.md`](docs/requirements/README.md) を参照してください。
+
+## ローカル起動
+
+Node.js 22.12以上を用意し、次を実行します。
+
+```bash
+npm install
+npm run dev
+```
+
+表示された `http://localhost:5173` を開いてください。データは同じブラウザ・同じoriginのIndexedDBへ保存されます。
+
+## 環境切り替え
+
+- ローカル: `npm run dev`（`.env.development`）
+- ステージング確認: `npm run dev:staging` / `npm run build:staging`（`.env.staging`）
+- 本番相当: `npm run dev:production` / `npm run build`（`.env.production`）
+
+環境ごとに `VITE_MAP_TILE_URL` と `VITE_MAP_ATTRIBUTION` を設定できます。`VITE_` で始まる値はブラウザへ公開されるため、Secretを設定しないでください。
+
+主な品質確認は `npm run lint`、`npm run typecheck`、`npm test`、`npm run build` です。
 
 - 文書バージョン: `0.2.0-draft`
 - 更新日: `2026-09-15`
@@ -23,6 +44,8 @@
 ```text
 .
 ├── AGENTS.md
+├── src/              # React UI、domain、IndexedDB
+├── package.json
 ├── README.md
 └── docs/
     └── requirements/
