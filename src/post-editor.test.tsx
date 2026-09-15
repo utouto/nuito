@@ -605,7 +605,9 @@ describe("日別地図の投稿ピン", () => {
     expect(leafletDivIcon).toHaveBeenCalledWith(
       expect.objectContaining({
         className: "post-map-marker photo-post-map-marker",
-        html: expect.stringContaining('<img src="blob:post-image"'),
+        html: expect.stringMatching(
+          /<img src="blob:post-image".*<em style="background:#8b5e3c"><i style="background:conic-gradient\(/,
+        ),
         iconSize: [64, 72],
         iconAnchor: [32, 72],
       }),

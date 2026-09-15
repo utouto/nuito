@@ -245,13 +245,18 @@ h2 {
 }
 .photo-post-map-marker em {
   position: absolute;
-  bottom: 0;
-  left: 29px;
-  width: 7px;
-  height: 7px;
-  border: 2px solid white;
+  bottom: -14px;
+  left: 18px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 3px;
   border-radius: 50%;
-  background: #8b5e3c;
+  font-style: normal;
+}
+.photo-post-map-marker em i {
+  width: 100%;
+  height: 100%;
 }
 .photo-post-map-marker.selected > span {
   transform: scale(1.12);
