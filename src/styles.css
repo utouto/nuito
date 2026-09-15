@@ -401,6 +401,15 @@ h2 {
   padding: 16px;
   box-shadow: 0 4px 14px #5f44200c;
 }
+.post-card[tabindex] {
+  cursor: pointer;
+}
+.post-card[tabindex]:focus-visible,
+.post-card.selected {
+  border-color: #a05432;
+  outline: 3px solid #a0543238;
+  outline-offset: 1px;
+}
 .card-action {
   position: absolute;
   right: 8px;

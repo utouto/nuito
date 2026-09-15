@@ -184,6 +184,7 @@ export function DayMap({
   control,
   className,
   centerOnCurrentWhenEmpty = false,
+  focusPostId,
 }: {
   posts: Post[];
   plushes?: Plush[];
@@ -192,8 +193,10 @@ export function DayMap({
   control?: ReactNode;
   className?: string;
   centerOnCurrentWhenEmpty?: boolean;
+  focusPostId?: string;
 }) {
   const element = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<L.Map | undefined>(undefined);
   useEffect(() => {
     if (!element.current) return;
     const located = posts.filter((p) => p.place);
@@ -207,6 +210,7 @@ export function DayMap({
       all[0] ?? [35.6812, 139.7671],
       all.length ? 13 : 5,
     );
+    mapInstance.current = map;
     if (className === "today-map") {
       map.attributionControl.setPosition("topright");
       map.zoomControl.setPosition("topright");
@@ -290,9 +294,19 @@ export function DayMap({
       );
     return () => {
       active = false;
+      if (mapInstance.current === map) mapInstance.current = undefined;
       map.remove();
     };
   }, [posts, plushes, pick, onPick, className, centerOnCurrentWhenEmpty]);
+  useEffect(() => {
+    if (!focusPostId || !mapInstance.current) return;
+    const focused = posts.find((post) => post.id === focusPostId && post.place);
+    if (!focused?.place) return;
+    mapInstance.current.setView(
+      [focused.place.latitude, focused.place.longitude],
+      mapInstance.current.getZoom(),
+    );
+  }, [focusPostId, posts]);
   return (
     <div className={className ? `map-wrap ${className}` : "map-wrap"}>
       <div className="map-stage">
@@ -318,10 +332,14 @@ export function PostCard({
   post,
   plushes,
   onEdit,
+  onSelect,
+  selected = false,
 }: {
   post: Post;
   plushes: Plush[];
   onEdit: () => void;
+  onSelect?: () => void;
+  selected?: boolean;
 }) {
   const [expandedImage, setExpandedImage] = useState<{
     image: PostImage;
@@ -333,7 +351,26 @@ export function PostCard({
     .map((id) => plushes.find((p) => p.id === id))
     .filter((plush): plush is Plush => Boolean(plush));
   return (
-    <article className="post-card">
+    <article
+      className={`post-card${selected ? " selected" : ""}`}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-label={
+        onSelect
+          ? `${post.place?.name || "投稿地点"}を地図の中心に表示`
+          : undefined
+      }
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (
+          onSelect &&
+          event.target === event.currentTarget &&
+          (event.key === "Enter" || event.key === " ")
+        ) {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+    >
       <button className="card-action" onClick={onEdit} aria-label="投稿を編集">
         編集
       </button>
@@ -699,6 +736,7 @@ export function Today({
   onDrawerOpenChange?: (open: boolean) => void;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [focusedPostId, setFocusedPostId] = useState<string>();
   const dragStart = useRef<number | undefined>(undefined);
   const dragDistance = useRef(0);
   const suppressNextClick = useRef(false);
@@ -740,6 +778,7 @@ export function Today({
         plushes={plushes}
         className="today-map"
         centerOnCurrentWhenEmpty
+        focusPostId={focusedPostId}
       />
       <div className="today-summary">
         <p className="eyebrow">きょう</p>
@@ -794,6 +833,8 @@ export function Today({
                 post={p}
                 plushes={plushes}
                 onEdit={() => onNew(p)}
+                onSelect={p.place ? () => setFocusedPostId(p.id) : undefined}
+                selected={focusedPostId === p.id}
               />
             ))
           ) : (

@@ -43,6 +43,7 @@ vi.mock("leaflet", () => ({
           mapSetView(...args);
           return this;
         },
+        getZoom: () => 11,
         on: mapOn,
         fitBounds: vi.fn(),
         remove: vi.fn(),
@@ -291,6 +292,27 @@ describe("きょうの投稿ドロワー", () => {
     );
 
     expect(leafletMap).toHaveBeenCalledTimes(initialMapCalls);
+  });
+
+  it("場所付き投稿を選ぶと現在の縮尺を保って投稿地点を中央にする", () => {
+    const view = render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+    const page = within(view.container);
+    fireEvent.click(page.getByRole("button", { name: "投稿ドロワーを開く" }));
+
+    const postCard = page.getByLabelText("東京駅を地図の中心に表示");
+    fireEvent.click(postCard);
+
+    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 11);
+    expect(postCard).toHaveClass("selected");
   });
 
   it("件数と上部投稿ボタンを表示せず、本アイコンで日記を開く", () => {
