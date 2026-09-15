@@ -426,12 +426,12 @@ describe("日別地図の投稿ピン", () => {
     );
 
     const [route, options] = leafletPolyline.mock.calls.at(-1)!;
-    expect(route).toHaveLength(17);
+    expect(route).toHaveLength(33);
     expect(route[0]).toEqual([35.6812, 139.7671]);
     expect(route.at(-1)).toEqual([35.72, 139.8]);
     expect(route[1]).not.toEqual([
-      35.6812 + (35.7 - 35.6812) / 8,
-      139.7671 + (139.75 - 139.7671) / 8,
+      35.6812 + (35.7 - 35.6812) / 16,
+      139.7671 + (139.75 - 139.7671) / 16,
     ]);
     expect(options).toEqual(expect.objectContaining({ dashArray: "7 10" }));
   });

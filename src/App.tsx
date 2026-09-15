@@ -89,26 +89,33 @@ function postMarkerBackground(post: Post, plushes: Plush[]): string {
 function curvedRoute(points: L.LatLngTuple[]): L.LatLngTuple[] {
   if (points.length < 2) return points;
   const curved: L.LatLngTuple[] = [points[0]];
-  points.slice(1).forEach((end, index) => {
-    const start = points[index];
-    const latitudeDelta = end[0] - start[0];
-    const longitudeDelta = end[1] - start[1];
-    const bend = 0.12 * (index % 2 ? -1 : 1);
-    const control: L.LatLngTuple = [
-      (start[0] + end[0]) / 2 - longitudeDelta * bend,
-      (start[1] + end[1]) / 2 + latitudeDelta * bend,
-    ];
-    for (let step = 1; step <= 8; step += 1) {
-      const t = step / 8;
-      const inverse = 1 - t;
-      curved.push([
-        inverse * inverse * start[0] +
-          2 * inverse * t * control[0] +
-          t * t * end[0],
-        inverse * inverse * start[1] +
-          2 * inverse * t * control[1] +
-          t * t * end[1],
-      ]);
+  points.slice(0, -1).forEach((start, index) => {
+    const before = points[Math.max(0, index - 1)];
+    const end = points[index + 1];
+    const after = points[Math.min(points.length - 1, index + 2)];
+    for (let step = 1; step <= 16; step += 1) {
+      if (step === 16) {
+        curved.push(end);
+        continue;
+      }
+      const t = step / 16;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      curved.push(
+        ([0, 1] as const).map(
+          (axis) =>
+            0.5 *
+            (2 * start[axis] +
+              (-before[axis] + end[axis]) * t +
+              (2 * before[axis] -
+                5 * start[axis] +
+                4 * end[axis] -
+                after[axis]) *
+                t2 +
+              (-before[axis] + 3 * start[axis] - 3 * end[axis] + after[axis]) *
+                t3),
+        ) as L.LatLngTuple,
+      );
     }
   });
   return curved;
