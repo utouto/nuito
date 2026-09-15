@@ -216,7 +216,7 @@ export default function App() {
       <header>
         <div>
           <span className="brand-mark">ぬ</span>
-          <strong>ぬいログ</strong>
+          <strong>ぬいと</strong>
         </div>
         <span className="env">{import.meta.env.VITE_APP_ENV}</span>
       </header>
@@ -308,7 +308,7 @@ function Onboarding({
   return (
     <main className="onboarding">
       <span className="hero-icon">ぬ</span>
-      <h1>ぬいログ</h1>
+      <h1>ぬいと</h1>
       <p>ぬいぐるみとの一日を、写真と場所でそっと残そう。</p>
       <section className="notice">
         <h2>この端末に保存します</h2>

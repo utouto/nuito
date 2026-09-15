@@ -1,4 +1,4 @@
-# ぬいログ
+# ぬいと
 
 ぬいぐるみと一緒に出かけた記録を、写真・ひとこと・場所・時刻とともに残し、地図と日記で振り返るスマートフォン向けWebアプリです。
 
@@ -38,7 +38,7 @@ LINEログインをローカルで試す場合は `.dev.vars.example` を `.dev.
 
 フロントエンドだけを起動する場合は `npm run dev:app`、Workerだけは `npm run dev:worker` を使います。ローカルD1 migrationは `npm run db:migrate:local` で再適用できます。`.wrangler/` のローカルD1・R2データはGit管理されません。
 
-- 文書バージョン: `0.4.0-draft`
+- 文書バージョン: `0.5.0-draft`
 - 更新日: `2026-09-15`
 - 対象: 初期リリース（MVP）および将来拡張
 - 正本: [`docs/requirements/README.md`](docs/requirements/README.md)
