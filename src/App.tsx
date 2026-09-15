@@ -44,6 +44,18 @@ function placeFromPosition(position: GeolocationPosition): Place {
   };
 }
 
+function postMarkerBackground(post: Post, plushes: Plush[]): string {
+  const colors = post.plushIds
+    .map((id) => plushes.find((plush) => plush.id === id)?.themeColor)
+    .filter(
+      (color): color is string =>
+        Boolean(color && /^#[0-9a-f]{6}$/i.test(color)),
+    );
+  if (!colors.length) return "#687076";
+  if (colors.length === 1) return colors[0];
+  return `linear-gradient(135deg, ${colors.join(", ")})`;
+}
+
 function BlobImage({
   blob,
   alt,
@@ -120,12 +132,14 @@ function ImageLightbox({
 }
 export function DayMap({
   posts,
+  plushes = [],
   pick,
   onPick,
   control,
   className,
 }: {
   posts: Post[];
+  plushes?: Plush[];
   pick?: Place;
   onPick?: (p: Place) => void;
   control?: ReactNode;
@@ -156,15 +170,19 @@ export function DayMap({
         color: "#8b5e3c",
         weight: 4,
       }).addTo(map);
-    located.forEach((p) =>
-      L.circleMarker([p.place!.latitude, p.place!.longitude], {
-        radius: 9,
-        color: p.timeMode === "known" ? "#8b5e3c" : "#687076",
-        fillOpacity: 0.9,
+    located.forEach((p) => {
+      const background = postMarkerBackground(p, plushes);
+      L.marker([p.place!.latitude, p.place!.longitude], {
+        icon: L.divIcon({
+          className: "post-map-marker",
+          html: `<span style="background:${background}"></span>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        }),
       })
         .bindTooltip(p.place!.name || "記録した場所")
-        .addTo(map),
-    );
+        .addTo(map);
+    });
     if (pick) {
       const pin = L.marker([pick.latitude, pick.longitude], {
         draggable: Boolean(onPick),
@@ -196,7 +214,7 @@ export function DayMap({
     return () => {
       map.remove();
     };
-  }, [posts, pick, onPick]);
+  }, [posts, plushes, pick, onPick]);
   return (
     <div className={className ? `map-wrap ${className}` : "map-wrap"}>
       <div className="map-stage">
@@ -588,7 +606,7 @@ export function Today({
   );
   return (
     <section className="today-map-view" aria-labelledby="today-heading">
-      <DayMap posts={posts} className="today-map" />
+      <DayMap posts={posts} plushes={plushes} className="today-map" />
       <div className="today-summary">
         <p className="eyebrow">きょう</p>
         <h1 id="today-heading">{formatDate(date)}</h1>
@@ -1442,7 +1460,7 @@ function JournalView({
         <p className="notice">日記の保存後に記録が更新されています。</p>
       ) : null}
       {posts.some((p) => p.place) ? (
-        <DayMap posts={posts} />
+        <DayMap posts={posts} plushes={plushes} />
       ) : (
         <div className="empty">場所付きの投稿がないため、地図は空です。</div>
       )}

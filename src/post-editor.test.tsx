@@ -12,9 +12,10 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Plushes, PostCard, PostEditor, Today } from "./App";
 import type { Plush, Post, Settings } from "./types";
 
-const { mapOn, mapSetView, leafletMarker } = vi.hoisted(() => ({
+const { mapOn, mapSetView, leafletDivIcon, leafletMarker } = vi.hoisted(() => ({
   mapOn: vi.fn(),
   mapSetView: vi.fn(),
+  leafletDivIcon: vi.fn((options) => options),
   leafletMarker: vi.fn(),
 }));
 
@@ -36,6 +37,7 @@ vi.mock("leaflet", () => ({
         return this;
       },
     }),
+    divIcon: leafletDivIcon,
     marker: (...args: unknown[]) => {
       leafletMarker(...args);
       return {
@@ -43,6 +45,9 @@ vi.mock("leaflet", () => ({
           return this;
         },
         on() {
+          return this;
+        },
+        bindTooltip() {
           return this;
         },
         getLatLng() {
@@ -214,6 +219,46 @@ describe("きょうの投稿ドロワー", () => {
     expect(
       page.getByRole("button", { name: "投稿を閉じる" }),
     ).toHaveAttribute("aria-expanded", "true");
+  });
+});
+
+describe("日別地図の投稿ピン", () => {
+  it("同行した複数のぬいのテーマカラーをグラデーション表示する", () => {
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[{ ...post, plushIds: ["plush-1", "plush-2"] }]}
+        plushes={[
+          {
+            id: "plush-1",
+            name: "くま",
+            themeColor: "#3a7bd5",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+          {
+            id: "plush-2",
+            name: "うさぎ",
+            themeColor: "#d55a87",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+
+    expect(leafletDivIcon).toHaveBeenCalledWith(
+      expect.objectContaining({
+        html: expect.stringContaining(
+          "linear-gradient(135deg, #3a7bd5, #d55a87)",
+        ),
+      }),
+    );
   });
 });
 
@@ -402,8 +447,12 @@ describe("投稿の同行表示", () => {
       />,
     );
 
-    expect(screen.getByLabelText("くま、うさぎといっしょ")).toBeVisible();
-    expect(screen.queryByText("くまとうさぎといっしょ")).not.toBeInTheDocument();
+    expect(
+      within(container).getByLabelText("くま、うさぎといっしょ"),
+    ).toBeVisible();
+    expect(
+      within(container).queryByText("くまとうさぎといっしょ"),
+    ).not.toBeInTheDocument();
     expect(container.querySelectorAll(".companion-icon")).toHaveLength(2);
     expect(container.querySelector(".companion-icon img")).toHaveAttribute(
       "src",
