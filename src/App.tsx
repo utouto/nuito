@@ -9,6 +9,16 @@ import {
 } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import L from "leaflet";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import BookRoundedIcon from "@mui/icons-material/BookRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
+import PetsRoundedIcon from "@mui/icons-material/PetsRounded";
+import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
+import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import { db, deleteAllData, getSettings } from "./db";
 import {
   effectiveLogicalDate,
@@ -156,7 +166,7 @@ function ImageLightbox({
         onClick={onClose}
         aria-label="拡大表示を閉じる"
       >
-        ×
+        <CloseRoundedIcon aria-hidden="true" />
       </button>
       <BlobImage
         blob={image.full}
@@ -523,7 +533,7 @@ export default function App() {
             onClick={() => openEditor()}
             aria-label="新しい投稿"
           >
-            ＋
+            <AddRoundedIcon aria-hidden="true" />
           </button>
           <nav aria-label="メインメニュー">
             {(
@@ -539,6 +549,18 @@ export default function App() {
                 className={view === id ? "active" : ""}
                 onClick={() => setView(id)}
               >
+                {id === "today" ? (
+                  <TodayRoundedIcon aria-hidden="true" />
+                ) : null}
+                {id === "history" ? (
+                  <HistoryRoundedIcon aria-hidden="true" />
+                ) : null}
+                {id === "plushes" ? (
+                  <PetsRoundedIcon aria-hidden="true" />
+                ) : null}
+                {id === "settings" ? (
+                  <SettingsRoundedIcon aria-hidden="true" />
+                ) : null}
                 {label}
               </button>
             ))}
@@ -734,7 +756,7 @@ export function Today({
               : "きょうの日記を見る"
         }
       >
-        <span aria-hidden="true">📖</span>
+        <BookRoundedIcon aria-hidden="true" />
       </button>
       <aside
         id="today-post-drawer"
@@ -1302,7 +1324,8 @@ export function PostEditor({
   return (
     <>
       <button className="back" onClick={onDone}>
-        ← 戻る
+        <ArrowBackRoundedIcon aria-hidden="true" />
+        戻る
       </button>
       <p className="eyebrow">{post ? "投稿を編集" : "新しい投稿"}</p>
       <h1>思い出を残す</h1>
@@ -1348,7 +1371,9 @@ export function PostEditor({
                         ぬ
                       </span>
                     )}
-                    <span className="plush-choice-check">✓</span>
+                    <span className="plush-choice-check">
+                      <CheckRoundedIcon aria-hidden="true" />
+                    </span>
                   </span>
                   <span className="plush-choice-name">{p.name}</span>
                 </label>
@@ -1489,7 +1514,7 @@ export function PostEditor({
                     disabled={busy}
                     aria-label="現在地付近を表示"
                   >
-                    <span aria-hidden="true">◎</span>
+                    <MyLocationRoundedIcon aria-hidden="true" />
                     <span>{busy ? "取得中…" : "現在地"}</span>
                   </button>
                 }
@@ -1583,7 +1608,8 @@ export function JournalView({
           </div>
         )}
         <button className="back journal-back" onClick={onBack}>
-          ← 戻る
+          <ArrowBackRoundedIcon aria-hidden="true" />
+          戻る
         </button>
         <div className="journal-heading-card">
           <p className="eyebrow">きょうの日記</p>

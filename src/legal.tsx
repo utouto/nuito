@@ -1,3 +1,5 @@
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+
 const operatorName = import.meta.env.VITE_OPERATOR_NAME || "運営者情報未設定";
 const contact = import.meta.env.VITE_CONTACT_URL || "お問い合わせ先未設定";
 const effectiveDate =
@@ -15,7 +17,8 @@ export function LegalPage({
   return (
     <article className="legal-page">
       <button className="back" onClick={onBack}>
-        ← アプリへ戻る
+        <ArrowBackRoundedIcon aria-hidden="true" />
+        アプリへ戻る
       </button>
       {kind === "privacy" ? <PrivacyPolicy /> : <TermsOfUse />}
     </article>

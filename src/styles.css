@@ -173,6 +173,9 @@ h2 {
   cursor: wait;
   opacity: 0.7;
 }
+.map-location-button .MuiSvgIcon-root {
+  font-size: 22px;
+}
 .post-map-marker {
   border: 0;
   background: transparent;
@@ -257,6 +260,12 @@ h2 {
   box-shadow: 0 5px 18px #3e332c4d;
   font-size: 26px;
   transition: bottom 220ms ease;
+}
+.today-journal-button .MuiSvgIcon-root,
+.fab .MuiSvgIcon-root {
+  display: block;
+  margin: auto;
+  font-size: 30px;
 }
 .today-journal-button.drawer-open {
   bottom: min(calc(62vh + 14px), 574px);
@@ -488,6 +497,11 @@ h2 {
   color: white;
   font-size: 30px;
   line-height: 1;
+}
+.lightbox-close .MuiSvgIcon-root {
+  display: block;
+  margin: auto;
+  font-size: 30px;
 }
 .history-row {
   width: 100%;
@@ -747,6 +761,9 @@ h2 {
   font-size: 15px;
   font-weight: 900;
 }
+.plush-choice-check .MuiSvgIcon-root {
+  font-size: 18px;
+}
 .plush-choice > input:checked + .plush-choice-icon .plush-choice-check {
   display: grid;
 }
@@ -799,6 +816,9 @@ h2 {
   border-top: 1px solid #ead8d4;
 }
 .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: none;
   border: 0;
   color: #7e4c30;
@@ -840,10 +860,16 @@ nav {
   padding-bottom: env(safe-area-inset-bottom);
 }
 nav button {
+  display: grid;
+  place-content: center;
+  justify-items: center;
   border: 0;
   background: none;
   color: #71645b;
   font-size: 14px;
+}
+nav button .MuiSvgIcon-root {
+  font-size: 22px;
 }
 nav button.active {
   color: #9d4d2c;

@@ -315,7 +315,7 @@ describe("きょうの投稿ドロワー", () => {
     const journalButton = page.getByRole("button", {
       name: "きょうの日記を見る",
     });
-    expect(journalButton).toHaveTextContent("📖");
+    expect(journalButton.querySelector("svg")).toBeInTheDocument();
     fireEvent.click(journalButton);
     expect(onJournal).toHaveBeenCalledOnce();
   });
@@ -504,8 +504,8 @@ describe("投稿のぬい選択", () => {
     expect(choice).not.toBeChecked();
     expect(form.getByText("くま")).toHaveClass("plush-choice-name");
     expect(
-      view.container.querySelector(".plush-choice-check"),
-    ).toHaveTextContent("✓");
+      view.container.querySelector(".plush-choice-check svg"),
+    ).toBeInTheDocument();
 
     fireEvent.click(choice);
 

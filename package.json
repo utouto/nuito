@@ -21,6 +21,10 @@
     "db:migrate:local": "wrangler d1 migrations apply nuito-local --local"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.4.0",
+    "@mui/material": "^9.4.0",
     "dexie": "^4.2.0",
     "dexie-react-hooks": "^4.2.0",
     "leaflet": "^1.9.4",
