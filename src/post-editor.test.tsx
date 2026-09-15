@@ -154,6 +154,23 @@ describe("投稿編集", () => {
   });
 });
 
+describe("投稿のぬい選択", () => {
+  it("ぬいのアイコンと名前を表示し、選択状態をチェックで示す", () => {
+    const view = render(<Subject />);
+    const form = within(view.container);
+    const choice = form.getByRole("checkbox", { name: "くま" });
+
+    expect(choice).not.toBeChecked();
+    expect(form.getByText("くま")).toHaveClass("plush-choice-name");
+    expect(view.container.querySelector(".plush-choice-check")).toHaveTextContent("✓");
+
+    fireEvent.click(choice);
+
+    expect(choice).toBeChecked();
+    expect(choice).toBeChecked();
+  });
+});
+
 describe("投稿の同行表示", () => {
   it("名前を連結せず、登録画像または既定の円形アイコンを並べる", () => {
     const companions: Plush[] = [
@@ -197,8 +214,8 @@ describe("投稿の同行表示", () => {
     expect(container.querySelector(".fallback-icon")).toHaveStyle({
       borderColor: "#d55a87",
     });
-    expect(screen.getByText("ぬ")).toBeInTheDocument();
-    expect(screen.getByText("といっしょ")).toBeInTheDocument();
+    expect(within(container).getByText("ぬ")).toBeInTheDocument();
+    expect(within(container).getByText("といっしょ")).toBeInTheDocument();
   });
 });
 

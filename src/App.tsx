@@ -1175,8 +1175,9 @@ export function PostEditor({
         <fieldset>
           <legend>いっしょにいたぬい</legend>
           {plushes.length ? (
-            plushes.map((p) => (
-              <label className="check" key={p.id}>
+            <div className="plush-choices">
+              {plushes.map((p) => (
+                <label className="plush-choice" key={p.id}>
                 <input
                   type="checkbox"
                   checked={selected.includes(p.id)}
@@ -1188,9 +1189,31 @@ export function PostEditor({
                     )
                   }
                 />
-                {p.name}
-              </label>
-            ))
+                  <span className="plush-choice-icon" aria-hidden="true">
+                    {p.icon ? (
+                      <PlushIcon
+                        blob={p.icon}
+                        crop={p.iconCrop}
+                        alt=""
+                        themeColor={p.themeColor}
+                      />
+                    ) : (
+                      <span
+                        className="plush-icon plush-icon-fallback"
+                        style={{
+                          borderColor:
+                            p.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
+                        }}
+                      >
+                        ぬ
+                      </span>
+                    )}
+                    <span className="plush-choice-check">✓</span>
+                  </span>
+                  <span className="plush-choice-name">{p.name}</span>
+                </label>
+              ))}
+            </div>
           ) : (
             <small>
               「ぬいたち」から登録できます。選択なしでも保存できます。
