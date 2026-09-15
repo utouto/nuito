@@ -557,7 +557,7 @@ export default function App() {
     setView("journal");
   };
   return (
-    <div className="app">
+    <div className={`app${view === "today" ? " today-app" : ""}`}>
       <header className="app-header">
         <img src="/icons/nuito-icon.png" alt="" width="48" height="48" />
         <strong>ぬいと</strong>
@@ -830,7 +830,10 @@ export function Today({
     settings.journalPromptTime,
   );
   return (
-    <section className="today-map-view" aria-labelledby="today-heading">
+    <section
+      className={`today-map-view${drawerOpen ? " drawer-open" : ""}`}
+      aria-labelledby="today-heading"
+    >
       <DayMap
         posts={posts}
         plushes={plushes}

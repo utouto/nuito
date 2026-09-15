@@ -43,6 +43,12 @@ textarea:focus-visible {
   padding-bottom: 90px;
   box-shadow: 0 0 40px #6d4c3520;
 }
+.app.today-app {
+  height: 100dvh;
+  min-height: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
 .app-header {
   position: sticky;
   top: 0;
@@ -218,10 +224,14 @@ h2 {
 }
 .today-map .leaflet-control-zoom {
   position: fixed;
-  top: 50%;
+  top: calc(50dvh - 3px);
   right: max(10px, calc((100vw - 740px) / 2));
   margin: 0;
   transform: translateY(-50%);
+  transition: top 220ms ease;
+}
+.today-map-view.drawer-open .leaflet-control-zoom {
+  top: calc(50dvh - 3px - min(31vh, 280px));
 }
 .today-summary {
   position: absolute;

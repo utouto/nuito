@@ -247,6 +247,9 @@ describe("きょうの投稿ドロワー", () => {
     fireEvent.click(toggle);
 
     expect(drawer).toBeVisible();
+    expect(view.container.querySelector(".today-map-view")).toHaveClass(
+      "drawer-open",
+    );
     expect(page.getByText("もとのひとこと")).toBeVisible();
     expect(
       page.getByRole("button", { name: "おもいでドロワーを閉じる" }),
