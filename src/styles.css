@@ -43,19 +43,6 @@ textarea:focus-visible {
   padding-bottom: 90px;
   box-shadow: 0 0 40px #6d4c3520;
 }
-header {
-  height: 60px;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #e8ded2;
-  background: #fffdf9;
-  position: sticky;
-  top: 0;
-  z-index: 1001;
-}
-.brand-mark,
 .hero-icon {
   display: inline-grid;
   place-items: center;
@@ -66,11 +53,6 @@ header {
   height: 34px;
   margin-right: 8px;
   font-weight: 800;
-}
-.env {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: #7a6f68;
 }
 main {
   padding: 24px 18px;
@@ -203,7 +185,7 @@ h2 {
 }
 .today-map-view {
   position: relative;
-  height: calc(100dvh - 126px);
+  height: calc(100dvh - 66px);
   min-height: 430px;
   overflow: hidden;
 }

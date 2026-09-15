@@ -552,15 +552,6 @@ export default function App() {
   };
   return (
     <div className="app">
-      <header>
-        <div>
-          <span className="brand-mark">ぬ</span>
-          <strong>ぬいと</strong>
-        </div>
-        {import.meta.env.MODE !== "production" && (
-          <span className="env">{import.meta.env.VITE_APP_ENV}</span>
-        )}
-      </header>
       <main className={view === "today" ? "today-main" : undefined}>
         {view === "today" ? (
           <Today
