@@ -1,12 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "nuito-production",
+  "name": "nuito",
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-15",
   "workers_dev": true,
   "vars": {
     "ENVIRONMENT": "production",
-    "APP_ORIGIN": "https://nuito-production.<YOUR_WORKERS_SUBDOMAIN>.workers.dev"
+    "APP_ORIGIN": "https://nuito.<YOUR_WORKERS_SUBDOMAIN>.workers.dev"
   },
   "d1_databases": [
     {
