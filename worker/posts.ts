@@ -518,6 +518,82 @@ async function deletePlush(env: PostsEnv, userId: string, plushId: string) {
   return response({ ok: true, cleanupPending });
 }
 
+async function savePlush(
+  request: Request,
+  env: PostsEnv,
+  userId: string,
+  plushId: string,
+) {
+  if (!ID.test(plushId)) return response({ error: "invalid_request" }, 400);
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return response({ error: "invalid_request" }, 400);
+  }
+  let plush: PlushInput;
+  try {
+    plush = JSON.parse(String(form.get("metadata"))) as PlushInput;
+  } catch {
+    return response({ error: "invalid_request" }, 400);
+  }
+  if (
+    plush.id !== plushId ||
+    typeof plush.name !== "string" ||
+    plush.name.length < 1 ||
+    plush.name.length > 60 ||
+    typeof plush.hasIcon !== "boolean" ||
+    typeof plush.hidden !== "boolean" ||
+    (plush.themeColor !== undefined && !THEME_COLOR.test(plush.themeColor)) ||
+    (plush.iconCrop !== undefined &&
+      (!Number.isFinite(plush.iconCrop.x) ||
+        !Number.isFinite(plush.iconCrop.y) ||
+        !Number.isFinite(plush.iconCrop.zoom) ||
+        plush.iconCrop.zoom < 1 ||
+        plush.iconCrop.zoom > 4)) ||
+    !validTimestamp(plush.createdAt) ||
+    !validTimestamp(plush.updatedAt)
+  )
+    return response({ error: "invalid_request" }, 400);
+  const existing = await env.DB.prepare(
+    "SELECT user_id,icon_object_key FROM plushes WHERE id=?",
+  )
+    .bind(plushId)
+    .first<{ user_id: string; icon_object_key: string | null }>();
+  if (existing && existing.user_id !== userId)
+    return response({ error: "not_found" }, 404);
+  const icon = form.get("icon");
+  if (
+    plush.hasIcon !== (icon instanceof File) ||
+    (icon instanceof File &&
+      (!icon.type.startsWith("image/") ||
+        icon.size < 1 ||
+        icon.size > MAX_PLUSH_ICON_BYTES))
+  )
+    return response({ error: "invalid_image" }, 400);
+  const key = plush.hasIcon
+    ? plushIconKey(userId, plushId, plush.updatedAt)
+    : null;
+  try {
+    if (icon instanceof File && key)
+      await env.IMAGES.put(key, icon.stream(), {
+        httpMetadata: { contentType: icon.type },
+      });
+    await env.DB.prepare(
+      `INSERT INTO plushes(id,user_id,name,icon_object_key,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,icon_object_key=excluded.icon_object_key,theme_color=excluded.theme_color,icon_crop_x=excluded.icon_crop_x,icon_crop_y=excluded.icon_crop_y,icon_crop_zoom=excluded.icon_crop_zoom,hidden=excluded.hidden,updated_at=excluded.updated_at WHERE plushes.user_id=excluded.user_id`,
+    )
+      .bind(plush.id, userId, plush.name, key, plush.themeColor ?? null, plush.iconCrop?.x ?? null, plush.iconCrop?.y ?? null, plush.iconCrop?.zoom ?? null, plush.hidden ? 1 : 0, plush.createdAt, plush.updatedAt)
+      .run();
+    if (existing?.icon_object_key && existing.icon_object_key !== key)
+      await env.IMAGES.delete(existing.icon_object_key);
+    return response({ ok: true });
+  } catch {
+    if (key) await env.IMAGES.delete(key).catch(() => undefined);
+    return response({ error: "save_failed" }, 503);
+  }
+}
+
 export async function handlePosts(
   request: Request,
   env: PostsEnv,
@@ -532,6 +608,8 @@ export async function handlePosts(
   if (postMatch && request.method === "DELETE")
     return deletePost(env, userId, postMatch[1]);
   const plushMatch = url.pathname.match(/^\/api\/plushes\/([^/]+)$/);
+  if (plushMatch && request.method === "PUT")
+    return savePlush(request, env, userId, plushMatch[1]);
   if (plushMatch && request.method === "DELETE")
     return deletePlush(env, userId, plushMatch[1]);
   const imageMatch = url.pathname.match(

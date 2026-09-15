@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { handleRequest } from "./index";
 import { handlePosts } from "./posts";
+import { handleProfileData } from "./profile-data";
 
 const env = (fails = false) => ({
   DB: {
@@ -43,6 +44,11 @@ describe("Cloudflare API", () => {
     );
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: "unauthorized" });
+    const settingsResponse = await handleRequest(
+      new Request("http://local/api/settings", { method: "PUT" }),
+      env() as never,
+    );
+    expect(settingsResponse.status).toBe(401);
   });
   it("認証開始の不正なJSONを400で拒否する", async () => {
     const response = await handleRequest(
@@ -203,6 +209,21 @@ describe("投稿保存API", () => {
     expect(bindings.IMAGES.put).not.toHaveBeenCalled();
     expect(bindings.DB.batch).not.toHaveBeenCalled();
   });
+
+  it("投稿に使われていないぬいを単独で保存する", async () => {
+    const bindings = env();
+    bindings.DB.prepare = vi.fn(() => ({
+      bind() { return this; },
+      first: vi.fn().mockResolvedValue(null),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+    })) as never;
+    const form = new FormData();
+    form.set("metadata", JSON.stringify({ id: "plush-standalone", name: "くま", hasIcon: false, hidden: false, createdAt: "2026-09-15T10:00:00.000Z", updatedAt: "2026-09-15T11:00:00.000Z" }));
+    const response = await handlePosts(new Request("http://local/api/plushes/plush-standalone", { method: "PUT", body: form }), bindings as never, "user-1");
+    expect(response.status).toBe(200);
+    expect(bindings.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO plushes"));
+  });
 });
 
 describe("データ削除API", () => {
@@ -264,5 +285,20 @@ describe("データ削除API", () => {
     expect(bindings.IMAGES.delete).toHaveBeenCalledWith([
       "user-1/posts/post-1/image",
     ]);
+  });
+});
+
+describe("プロフィールデータAPI", () => {
+  it("設定と日記を所有者ID付きで保存する", async () => {
+    const bindings = env();
+    const settings = await handleProfileData(new Request("http://local/api/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ dayBoundaryTime: "04:00", journalPromptTime: "21:00", timezone: "Asia/Tokyo", schemaVersion: 1, updatedAt: "2026-09-15T10:00:00.000Z" }) }), bindings as never, "user-1");
+    const journal = await handleProfileData(new Request("http://local/api/journals/2026-09-15", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ logicalDate: "2026-09-15", body: "日記", createdAt: "2026-09-15T10:00:00.000Z", updatedAt: "2026-09-15T11:00:00.000Z" }) }), bindings as never, "user-1");
+    expect(settings.status).toBe(200);
+    expect(journal.status).toBe(200);
+  });
+
+  it("1001文字の日記を拒否する", async () => {
+    const response = await handleProfileData(new Request("http://local/api/journals/2026-09-15", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ logicalDate: "2026-09-15", body: "a".repeat(1001), createdAt: "2026-09-15T10:00:00.000Z", updatedAt: "2026-09-15T11:00:00.000Z" }) }), env() as never, "user-1");
+    expect(response.status).toBe(400);
   });
 });

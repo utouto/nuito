@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import { handlePosts } from "./posts";
+import { handleProfileData } from "./profile-data";
 
 interface Env {
   DB: D1Database;
@@ -348,6 +349,19 @@ export async function handleRequest(
       const userId = await authenticatedUserId(request, env);
       if (!userId) return json({ error: "unauthorized" }, 401);
       return handlePosts(request, env, userId);
+    } catch {
+      return json({ error: "service_unavailable" }, 503);
+    }
+  }
+  if (
+    url.pathname === "/api/profile-data" ||
+    url.pathname === "/api/settings" ||
+    url.pathname.startsWith("/api/journals/")
+  ) {
+    try {
+      const userId = await authenticatedUserId(request, env);
+      if (!userId) return json({ error: "unauthorized" }, 401);
+      return handleProfileData(request, env, userId);
     } catch {
       return json({ error: "service_unavailable" }, 503);
     }
