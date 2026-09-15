@@ -11,7 +11,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import L from "leaflet";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import BookRoundedIcon from "@mui/icons-material/BookRounded";
+import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
@@ -756,7 +756,7 @@ export function Today({
               : "きょうの日記を見る"
         }
       >
-        <BookRoundedIcon aria-hidden="true" />
+        <ImportContactsIcon aria-hidden="true" />
       </button>
       <aside
         id="today-post-drawer"

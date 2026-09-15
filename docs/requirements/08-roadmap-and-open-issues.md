@@ -74,7 +74,7 @@
 | DEC-025 | 製品名を「ぬいログ」から「ぬいと」へ変更する。技術識別子 `nuito` は維持する | 確定 |
 | DEC-026 | 初回公開はWorkers Static AssetsでSPAとAPIを同一origin配信し、D1・非公開R2を環境別にbindingする | 確定 |
 | DEC-027 | 投稿がない日の地図は、許可済みのブラウザ位置情報を利用する。未許可時はプライバシーを優先し、外部IP位置推定サービスへ自動送信しない | 確定 |
-| DEC-028 | 操作を表すアイコンはMaterial UI IconsのRounded SVGコンポーネントへ統一し、個別パスからimportして不要なアイコンをbundleへ含めない | 確定 |
+| DEC-028 | 操作を表すアイコンはMaterial UI IconsのSVGコンポーネントへ統一し、基本はRounded、日記は`ImportContacts`を使う。個別パスからimportして不要なアイコンをbundleへ含めない | 確定 |
 
 ## 3. 未決事項
 

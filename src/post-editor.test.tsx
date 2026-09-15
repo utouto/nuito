@@ -316,6 +316,9 @@ describe("きょうの投稿ドロワー", () => {
       name: "きょうの日記を見る",
     });
     expect(journalButton.querySelector("svg")).toBeInTheDocument();
+    expect(
+      journalButton.querySelector("[data-testid='ImportContactsIcon']"),
+    ).toBeInTheDocument();
     fireEvent.click(journalButton);
     expect(onJournal).toHaveBeenCalledOnce();
   });
