@@ -2,7 +2,7 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { PostEditor } from "./App";
+import { PostEditor, Today } from "./App";
 import type { Post, Settings } from "./types";
 
 vi.mock("leaflet", () => ({
@@ -96,6 +96,24 @@ function Subject({ postToEdit }: { postToEdit?: Post }) {
 }
 
 describe("投稿編集", () => {
+  it("きょう画面の編集ボタンから対象の投稿を渡す", () => {
+    const onEdit = vi.fn();
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={onEdit}
+        onJournal={() => undefined}
+      />,
+    );
+
+    screen.getByRole("button", { name: "投稿を編集" }).click();
+
+    expect(onEdit).toHaveBeenCalledWith(post);
+  });
+
   it("フォームの表示後に編集対象が届いても元の内容を反映する", () => {
     const { rerender } = render(<Subject />);
 

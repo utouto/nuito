@@ -235,7 +235,7 @@ export default function App() {
             plushes={plushes}
             journal={journals.find((j) => j.logicalDate === today)}
             settings={settings}
-            onNew={() => openEditor()}
+            onNew={openEditor}
             onJournal={() => openJournal(today)}
           />
         ) : null}
@@ -417,7 +417,7 @@ function LineAuth() {
     </section>
   );
 }
-function Today({
+export function Today({
   date,
   posts,
   plushes,
