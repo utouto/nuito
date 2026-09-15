@@ -14,6 +14,7 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
 import PetsRoundedIcon from "@mui/icons-material/PetsRounded";
@@ -412,41 +413,6 @@ export function PostCard({
         }
       }}
     >
-      <button
-        className="card-action"
-        onClick={onEdit}
-        aria-label="おもいでを編集"
-      >
-        編集
-      </button>
-      <p className="post-time">
-        {post.timeMode === "known"
-          ? post.occurredLocalDateTime!.slice(11, 16)
-          : "時間不明"}
-        {post.place ? ` · ${post.place.name || "場所あり"}` : ""}
-      </p>
-      {post.images.length ? (
-        <div className="photos">
-          {post.images.map((image, i) => (
-            <button
-              key={image.id}
-              type="button"
-              className="photo-expand"
-              aria-label={`おもいでの写真 ${i + 1}を拡大`}
-              onClick={(event) => {
-                imageTrigger.current = event.currentTarget;
-                setExpandedImage({ image, imageNumber: i + 1 });
-              }}
-            >
-              <BlobImage
-                blob={image.thumbnail}
-                alt={`おもいでの写真 ${i + 1}`}
-              />
-            </button>
-          ))}
-        </div>
-      ) : null}
-      {post.body ? <p className="post-body">{post.body}</p> : null}
       {companions.length ? (
         <div
           className="with"
@@ -479,6 +445,46 @@ export function PostCard({
           <span aria-hidden="true">といっしょ</span>
         </div>
       ) : null}
+      {post.body ? <p className="post-body">{post.body}</p> : null}
+      {post.images.length ? (
+        <div className="photos">
+          {post.images.map((image, i) => (
+            <button
+              key={image.id}
+              type="button"
+              className="photo-expand"
+              aria-label={`おもいでの写真 ${i + 1}を拡大`}
+              onClick={(event) => {
+                imageTrigger.current = event.currentTarget;
+                setExpandedImage({ image, imageNumber: i + 1 });
+              }}
+            >
+              <BlobImage
+                blob={image.thumbnail}
+                alt={`おもいでの写真 ${i + 1}`}
+              />
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <div className="post-card-footer">
+        <p className="post-time">
+          {post.timeMode === "known"
+            ? post.occurredLocalDateTime!.slice(11, 16)
+            : "時間不明"}
+          {post.place ? ` · ${post.place.name || "場所あり"}` : ""}
+        </p>
+        <button
+          className="card-action"
+          onClick={(event) => {
+            event.stopPropagation();
+            onEdit();
+          }}
+          aria-label="おもいでを編集"
+        >
+          <EditRoundedIcon aria-hidden="true" />
+        </button>
+      </div>
       {expandedImage ? (
         <ImageLightbox
           image={expandedImage.image}

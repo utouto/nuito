@@ -782,6 +782,31 @@ describe("投稿の同行表示", () => {
 });
 
 describe("投稿画像の拡大表示", () => {
+  it("カードを同行ぬい、本文、画像、時刻と場所・編集ボタンの順で表示する", () => {
+    const companion: Plush = {
+      id: "plush-order",
+      name: "くま",
+      hidden: false,
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+    };
+    const { container } = render(
+      <PostCard
+        post={{ ...post, plushIds: [companion.id] }}
+        plushes={[companion]}
+        onEdit={() => undefined}
+      />,
+    );
+    const card = container.querySelector(".post-card");
+
+    expect(
+      Array.from(card?.children ?? []).map((element) => element.className),
+    ).toEqual(["with", "post-body", "photos", "post-card-footer"]);
+    expect(
+      within(container).getByRole("button", { name: "おもいでを編集" }),
+    ).toContainElement(container.querySelector(".MuiSvgIcon-root"));
+  });
+
   it("投稿画像を選択して拡大し、Escapeキーで閉じて元の操作へ戻る", () => {
     const view = render(
       <PostCard post={post} plushes={[]} onEdit={() => undefined} />,
