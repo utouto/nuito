@@ -779,6 +779,18 @@ export function PostEditor({
   const [place, setPlace] = useState<Place | undefined>(post?.place);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+    setBody(post?.body ?? "");
+    setMode(post?.timeMode ?? "known");
+    setDateTime(post?.occurredLocalDateTime ?? localDateTime());
+    setManualDate(
+      post?.manualLogicalDate ?? todayLogicalDate(settings.dayBoundaryTime),
+    );
+    setSelected(post?.plushIds ?? []);
+    setImages(post?.images ?? []);
+    setPlace(post?.place);
+    setError("");
+  }, [post, settings.dayBoundaryTime]);
   const valid = body.trim() || images.length || place;
   async function filesChosen(files: FileList | null) {
     if (!files) return;

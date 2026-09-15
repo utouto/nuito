@@ -79,7 +79,6 @@ const post: Post = {
 function Subject({ postToEdit }: { postToEdit?: Post }) {
   return (
     <PostEditor
-      key={postToEdit?.id ?? "new"}
       post={postToEdit}
       plushes={[
         {
@@ -97,7 +96,7 @@ function Subject({ postToEdit }: { postToEdit?: Post }) {
 }
 
 describe("投稿編集", () => {
-  it("新規投稿表示後に編集対象が届いても元の内容でフォームを作り直す", () => {
+  it("フォームの表示後に編集対象が届いても元の内容を反映する", () => {
     const { rerender } = render(<Subject />);
 
     rerender(<Subject postToEdit={post} />);
