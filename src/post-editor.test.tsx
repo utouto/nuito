@@ -22,6 +22,17 @@ vi.mock("leaflet", () => ({
         return this;
       },
     }),
+    marker: () => ({
+      addTo() {
+        return this;
+      },
+      on() {
+        return this;
+      },
+      getLatLng() {
+        return { lat: 35.6812, lng: 139.7671 };
+      },
+    }),
   },
 }));
 
@@ -168,6 +179,29 @@ describe("投稿のぬい選択", () => {
 
     expect(choice).toBeChecked();
     expect(choice).toBeChecked();
+  });
+});
+
+describe("投稿の場所選択", () => {
+  it("現在地付近へ移動し、ドラッグ可能なピンを表示する", () => {
+    const getCurrentPosition = vi.fn((success) =>
+      success({ coords: { latitude: 35.6812, longitude: 139.7671 } }),
+    );
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+    const view = render(<Subject />);
+    const form = within(view.container);
+
+    fireEvent.click(form.getByRole("button", { name: "現在地付近を表示" }));
+
+    expect(getCurrentPosition).toHaveBeenCalledOnce();
+    expect(form.getByRole("textbox", { name: "場所名" })).toHaveValue("現在地");
+    expect(form.getByLabelText("場所を選択する地図")).toBeInTheDocument();
+    expect(
+      form.getByText("地図をタップするか、ピンをドラッグして場所を指定できます。"),
+    ).toBeVisible();
   });
 });
 

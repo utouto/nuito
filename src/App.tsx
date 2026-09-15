@@ -103,7 +103,7 @@ function ImageLightbox({
     </div>
   );
 }
-function DayMap({
+export function DayMap({
   posts,
   pick,
   onPick,
@@ -146,12 +146,23 @@ function DayMap({
         .bindTooltip(p.place!.name || "記録した場所")
         .addTo(map),
     );
-    if (pick)
-      L.circleMarker([pick.latitude, pick.longitude], {
-        radius: 10,
-        color: "#d65a31",
-        fillOpacity: 1,
+    if (pick) {
+      const pin = L.marker([pick.latitude, pick.longitude], {
+        draggable: Boolean(onPick),
+        title: onPick ? "選択中の場所。ドラッグして移動" : "選択中の場所",
+        alt: "選択中の場所",
       }).addTo(map);
+      if (onPick)
+        pin.on("dragend", () => {
+          const position = pin.getLatLng();
+          onPick({
+            ...pick,
+            latitude: position.lat,
+            longitude: position.lng,
+            source: "map",
+          });
+        });
+    }
     if (all.length > 1)
       map.fitBounds(L.latLngBounds(all), { padding: [24, 24], maxZoom: 15 });
     if (onPick)
@@ -169,7 +180,11 @@ function DayMap({
   }, [posts, pick, onPick]);
   return (
     <div className="map-wrap">
-      <div ref={element} className="map" aria-label="日別地図" />
+      <div
+        ref={element}
+        className="map"
+        aria-label={onPick ? "場所を選択する地図" : "日別地図"}
+      />
       {!navigator.onLine ? (
         <p className="map-note">
           オフラインのため背景地図を表示できません。記録済み地点のみ表示します。
@@ -1178,17 +1193,17 @@ export function PostEditor({
             <div className="plush-choices">
               {plushes.map((p) => (
                 <label className="plush-choice" key={p.id}>
-                <input
-                  type="checkbox"
-                  checked={selected.includes(p.id)}
-                  onChange={(e) =>
-                    setSelected(
-                      e.target.checked
-                        ? [...selected, p.id]
-                        : selected.filter((id) => id !== p.id),
-                    )
-                  }
-                />
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(p.id)}
+                    onChange={(e) =>
+                      setSelected(
+                        e.target.checked
+                          ? [...selected, p.id]
+                          : selected.filter((id) => id !== p.id),
+                      )
+                    }
+                  />
                   <span className="plush-choice-icon" aria-hidden="true">
                     {p.icon ? (
                       <PlushIcon
@@ -1223,9 +1238,9 @@ export function PostEditor({
         <fieldset>
           <legend>場所（任意）</legend>
           <button onClick={current} disabled={busy}>
-            現在地を使う
+            現在地付近を表示
           </button>
-          <p>地図をタップして場所を指定できます。</p>
+          <p>地図をタップするか、ピンをドラッグして場所を指定できます。</p>
           <DayMap posts={[]} pick={place} onPick={setPlace} />
           {place ? (
             <>
