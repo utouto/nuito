@@ -165,8 +165,30 @@ h2 {
   line-height: 1.7;
 }
 .with {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
   color: #9a5438;
+}
+.companion-icons {
+  display: flex;
+  padding-left: 4px;
+}
+.plush-icon.companion-icon,
+.companion-icon.fallback-icon {
+  width: 32px;
+  height: 32px;
+  margin-left: -4px;
+  border: 2px solid white;
+}
+.companion-icon.fallback-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #f0dfce;
+  font-weight: 700;
 }
 .photos {
   display: grid;

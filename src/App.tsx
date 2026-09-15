@@ -123,7 +123,7 @@ function DayMap({
     </div>
   );
 }
-function PostCard({
+export function PostCard({
   post,
   plushes,
   onEdit,
@@ -132,9 +132,9 @@ function PostCard({
   plushes: Plush[];
   onEdit: () => void;
 }) {
-  const names = post.plushIds
-    .map((id) => plushes.find((p) => p.id === id)?.name)
-    .filter(Boolean);
+  const companions = post.plushIds
+    .map((id) => plushes.find((p) => p.id === id))
+    .filter((plush): plush is Plush => Boolean(plush));
   return (
     <article className="post-card">
       <button className="card-action" onClick={onEdit} aria-label="投稿を編集">
@@ -158,8 +158,30 @@ function PostCard({
         </div>
       ) : null}
       {post.body ? <p className="post-body">{post.body}</p> : null}
-      {names.length ? (
-        <p className="with">{names.join("と")}といっしょ</p>
+      {companions.length ? (
+        <div
+          className="with"
+          aria-label={`${companions.map((plush) => plush.name).join("、")}といっしょ`}
+        >
+          <span className="companion-icons" aria-hidden="true">
+            {companions.map((plush) =>
+              plush.icon ? (
+                <PlushIcon
+                  key={plush.id}
+                  blob={plush.icon}
+                  crop={plush.iconCrop}
+                  alt=""
+                  className="companion-icon"
+                />
+              ) : (
+                <span key={plush.id} className="companion-icon fallback-icon">
+                  ぬ
+                </span>
+              ),
+            )}
+          </span>
+          <span aria-hidden="true">といっしょ</span>
+        </div>
       ) : null}
     </article>
   );

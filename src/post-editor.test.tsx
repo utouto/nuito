@@ -2,8 +2,8 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { PostEditor, Today } from "./App";
-import type { Post, Settings } from "./types";
+import { PostCard, PostEditor, Today } from "./App";
+import type { Plush, Post, Settings } from "./types";
 
 vi.mock("leaflet", () => ({
   default: {
@@ -134,5 +134,45 @@ describe("投稿編集", () => {
       "東京駅",
     );
     expect(screen.getByText("投稿を編集")).toBeInTheDocument();
+  });
+});
+
+describe("投稿の同行表示", () => {
+  it("名前を連結せず、登録画像または既定の円形アイコンを並べる", () => {
+    const companions: Plush[] = [
+      {
+        id: "plush-1",
+        name: "くま",
+        icon: new Blob(["icon"], { type: "image/webp" }),
+        hidden: false,
+        createdAt: "2026-09-01T00:00:00.000Z",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+      },
+      {
+        id: "plush-2",
+        name: "うさぎ",
+        hidden: false,
+        createdAt: "2026-09-01T00:00:00.000Z",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+      },
+    ];
+
+    const { container } = render(
+      <PostCard
+        post={{ ...post, plushIds: companions.map((plush) => plush.id) }}
+        plushes={companions}
+        onEdit={() => undefined}
+      />,
+    );
+
+    expect(screen.getByLabelText("くま、うさぎといっしょ")).toBeVisible();
+    expect(screen.queryByText("くまとうさぎといっしょ")).not.toBeInTheDocument();
+    expect(container.querySelectorAll(".companion-icon")).toHaveLength(2);
+    expect(container.querySelector(".companion-icon img")).toHaveAttribute(
+      "src",
+      "blob:post-image",
+    );
+    expect(screen.getByText("ぬ")).toBeInTheDocument();
+    expect(screen.getByText("といっしょ")).toBeInTheDocument();
   });
 });
