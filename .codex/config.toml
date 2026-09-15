@@ -1,0 +1,5 @@
+# Dev Container自体をサンドボックスとして利用する。
+# bwrapがコンテナ内で動作しないため、Codex内部のsandboxは無効化する。
+# Dev Container内のコマンドは、実行前の利用者承認を求めない。
+approval_policy = "never"
+sandbox_mode = "danger-full-access"

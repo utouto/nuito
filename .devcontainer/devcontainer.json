@@ -1,0 +1,41 @@
+{
+  "name": "source=${localWorkspaceFolderBasename} Development",
+
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  "remoteUser": "root",
+  "containerUser": "root",
+
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "forwardPorts": [5173],
+
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-node-codex,target=/root/.codex,type=volume",
+    "source=${localWorkspaceFolderBasename}-node-gitconfig,target=/root/.config/git,type=volume",
+    "source=${localWorkspaceFolderBasename}-node-opencode-config,target=/root/.config/opencode,type=volume",
+    "source=${localWorkspaceFolderBasename}-node-opencode-data,target=/root/.local/share/opencode,type=volume"
+  ],
+
+  "containerEnv": {
+    "GIT_CONFIG_GLOBAL": "/root/.config/git/config",
+    "OPENCODE_DISABLE_AUTOUPDATE": "true"
+  },
+
+  "postCreateCommand": "if [ -f package-lock.json ]; then npm ci; fi",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "sst-dev.opencode"
+      ]
+    }
+  }
+}
