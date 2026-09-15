@@ -524,7 +524,7 @@ describe("日別地図の投稿ピン", () => {
     expect(leafletDivIcon).toHaveBeenCalledWith(
       expect.objectContaining({
         html: expect.stringMatching(
-          /<span style="background:conic-gradient\(from -2deg, #3a7bd5 0deg, #3a7bd5 176deg, #d55a87 184deg, #d55a87 356deg, #3a7bd5 360deg\)"><i style="background:conic-gradient\(from -2deg, #3a7bd5 0deg, #3a7bd5 176deg, #d55a87 184deg, #d55a87 356deg, #3a7bd5 360deg\)"><\/i><\/span>/,
+          /<span style="background:#8b5e3c"><i style="background:conic-gradient\(from -2deg, #3a7bd5 0deg, #3a7bd5 176deg, #d55a87 184deg, #d55a87 356deg, #3a7bd5 360deg\)"><\/i><\/span>/,
         ),
       }),
     );

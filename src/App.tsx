@@ -52,6 +52,7 @@ const geolocationOptions: PositionOptions = {
   timeout: 10000,
 };
 const defaultPlaceName = "ここで遊んだよ";
+const postMarkerBorderColor = "#8b5e3c";
 const emptyPosts: Post[] = [];
 
 function placeFromPosition(position: GeolocationPosition): Place {
@@ -271,7 +272,7 @@ export function DayMap({
       L.marker([p.place!.latitude, p.place!.longitude], {
         icon: L.divIcon({
           className: "post-map-marker",
-          html: `<span style="background:${background}"><i style="background:${background}"></i></span>`,
+          html: `<span style="background:${postMarkerBorderColor}"><i style="background:${background}"></i></span>`,
           iconSize: [28, 28],
           iconAnchor: [14, 14],
         }),
