@@ -438,9 +438,22 @@ h2 {
   gap: 8px;
   margin-top: 10px;
 }
-.post-time {
-  font-weight: 800;
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
+  color: #88796f;
+  font-size: 12px;
+  font-weight: 500;
+}
+.post-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.post-location .MuiSvgIcon-root {
+  font-size: 15px;
 }
 .post-body {
   white-space: pre-wrap;

@@ -12,6 +12,7 @@ import L from "leaflet";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
+import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
@@ -468,11 +469,18 @@ export function PostCard({
         </div>
       ) : null}
       <div className="post-card-footer">
-        <p className="post-time">
-          {post.timeMode === "known"
-            ? post.occurredLocalDateTime!.slice(11, 16)
-            : "時間不明"}
-          {post.place ? ` · ${post.place.name || "場所あり"}` : ""}
+        <p className="post-meta">
+          <span>
+            {post.timeMode === "known"
+              ? post.occurredLocalDateTime!.slice(11, 16)
+              : "時間不明"}
+          </span>
+          {post.place ? (
+            <span className="post-location">
+              <LocationOnRoundedIcon aria-hidden="true" />
+              {post.place.name || "場所あり"}
+            </span>
+          ) : null}
         </p>
         <button
           className="card-action"

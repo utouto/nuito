@@ -805,9 +805,14 @@ describe("投稿画像の拡大表示", () => {
     expect(
       Array.from(card?.children ?? []).map((element) => element.className),
     ).toEqual(["with", "post-body", "photos", "post-card-footer"]);
-    expect(
-      within(container).getByRole("button", { name: "おもいでを編集" }),
-    ).toContainElement(container.querySelector(".MuiSvgIcon-root"));
+    const editButton = within(container).getByRole("button", {
+      name: "おもいでを編集",
+    });
+    expect(editButton.querySelector(".MuiSvgIcon-root")).toBeInTheDocument();
+    const location = container.querySelector(".post-location");
+    expect(location).toHaveTextContent("東京駅");
+    expect(location?.querySelector(".MuiSvgIcon-root")).toBeInTheDocument();
+    expect(container.querySelector(".post-meta")).not.toHaveTextContent("·");
   });
 
   it("投稿画像を選択して拡大し、Escapeキーで閉じて元の操作へ戻る", () => {
