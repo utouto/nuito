@@ -223,6 +223,7 @@ export function DayMap({
   focusRequest = 0,
   occludedById,
   onPostSelect,
+  onFocusComplete,
 }: {
   posts: Post[];
   plushes?: Plush[];
@@ -235,11 +236,14 @@ export function DayMap({
   focusRequest?: number;
   occludedById?: string;
   onPostSelect?: (post: Post) => void;
+  onFocusComplete?: () => void;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | undefined>(undefined);
   const onPostSelectRef = useRef(onPostSelect);
   onPostSelectRef.current = onPostSelect;
+  const onFocusCompleteRef = useRef(onFocusComplete);
+  onFocusCompleteRef.current = onFocusComplete;
   useEffect(() => {
     if (!element.current) return;
     const located = posts.filter((p) => p.place);
@@ -372,16 +376,12 @@ export function DayMap({
           ?.querySelector<HTMLElement>(`#${occludedById}`)
           ?.getBoundingClientRect()
       : undefined;
-    if (!mapBounds || !occluderBounds) return;
-    const overlap = Math.min(
-      mapBounds.height,
-      Math.max(
-        0,
-        mapBounds.bottom - Math.max(mapBounds.top, occluderBounds.top),
-      ),
-    );
-    if (overlap > 0)
-      mapInstance.current.panBy([0, overlap / 2], { animate: false });
+    if (mapBounds && occluderBounds) {
+      const overlap = Math.min(mapBounds.height, occluderBounds.height);
+      if (overlap > 0)
+        mapInstance.current.panBy([0, overlap / 2], { animate: false });
+    }
+    requestAnimationFrame(() => onFocusCompleteRef.current?.());
   }, [focusPostId, focusRequest, occludedById, posts]);
   return (
     <div className={className ? `map-wrap ${className}` : "map-wrap"}>
@@ -889,11 +889,15 @@ export function Today({
   const selectPost = (post: Post) => {
     setFocusedPostId(post.id);
     setFocusRequest((request) => request + 1);
+  };
+  const finishPostSelection = () => {
     setOpen(true);
     requestAnimationFrame(() =>
-      document.getElementById(`post-${post.id}`)?.scrollIntoView?.({
+      focusedPostId
+        ? document.getElementById(`post-${focusedPostId}`)?.scrollIntoView?.({
         block: "nearest",
-      }),
+          })
+        : undefined,
     );
   };
   const startDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -936,6 +940,7 @@ export function Today({
         focusRequest={focusRequest}
         occludedById="today-post-drawer"
         onPostSelect={selectPost}
+        onFocusComplete={finishPostSelection}
       />
       <div className="today-summary">
         <h1 id="today-heading">{formatDate(date)}</h1>

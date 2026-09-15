@@ -424,7 +424,14 @@ describe("きょうの投稿ドロワー", () => {
     expect(onJournal).toHaveBeenCalledOnce();
   });
 
-  it("地図の投稿ピンを選ぶと拡大してドロワーの該当投稿を表示する", () => {
+  it("地図の投稿ピンを中央へ移動してからドロワーの該当投稿を表示する", () => {
+    const frames: FrameRequestCallback[] = [];
+    const requestAnimationFrame = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        frames.push(callback);
+        return frames.length;
+      });
     const view = render(
       <Today
         date="2026-09-14"
@@ -437,12 +444,24 @@ describe("きょうの投稿ドロワー", () => {
     );
     const markerClick = markerOn.mock.calls.find(([event]) => event === "click")?.[1] as (() => void) | undefined;
     act(() => markerClick?.());
+
+    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 11, {
+      animate: false,
+    });
+    expect(
+      within(view.container).getByRole("button", {
+        name: "おもいでドロワーを開く",
+      }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(view.container.querySelector("#post-post-1")).toHaveClass("selected");
+
+    act(() => frames.shift()?.(0));
     expect(
       within(view.container).getByRole("button", {
         name: "おもいでドロワーを閉じる",
       }),
     ).toHaveAttribute("aria-expanded", "true");
-    expect(view.container.querySelector("#post-post-1")).toHaveClass("selected");
+    requestAnimationFrame.mockRestore();
   });
 });
 
