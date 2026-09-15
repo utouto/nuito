@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type DragEvent as ReactDragEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -49,7 +50,7 @@ import {
 } from "./plush-icon";
 import { DEFAULT_PLUSH_ICON_CROP } from "./plush-icon-crop";
 import { plushNameInitial } from "./plush-name";
-import { reorderPostImages } from "./post-images";
+import { movePostImage, reorderPostImages } from "./post-images";
 import type { Journal, Place, Plush, Post, PostImage, Settings } from "./types";
 type View =
   | "today"
@@ -1497,6 +1498,12 @@ export function PostEditor({
   );
   const [selected, setSelected] = useState<string[]>(post?.plushIds ?? []);
   const [images, setImages] = useState<PostImage[]>(post?.images ?? []);
+  const [draggedImageId, setDraggedImageId] = useState<string>();
+  const imagePointerStart = useRef<{
+    id: string;
+    x: number;
+    y: number;
+  } | undefined>(undefined);
   const [pinCropImageId, setPinCropImageId] = useState<string>();
   const [draftPinCrop, setDraftPinCrop] = useState(DEFAULT_PLUSH_ICON_CROP);
   const [place, setPlace] = useState<Place | undefined>(post?.place);
@@ -1586,6 +1593,52 @@ export function PostEditor({
   }
   const moveImage = (index: number, offset: -1 | 1) => {
     setImages(reorderPostImages(images, index, offset));
+  };
+  const moveImageTo = (imageId: string, targetIndex: number) => {
+    const sourceIndex = images.findIndex((image) => image.id === imageId);
+    if (sourceIndex >= 0)
+      setImages(movePostImage(images, sourceIndex, targetIndex));
+  };
+  const startImageDrag = (
+    event: ReactDragEvent<HTMLDivElement>,
+    imageId: string,
+  ) => {
+    setDraggedImageId(imageId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", imageId);
+  };
+  const dropImage = (event: ReactDragEvent<HTMLDivElement>, target: number) => {
+    event.preventDefault();
+    const imageId =
+      event.dataTransfer.getData("text/plain") || draggedImageId;
+    if (imageId) moveImageTo(imageId, target);
+    setDraggedImageId(undefined);
+  };
+  const startImageSwipe = (
+    event: ReactPointerEvent<HTMLDivElement>,
+    imageId: string,
+  ) => {
+    if (
+      event.pointerType !== "touch" ||
+      (event.target as HTMLElement).closest("button")
+    )
+      return;
+    imagePointerStart.current = {
+      id: imageId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+  };
+  const finishImageSwipe = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = imagePointerStart.current;
+    imagePointerStart.current = undefined;
+    if (!start || event.pointerType !== "touch") return;
+    const horizontal = event.clientX - start.x;
+    const vertical = event.clientY - start.y;
+    if (Math.abs(horizontal) < 40 || Math.abs(horizontal) <= Math.abs(vertical))
+      return;
+    const index = images.findIndex((image) => image.id === start.id);
+    moveImage(index, horizontal < 0 ? -1 : 1);
   };
   function current() {
     if (!navigator.geolocation) {
@@ -1752,9 +1805,28 @@ export function PostEditor({
           />
         </label>
         {busy ? <p role="status">画像処理または位置情報を取得中…</p> : null}
+        {images.length > 1 ? (
+          <small className="photo-reorder-help">
+            写真をドラッグ、または左右にスワイプして並び替えられます。1枚目が写真ピンになります。
+          </small>
+        ) : null}
         <div className="photos editable">
           {images.map((im, i) => (
-            <div key={im.id}>
+            <div
+              key={im.id}
+              className={draggedImageId === im.id ? "dragging" : undefined}
+              draggable
+              onDragStart={(event) => startImageDrag(event, im.id)}
+              onDragEnd={() => setDraggedImageId(undefined)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => dropImage(event, i)}
+              onPointerDown={(event) => startImageSwipe(event, im.id)}
+              onPointerUp={finishImageSwipe}
+              onPointerCancel={() => {
+                imagePointerStart.current = undefined;
+              }}
+              aria-label={`選択写真 ${i + 1}。ドラッグまたは左右スワイプで並び替え`}
+            >
               <BlobImage blob={im.thumbnail} alt={`選択写真 ${i + 1}`} />
               <div className="photo-order-actions">
                 <button
@@ -2051,8 +2123,7 @@ export function JournalView({
         ))}
       </section>
       <section className="form-card journal-compose">
-        <p className="eyebrow">一日のまとめ</p>
-        <h2>きょうの気持ちを残す</h2>
+        <h2>きょうのにっき</h2>
         <textarea
           rows={8}
           value={body}

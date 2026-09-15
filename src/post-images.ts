@@ -5,10 +5,25 @@ export function reorderPostImages(
   index: number,
   offset: -1 | 1,
 ): PostImage[] {
+  return movePostImage(images, index, index + offset);
+}
+
+export function movePostImage(
+  images: PostImage[],
+  index: number,
+  target: number,
+): PostImage[] {
   const next = [...images];
-  const target = index + offset;
-  if (target < 0 || target >= next.length) return images;
-  [next[index], next[target]] = [next[target], next[index]];
+  if (
+    index < 0 ||
+    index >= next.length ||
+    target < 0 ||
+    target >= next.length ||
+    index === target
+  )
+    return images;
+  const [moved] = next.splice(index, 1);
+  next.splice(target, 0, moved);
   return next.map((image, displayOrder) => ({
     ...image,
     displayOrder,

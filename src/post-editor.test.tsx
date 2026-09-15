@@ -19,7 +19,7 @@ import {
   Today,
 } from "./App";
 import { plushNameInitial } from "./plush-name";
-import { reorderPostImages } from "./post-images";
+import { movePostImage, reorderPostImages } from "./post-images";
 import type { Plush, Post, Settings } from "./types";
 
 const {
@@ -620,6 +620,79 @@ describe("投稿写真の順序", () => {
     expect(result.map((image) => image.id)).toEqual(["image-2", "image-1"]);
     expect(result.map((image) => image.isCover)).toEqual([true, false]);
   });
+
+  it("ドラッグ先の位置へ写真を移動する", () => {
+    const images = ["image-1", "image-2", "image-3"].map((id, index) => ({
+      ...post.images[0],
+      id,
+      displayOrder: index,
+      isCover: index === 0,
+    }));
+
+    const result = movePostImage(images, 0, 2);
+
+    expect(result.map((image) => image.id)).toEqual([
+      "image-2",
+      "image-3",
+      "image-1",
+    ]);
+    expect(result.map((image) => image.displayOrder)).toEqual([0, 1, 2]);
+    expect(result.map((image) => image.isCover)).toEqual([true, false, false]);
+  });
+
+  it("写真を左へスワイプすると1つ前へ移動する", () => {
+    const second = { ...post.images[0], id: "image-2", displayOrder: 1 };
+    const view = render(<Subject postToEdit={{ ...post, images: [post.images[0], second] }} />);
+    const photo = within(view.container).getByLabelText(
+      "選択写真 2。ドラッグまたは左右スワイプで並び替え",
+    );
+
+    fireEvent.pointerDown(photo, {
+      pointerType: "touch",
+      clientX: 100,
+      clientY: 20,
+    });
+    fireEvent.pointerUp(photo, {
+      pointerType: "touch",
+      clientX: 40,
+      clientY: 22,
+    });
+
+    expect(photo).toHaveAttribute(
+      "aria-label",
+      "選択写真 1。ドラッグまたは左右スワイプで並び替え",
+    );
+  });
+
+  it("写真を別の写真へドラッグするとドロップ位置へ移動する", () => {
+    const images = ["image-1", "image-2", "image-3"].map((id, index) => ({
+      ...post.images[0],
+      id,
+      displayOrder: index,
+      isCover: index === 0,
+    }));
+    const view = render(<Subject postToEdit={{ ...post, images }} />);
+    const form = within(view.container);
+    const first = form.getByLabelText(
+      "選択写真 1。ドラッグまたは左右スワイプで並び替え",
+    );
+    const third = form.getByLabelText(
+      "選択写真 3。ドラッグまたは左右スワイプで並び替え",
+    );
+    const dataTransfer = {
+      effectAllowed: "none",
+      setData: vi.fn(),
+      getData: vi.fn(() => "image-1"),
+    };
+
+    fireEvent.dragStart(first, { dataTransfer });
+    fireEvent.drop(third, { dataTransfer });
+
+    expect(first).toHaveAttribute(
+      "aria-label",
+      "選択写真 3。ドラッグまたは左右スワイプで並び替え",
+    );
+  });
 });
 
 describe("きょうの日記", () => {
@@ -646,7 +719,10 @@ describe("きょうの日記", () => {
       within(view.container).getByRole("region", { name: "この日のおもいで" }),
     ).toHaveTextContent("もとのひとこと");
     expect(view.container.querySelector(".journal-compose")).toHaveTextContent(
-      "きょうの気持ちを残す",
+      "きょうのにっき",
+    );
+    expect(view.container.querySelector(".journal-compose")).not.toHaveTextContent(
+      "一日のまとめ",
     );
     expect(
       within(view.container).queryByRole("button", { name: "戻る" }),

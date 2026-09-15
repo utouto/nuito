@@ -929,6 +929,17 @@ h2 {
 }
 .editable > div {
   position: relative;
+  touch-action: pan-y;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.editable > div.dragging {
+  opacity: 0.55;
+  transform: scale(0.96);
+}
+.photo-reorder-help {
+  display: block;
+  margin: 6px 0 8px;
+  color: #71645b;
 }
 .editable button {
   position: absolute;
