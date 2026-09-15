@@ -523,12 +523,15 @@ export default function App() {
   const [editing, setEditing] = useState<Post>();
   const [todayDrawerOpen, setTodayDrawerOpen] = useState(false);
   const [cloudError, setCloudError] = useState("");
+  const [cloudEnabled, setCloudEnabled] = useState(false);
   useEffect(() => {
-    void syncCloudPosts().catch(() =>
-      setCloudError(
-        "サーバー上のおもいでを読み込めませんでした。通信状態を確認してください。",
-      ),
-    );
+    void syncCloudPosts()
+      .then(setCloudEnabled)
+      .catch(() =>
+        setCloudError(
+          "サーバー上のおもいでを読み込めませんでした。通信状態を確認してください。",
+        ),
+      );
   }, []);
   const today = settings ? todayLogicalDate(settings.dayBoundaryTime) : "";
   const date = selectedDate || today;
@@ -611,7 +614,11 @@ export default function App() {
         ) : null}
         {view === "plushes" ? <Plushes plushes={plushes} /> : null}
         {view === "settings" ? (
-          <SettingsView settings={settings} onLegal={openLegal} />
+          <SettingsView
+            settings={settings}
+            cloudEnabled={cloudEnabled}
+            onLegal={openLegal}
+          />
         ) : null}
         {view === "editor" ? (
           <PostEditor
@@ -621,6 +628,7 @@ export default function App() {
               (p) => !p.hidden || editing?.plushIds.includes(p.id),
             )}
             settings={settings}
+            cloudEnabled={cloudEnabled}
             onDone={() => {
               setEditing(undefined);
               setView("today");
@@ -703,9 +711,9 @@ function Onboarding({
       <h1>ぬいと</h1>
       <p>ぬいぐるみとの一日を、写真と場所でそっと残そう。</p>
       <section className="notice">
-        <h2>この端末に保存します</h2>
+        <h2>保存について</h2>
         <p>
-          ブラウザデータの削除、端末の故障・紛失時には、バックアップがない記録を復元できない可能性があります。
+          LINEログイン中は投稿と写真をサーバーにも保存します。ログインせずに使う場合はこの端末だけに保存され、ブラウザデータの削除や端末の故障・紛失時に復元できない可能性があります。
         </p>
       </section>
       <LineAuth />
@@ -1206,9 +1214,11 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
 }
 function SettingsView({
   settings,
+  cloudEnabled,
   onLegal,
 }: {
   settings: Settings;
+  cloudEnabled: boolean;
   onLegal: (kind: LegalKind) => void;
 }) {
   const [boundary, setBoundary] = useState(settings.dayBoundaryTime);
@@ -1243,7 +1253,9 @@ function SettingsView({
       <section className="notice">
         <h2>保存について</h2>
         <p>
-          記録はこのブラウザ内に保存されます。ブラウザデータの削除、端末の故障・紛失時には復元できない可能性があります。
+          {cloudEnabled
+            ? "LINEログイン中です。投稿と写真はサーバーにも保存され、このブラウザにも保持されます。"
+            : "現在はこのブラウザ内だけに保存されています。ブラウザデータの削除、端末の故障・紛失時には復元できない可能性があります。"}
         </p>
       </section>
       <section className="form-card">
@@ -1287,11 +1299,13 @@ export function PostEditor({
   post,
   plushes,
   settings,
+  cloudEnabled = false,
   onDone,
 }: {
   post?: Post;
   plushes: Plush[];
   settings: Settings;
+  cloudEnabled?: boolean;
   onDone: () => void;
 }) {
   type TimeChoice = "current" | "manual" | "unknown";
@@ -1440,12 +1454,13 @@ export function PostEditor({
       updatedAt: now,
     };
     try {
-      await saveCloudPost(value, plushes);
+      const savedToCloud = await saveCloudPost(value, plushes);
+      if (cloudEnabled && !savedToCloud) throw new Error("cloud_session_expired");
       await db.posts.put(value);
       onDone();
     } catch {
       setError(
-        "保存できませんでした。空き容量を確認して、もう一度お試しください。入力内容は画面に保持されています。",
+        "保存できませんでした。通信状態と空き容量を確認して、もう一度お試しください。入力内容は画面に保持されています。",
       );
     } finally {
       setBusy(false);
@@ -1456,7 +1471,9 @@ export function PostEditor({
       setBusy(true);
       setError("");
       try {
-        await deleteCloudPost(post.id);
+        const deletedFromCloud = await deleteCloudPost(post.id);
+        if (cloudEnabled && !deletedFromCloud)
+          throw new Error("cloud_session_expired");
         await db.posts.delete(post.id);
         onDone();
       } catch {
