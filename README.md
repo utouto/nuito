@@ -20,9 +20,11 @@ npm run dev
 - health check: `http://localhost:5173/api/health`
 - D1・R2確認画面: Worker起動中にターミナルで `e` を押してLocal Explorerを開く
 
-データは現時点では同じブラウザ・同じoriginのIndexedDBへ保存されます。ローカルD1・R2はCloudflare移行用の開発基盤で、認証方式が決まるまで保存APIを公開しません。
+データは現時点では同じブラウザ・同じoriginのIndexedDBへ保存されます。D1はLINE認証情報とsession、R2は将来の画像同期用に分離して利用し、投稿のクラウド保存APIは同期要件が確定するまで公開しません。
 
 LINEログインをローカルで試す場合は `.dev.vars.example` を `.dev.vars` へコピーし、実値を設定します。`.dev.vars` はGit管理されません。新規登録には `INVITE_PHRASE` の一致が必要で、登録済みLINEアカウントはあいことばなしで再ログインできます。本番設定は [LINEログイン設定手順](docs/operations/line-login-setup.md) を参照してください。
+
+Cloudflareへ初回公開する場合は、資源作成、staging確認、production公開、rollbackまでをまとめた[Cloudflare初回公開手順](docs/operations/cloudflare-production-release.md)に従ってください。本番用Wrangler設定はexampleから作成し、環境固有IDを含む実ファイルはGit管理しません。
 
 ## 環境切り替え
 

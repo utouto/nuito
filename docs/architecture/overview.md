@@ -22,12 +22,12 @@
 
 - 投稿、写真、場所、ぬいぐるみ、日記、設定はIndexedDBが所有する。schema versionは1。
 - 写真、本文、正確な座標は端末内に保存する。タイル取得先へ送るのは通常の地図タイル要求だけで、投稿データは送信しない。
-- 初期版に認証・他利用者との共有境界はない。Cloudflare側の保存APIは認証方式が決まるまで無効化し、health checkだけを公開する。
+- LINE認証ではWorkerがOAuth callback、招待制登録、sessionを所有する。他利用者との共有境界は設けず、投稿のクラウド保存APIは同期要件が確定するまで無効化する。
 - 文字数、画像形式・枚数、空投稿をUIと保存前で検証する。
 
 ## 品質上の制約
 
 - 画像をWeb Storageへ置かず、投稿単位でIndexedDBへ保存する。保存失敗時は既存データと入力状態を維持する。
 - ローカルデータはoriginとブラウザに依存し、端末故障やブラウザデータ削除からは復元できない。バックアップ、PWA、施設検索、クラウド同期は現時点では未実装。
-- 将来のクラウド構成はPages（SPA）、Workers（認証・API）、D1（構造化データ）、R2（非公開画像）とする。ローカルではWranglerがD1とR2を模擬する。
-- 要件は `docs/requirements/`、技術判断は `docs/architecture/decisions/0001-local-web-app-stack.md` と `0002-cloudflare-target-architecture.md` を参照する。
+- クラウド構成はWorkers Static Assets（SPAと認証・API）、D1（構造化データ）、R2（非公開画像）とする。ローカルではViteとWranglerを分け、WranglerがD1とR2を模擬する。
+- 要件は `docs/requirements/`、技術判断は `docs/architecture/decisions/0001-local-web-app-stack.md`、`0002-cloudflare-target-architecture.md`、`0003-workers-static-assets.md` を参照する。

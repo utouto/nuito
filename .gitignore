@@ -43,3 +43,5 @@ vite.config.js
 vite.config.d.ts
 .env.*.local
 .wrangler/
+wrangler.staging.jsonc
+wrangler.production.jsonc

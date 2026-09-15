@@ -27,7 +27,7 @@ npx wrangler secret put INVITE_PHRASE
 
 `INVITE_PHRASE` は辞書語を避け、password managerで生成した十分に長い値にします。漏えいまたは不要な登録が疑われる場合は同じコマンドで直ちに変更します。
 
-WorkersをPagesと同一originの `/api/*` routeへ接続します。別originへ配置する場合は、cookie、CORS、CSRF方針を別途設計し直します。
+Workers Static AssetsでSPAと`/api/*`を同一originから配信します。別originへ配置する場合は、cookie、CORS、CSRF方針を別途設計し直します。初回公開の具体的な順序は[Cloudflare初回公開手順](cloudflare-production-release.md)を参照してください。
 
 ## D1 migration
 

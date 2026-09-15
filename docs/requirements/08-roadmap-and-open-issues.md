@@ -67,11 +67,12 @@
 | DEC-018 | MVP実装はReact・TypeScript・Viteを採用し、IndexedDBをDexie経由で利用する | 確定 |
 | DEC-019 | 地図providerは環境変数で切替可能にし、初期ローカル設定はOpenStreetMap標準タイルを使う | 暫定 |
 | DEC-020 | 保存画像はWebP品質0.82、長辺2,048px、サムネイル480pxとする | 暫定 |
-| DEC-021 | 将来のクラウド配置はCloudflare Pages・Workers・D1・非公開R2を利用する | 確定 |
+| DEC-021 | 将来のクラウド配置はCloudflare Pages・Workers・D1・非公開R2を利用する | DEC-026により置換 |
 | DEC-022 | 認証方式確定まではクラウド保存APIを有効化せず、IndexedDBを正本として維持する | 確定 |
 | DEC-023 | LINEログイン向け法務情報を `/privacy` と `/terms` で公開し、取得情報を最小限に明示する | 確定 |
 | DEC-024 | 新規登録はLINE認証とサーバー管理のあいことばを併用し、登録済み利用者の再ログインではあいことばを不要とする | 確定 |
 | DEC-025 | 製品名を「ぬいログ」から「ぬいと」へ変更する。技術識別子 `nuito` は維持する | 確定 |
+| DEC-026 | 初回公開はWorkers Static AssetsでSPAとAPIを同一origin配信し、D1・非公開R2を環境別にbindingする | 確定 |
 
 ## 3. 未決事項
 
@@ -113,6 +114,7 @@
 
 - 製品名を「ぬいログ」から「ぬいと」へ変更。
 - 既存データとの互換性を保つため、データベース名やpackage名の技術識別子 `nuito` は維持。
+- Cloudflare初回公開をWorkers Static Assetsによる同一origin構成へ具体化。
 
 ### 0.4.0-draft — 2026-09-15
 

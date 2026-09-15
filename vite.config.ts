@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   server: {
     host: "0.0.0.0",
@@ -8,5 +8,5 @@ export default defineConfig({
     proxy: { "/api": "http://127.0.0.1:8787" },
   },
   preview: { host: "0.0.0.0", port: 4173 },
-  build: { sourcemap: true },
-});
+  build: { sourcemap: mode !== "production" },
+}));
