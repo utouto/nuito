@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { PostCard, PostEditor, Today } from "./App";
+import { Plushes, PostCard, PostEditor, Today } from "./App";
 import type { Plush, Post, Settings } from "./types";
 
 vi.mock("leaflet", () => ({
@@ -144,6 +144,7 @@ describe("投稿の同行表示", () => {
         id: "plush-1",
         name: "くま",
         icon: new Blob(["icon"], { type: "image/webp" }),
+        themeColor: "#3a7bd5",
         hidden: false,
         createdAt: "2026-09-01T00:00:00.000Z",
         updatedAt: "2026-09-01T00:00:00.000Z",
@@ -151,6 +152,7 @@ describe("投稿の同行表示", () => {
       {
         id: "plush-2",
         name: "うさぎ",
+        themeColor: "#d55a87",
         hidden: false,
         createdAt: "2026-09-01T00:00:00.000Z",
         updatedAt: "2026-09-01T00:00:00.000Z",
@@ -172,7 +174,58 @@ describe("投稿の同行表示", () => {
       "src",
       "blob:post-image",
     );
+    expect(container.querySelector(".plush-icon.companion-icon")).toHaveStyle({
+      borderColor: "#3a7bd5",
+    });
+    expect(container.querySelector(".fallback-icon")).toHaveStyle({
+      borderColor: "#d55a87",
+    });
     expect(screen.getByText("ぬ")).toBeInTheDocument();
     expect(screen.getByText("といっしょ")).toBeInTheDocument();
+  });
+});
+
+describe("ぬいぐるみのテーマカラー設定", () => {
+  it("新規登録時は透明で、透明を解除すると色を選択できる", () => {
+    render(<Plushes plushes={[]} />);
+
+    const transparent = screen.getByRole("checkbox", {
+      name: "囲み線を透明にする",
+    });
+    const color = screen.getByLabelText("テーマカラー");
+
+    expect(transparent).toBeChecked();
+    expect(color).toBeDisabled();
+
+    fireEvent.click(transparent);
+
+    expect(transparent).not.toBeChecked();
+    expect(color).toBeEnabled();
+    expect(color).toHaveValue("#9a5438");
+  });
+
+  it("登録済みのテーマカラーを編集画面へ反映する", () => {
+    const view = render(
+      <Plushes
+        plushes={[
+          {
+            id: "plush-1",
+            name: "くま",
+            themeColor: "#3a7bd5",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
+      />,
+    );
+    const form = within(view.container);
+
+    fireEvent.click(form.getByRole("button", { name: /くま/ }));
+
+    expect(
+      form.getByRole("checkbox", { name: "囲み線を透明にする" }),
+    ).not.toBeChecked();
+    expect(form.getByLabelText("テーマカラー")).toHaveValue("#3a7bd5");
   });
 });

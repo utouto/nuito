@@ -250,7 +250,13 @@ h2 {
   width: 55px;
   height: 55px;
   border-radius: 50%;
+  border: 3px solid transparent;
+  box-sizing: border-box;
   background: #f0dfce;
+}
+.plush-icon-fallback {
+  border: 3px solid transparent;
+  box-sizing: border-box;
 }
 .plush-icon img {
   position: absolute;
@@ -350,6 +356,20 @@ h2 {
 .saved-icon-preview .plush-icon {
   width: 72px;
   height: 72px;
+}
+.theme-color-field {
+  display: grid;
+  gap: 10px;
+}
+.theme-color-field label:not(.check) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.theme-color-field input[type="color"] {
+  width: 52px;
+  height: 36px;
+  padding: 2px;
 }
 .form-card {
   display: grid;

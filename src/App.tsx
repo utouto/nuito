@@ -13,6 +13,7 @@ import {
 import { optimizeImage, optimizePlushIcon } from "./image";
 import { LegalPage, type LegalKind } from "./legal";
 import {
+  DEFAULT_PLUSH_THEME_COLOR,
   PlushIcon,
   PlushIconEditor,
 } from "./plush-icon";
@@ -172,9 +173,17 @@ export function PostCard({
                   crop={plush.iconCrop}
                   alt=""
                   className="companion-icon"
+                  themeColor={plush.themeColor}
                 />
               ) : (
-                <span key={plush.id} className="companion-icon fallback-icon">
+                <span
+                  key={plush.id}
+                  className="companion-icon fallback-icon"
+                  style={{
+                    borderColor:
+                      plush.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
+                  }}
+                >
                   ぬ
                 </span>
               ),
@@ -549,11 +558,16 @@ function History({
     </>
   );
 }
-function Plushes({ plushes }: { plushes: Plush[] }) {
+export function Plushes({ plushes }: { plushes: Plush[] }) {
+  const defaultOpaqueThemeColor = "#9a5438";
   const [editing, setEditing] = useState<Plush>();
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<Blob>();
   const [iconCrop, setIconCrop] = useState(DEFAULT_PLUSH_ICON_CROP);
+  const [themeColor, setThemeColor] = useState(DEFAULT_PLUSH_THEME_COLOR);
+  const [opaqueThemeColor, setOpaqueThemeColor] = useState(
+    defaultOpaqueThemeColor,
+  );
   const [draftIcon, setDraftIcon] = useState<Blob>();
   const [draftCrop, setDraftCrop] = useState(DEFAULT_PLUSH_ICON_CROP);
   const [busy, setBusy] = useState(false);
@@ -563,6 +577,13 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
     setName(p?.name ?? "");
     setIcon(p?.icon);
     setIconCrop(p?.iconCrop ?? DEFAULT_PLUSH_ICON_CROP);
+    const nextThemeColor = p?.themeColor ?? DEFAULT_PLUSH_THEME_COLOR;
+    setThemeColor(nextThemeColor);
+    setOpaqueThemeColor(
+      nextThemeColor === DEFAULT_PLUSH_THEME_COLOR
+        ? defaultOpaqueThemeColor
+        : nextThemeColor,
+    );
     setDraftIcon(undefined);
     setError("");
   };
@@ -590,6 +611,7 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
       name: name.trim(),
       icon,
       iconCrop: icon ? iconCrop : undefined,
+      themeColor,
       hidden: editing?.hidden ?? false,
       createdAt: editing?.createdAt ?? now,
       updatedAt: now,
@@ -604,9 +626,21 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
         {plushes.map((p) => (
           <button key={p.id} className="plush" onClick={() => edit(p)}>
             {p.icon ? (
-              <PlushIcon blob={p.icon} crop={p.iconCrop} alt="" />
+              <PlushIcon
+                blob={p.icon}
+                crop={p.iconCrop}
+                alt=""
+                themeColor={p.themeColor}
+              />
             ) : (
-              <span>ぬ</span>
+              <span
+                className="plush-icon-fallback"
+                style={{
+                  borderColor: p.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
+                }}
+              >
+                ぬ
+              </span>
             )}
             <strong>{p.name}</strong>
             {p.hidden ? <small>非表示</small> : null}
@@ -636,6 +670,36 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
             }}
           />
         </label>
+        <fieldset className="theme-color-field">
+          <legend>テーマカラー</legend>
+          <label>
+            アイコンを囲う色
+            <input
+              aria-label="テーマカラー"
+              type="color"
+              value={opaqueThemeColor}
+              disabled={themeColor === DEFAULT_PLUSH_THEME_COLOR}
+              onChange={(event) => {
+                setOpaqueThemeColor(event.target.value);
+                setThemeColor(event.target.value);
+              }}
+            />
+          </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={themeColor === DEFAULT_PLUSH_THEME_COLOR}
+              onChange={(event) =>
+                setThemeColor(
+                  event.target.checked
+                    ? DEFAULT_PLUSH_THEME_COLOR
+                    : opaqueThemeColor,
+                )
+              }
+            />
+            囲み線を透明にする
+          </label>
+        </fieldset>
         {busy ? <p role="status">画像を準備しています…</p> : null}
         {error ? <p className="error" role="alert">{error}</p> : null}
         {draftIcon ? (
@@ -644,6 +708,7 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
             crop={draftCrop}
             onChange={setDraftCrop}
             onCancel={() => setDraftIcon(undefined)}
+            themeColor={themeColor}
             onApply={() => {
               setIcon(draftIcon);
               setIconCrop(draftCrop);
@@ -652,7 +717,12 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
           />
         ) : icon ? (
           <div className="saved-icon-preview">
-            <PlushIcon blob={icon} crop={iconCrop} alt="現在のアイコン" />
+            <PlushIcon
+              blob={icon}
+              crop={iconCrop}
+              alt="現在のアイコン"
+              themeColor={themeColor}
+            />
             <button
               type="button"
               onClick={() => {

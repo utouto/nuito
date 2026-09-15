@@ -14,6 +14,7 @@ export interface Plush {
   name: string;
   icon?: Blob;
   iconCrop?: PlushIconCrop;
+  themeColor?: string;
   createdAt: string;
   updatedAt: string;
   hidden: boolean;

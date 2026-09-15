@@ -12,6 +12,8 @@ import {
 } from "./plush-icon-crop";
 import type { PlushIconCrop } from "./types";
 
+export const DEFAULT_PLUSH_THEME_COLOR = "transparent";
+
 function useBlobUrl(blob: Blob) {
   const [url, setUrl] = useState("");
   useEffect(() => {
@@ -27,11 +29,13 @@ export function PlushIcon({
   crop = DEFAULT_PLUSH_ICON_CROP,
   alt,
   className = "",
+  themeColor = DEFAULT_PLUSH_THEME_COLOR,
 }: {
   blob: Blob;
   crop?: PlushIconCrop;
   alt: string;
   className?: string;
+  themeColor?: string;
 }) {
   const url = useBlobUrl(blob);
   const safe = clampPlushIconCrop(crop);
@@ -41,7 +45,10 @@ export function PlushIcon({
     transformOrigin: `${safe.x}% ${safe.y}%`,
   };
   return (
-    <span className={`plush-icon ${className}`.trim()}>
+    <span
+      className={`plush-icon ${className}`.trim()}
+      style={{ borderColor: themeColor }}
+    >
       {url ? <img src={url} alt={alt} style={style} draggable={false} /> : null}
     </span>
   );
@@ -53,12 +60,14 @@ export function PlushIconEditor({
   onChange,
   onApply,
   onCancel,
+  themeColor = DEFAULT_PLUSH_THEME_COLOR,
 }: {
   blob: Blob;
   crop: PlushIconCrop;
   onChange: (crop: PlushIconCrop) => void;
   onApply: () => void;
   onCancel: () => void;
+  themeColor?: string;
 }) {
   type Point = { x: number; y: number };
   type Gesture = {
@@ -150,7 +159,12 @@ export function PlushIconEditor({
           onPointerUp={pointerEnd}
           onPointerCancel={pointerEnd}
         >
-          <PlushIcon blob={blob} crop={crop} alt="円形アイコンのプレビュー" />
+          <PlushIcon
+            blob={blob}
+            crop={crop}
+            alt="円形アイコンのプレビュー"
+            themeColor={themeColor}
+          />
           <span className="icon-gesture-hint" aria-hidden="true">
             ドラッグ・ピンチで調整
           </span>
@@ -163,6 +177,7 @@ export function PlushIconEditor({
             crop={crop}
             alt="一覧サイズのプレビュー"
             className="small"
+            themeColor={themeColor}
           />
         </div>
       </div>

@@ -7,7 +7,11 @@ import {
   clampPlushIconCrop,
   DEFAULT_PLUSH_ICON_CROP,
 } from "./plush-icon-crop";
-import { PlushIconEditor } from "./plush-icon";
+import {
+  DEFAULT_PLUSH_THEME_COLOR,
+  PlushIcon,
+  PlushIconEditor,
+} from "./plush-icon";
 
 beforeAll(() => {
   Object.defineProperty(URL, "createObjectURL", {
@@ -21,6 +25,31 @@ beforeAll(() => {
 });
 
 describe("ぬいぐるみアイコン調整", () => {
+  it("囲み線は既定で透明になり、テーマカラーを反映する", () => {
+    const { rerender } = render(
+      <PlushIcon
+        blob={new Blob(["image"], { type: "image/webp" })}
+        alt="ぬいアイコン"
+      />,
+    );
+
+    expect(
+      screen.getByAltText("ぬいアイコン").parentElement?.style.borderColor,
+    ).toBe(DEFAULT_PLUSH_THEME_COLOR);
+
+    rerender(
+      <PlushIcon
+        blob={new Blob(["image"], { type: "image/webp" })}
+        alt="ぬいアイコン"
+        themeColor="#3a7bd5"
+      />,
+    );
+
+    expect(
+      screen.getByAltText("ぬいアイコン").parentElement?.style.borderColor,
+    ).toBe("rgb(58, 123, 213)");
+  });
+
   it("位置と拡大率を保存可能な範囲へ収める", () => {
     expect(clampPlushIconCrop({ x: -10, y: 120, zoom: 5 })).toEqual({
       x: 0,
