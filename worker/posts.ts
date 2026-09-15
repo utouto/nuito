@@ -192,6 +192,22 @@ async function savePost(
     .first<{ user_id: string }>();
   if (existing && existing.user_id !== userId)
     return response({ error: "not_found" }, 404);
+  for (const plush of input.plushes) {
+    const owner = await env.DB.prepare("SELECT user_id FROM plushes WHERE id=?")
+      .bind(plush.id)
+      .first<{ user_id: string }>();
+    if (owner && owner.user_id !== userId)
+      return response({ error: "not_found" }, 404);
+  }
+  for (const image of input.images) {
+    const owner = await env.DB.prepare(
+      "SELECT p.user_id FROM post_images pi JOIN posts p ON p.id=pi.post_id WHERE pi.id=?",
+    )
+      .bind(image.id)
+      .first<{ user_id: string }>();
+    if (owner && owner.user_id !== userId)
+      return response({ error: "not_found" }, 404);
+  }
 
   const files = input.images.map((image) => ({
     image,
