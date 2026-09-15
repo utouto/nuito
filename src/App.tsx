@@ -182,9 +182,9 @@ export function DayMap({
       L.marker([p.place!.latitude, p.place!.longitude], {
         icon: L.divIcon({
           className: "post-map-marker",
-          html: `<span style="background:${background}"></span>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
+          html: `<span style="background:${background}"><i style="background:${background}"></i></span>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
         }),
       })
         .bindTooltip(p.place!.name || "記録した場所")

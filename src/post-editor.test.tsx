@@ -307,8 +307,8 @@ describe("日別地図の投稿ピン", () => {
 
     expect(leafletDivIcon).toHaveBeenCalledWith(
       expect.objectContaining({
-        html: expect.stringContaining(
-          "linear-gradient(135deg, #3a7bd5, #d55a87)",
+        html: expect.stringMatching(
+          /<span style="background:linear-gradient\(135deg, #3a7bd5, #d55a87\)"><i style="background:linear-gradient\(135deg, #3a7bd5, #d55a87\)"><\/i><\/span>/,
         ),
       }),
     );
