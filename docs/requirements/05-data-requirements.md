@@ -113,6 +113,7 @@ effectiveLogicalDate(post, settings):
 | postId | string | Yes | 投稿ID |
 | displayOrder | integer | Yes | 表示順 |
 | isCover | boolean | Yes | 代表写真か |
+| pinCrop | object/null | No | 写真ピン用の表示中心`x`,`y`（0〜100）と拡大率`zoom`（1〜4） |
 | fullBlob | Blob | Yes | リサイズ・圧縮済み保存画像 |
 | thumbnailBlob | Blob | Yes | 一覧・地図用サムネイル |
 | width | integer | Yes | 保存画像幅 |
@@ -125,7 +126,7 @@ effectiveLogicalDate(post, settings):
 
 - 1投稿につき0〜4件。
 - `width / height` の比率は、元画像の比率を可能な限り維持する。
-- サムネイルは正方形の表示用データでもよいが、`fullBlob` を破壊的に切り抜かない。
+- サムネイルは縦横比を維持し、正方形の写真ピンでは`pinCrop`による表示上のトリミングだけを行う。
 - 代表写真は1投稿につき最大1枚。
 
 ## 7. PostPlush
