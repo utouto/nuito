@@ -222,6 +222,7 @@ export function DayMap({
   focusPostId,
   focusRequest = 0,
   occludedById,
+  onPostSelect,
 }: {
   posts: Post[];
   plushes?: Plush[];
@@ -233,9 +234,12 @@ export function DayMap({
   focusPostId?: string;
   focusRequest?: number;
   occludedById?: string;
+  onPostSelect?: (post: Post) => void;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | undefined>(undefined);
+  const onPostSelectRef = useRef(onPostSelect);
+  onPostSelectRef.current = onPostSelect;
   useEffect(() => {
     if (!element.current) return;
     const located = posts.filter((p) => p.place);
@@ -297,18 +301,25 @@ export function DayMap({
       const crop = cover?.pinCrop ?? DEFAULT_PLUSH_ICON_CROP;
       const photoUrl = cover ? URL.createObjectURL(cover.thumbnail) : undefined;
       if (photoUrl) objectUrls.push(photoUrl);
-      L.marker([p.place!.latitude, p.place!.longitude], {
+      const marker = L.marker([p.place!.latitude, p.place!.longitude], {
         icon: L.divIcon({
           className: `post-map-marker${cover ? " photo-post-map-marker" : ""}`,
           html: cover
-            ? `<span><b><img src="${photoUrl}" alt="" style="object-position:${crop.x}% ${crop.y}%;transform:translate(-50%,-50%) scale(${crop.zoom});transform-origin:${crop.x}% ${crop.y}%"></b></span>`
+            ? `<span><b><img src="${photoUrl}" alt="" style="object-position:${crop.x}% ${crop.y}%;transform:translate(-50%,-50%) scale(${crop.zoom});transform-origin:${crop.x}% ${crop.y}%"></b><em></em></span>`
             : `<span style="background:${postMarkerBorderColor}"><i style="background:${background}"></i></span>`,
           iconSize: cover ? [64, 72] : [28, 28],
           iconAnchor: cover ? [32, 72] : [14, 14],
         }),
-      })
-        .bindTooltip(p.place!.name || "記録した場所")
-        .addTo(map);
+      });
+      marker.bindTooltip(p.place!.name || "記録した場所").addTo(map);
+      if (onPostSelectRef.current)
+        marker.on("click", () => {
+          element.current
+            ?.querySelectorAll(".post-map-marker.selected")
+            .forEach((node) => node.classList.remove("selected"));
+          marker.getElement()?.classList.add("selected");
+          onPostSelectRef.current?.(p);
+        });
     });
     if (pick) {
       const pin = L.marker([pick.latitude, pick.longitude], {
@@ -417,6 +428,7 @@ export function PostCard({
     .filter((plush): plush is Plush => Boolean(plush));
   return (
     <article
+      id={`post-${post.id}`}
       className={`post-card${selected ? " selected" : ""}`}
       tabIndex={onSelect ? 0 : undefined}
       aria-label={
@@ -874,6 +886,16 @@ export function Today({
     setDrawerOpen(open);
     onDrawerOpenChange?.(open);
   };
+  const selectPost = (post: Post) => {
+    setFocusedPostId(post.id);
+    setFocusRequest((request) => request + 1);
+    setOpen(true);
+    requestAnimationFrame(() =>
+      document.getElementById(`post-${post.id}`)?.scrollIntoView?.({
+        block: "nearest",
+      }),
+    );
+  };
   const startDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
     dragStart.current = event.clientY;
     dragDistance.current = 0;
@@ -913,6 +935,7 @@ export function Today({
         focusPostId={focusedPostId}
         focusRequest={focusRequest}
         occludedById="today-post-drawer"
+        onPostSelect={selectPost}
       />
       <div className="today-summary">
         <h1 id="today-heading">{formatDate(date)}</h1>
@@ -969,10 +992,7 @@ export function Today({
                   onEdit={() => onNew(p)}
                   onSelect={
                     p.place
-                      ? () => {
-                          setFocusedPostId(p.id);
-                          setFocusRequest((request) => request + 1);
-                        }
+                      ? () => selectPost(p)
                       : undefined
                   }
                   selected={focusedPostId === p.id}

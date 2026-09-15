@@ -27,6 +27,7 @@ const {
   leafletDivIcon,
   leafletMap,
   leafletMarker,
+  markerOn,
   leafletPolyline,
   mapOn,
   mapPanBy,
@@ -41,6 +42,7 @@ const {
   zoomSetPosition: vi.fn(),
   leafletDivIcon: vi.fn((options) => options),
   leafletMarker: vi.fn(),
+  markerOn: vi.fn(),
   leafletPolyline: vi.fn(),
 }));
 
@@ -82,7 +84,8 @@ vi.mock("leaflet", () => ({
         addTo() {
           return this;
         },
-        on() {
+        on(...args: unknown[]) {
+          markerOn(...args);
           return this;
         },
         bindTooltip() {
@@ -90,6 +93,9 @@ vi.mock("leaflet", () => ({
         },
         getLatLng() {
           return { lat: 35.6812, lng: 139.7671 };
+        },
+        getElement() {
+          return document.createElement("div");
         },
       };
     },
@@ -416,6 +422,27 @@ describe("きょうの投稿ドロワー", () => {
     ).toBeInTheDocument();
     fireEvent.click(journalButton);
     expect(onJournal).toHaveBeenCalledOnce();
+  });
+
+  it("地図の投稿ピンを選ぶと拡大してドロワーの該当投稿を表示する", () => {
+    const view = render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+    const markerClick = markerOn.mock.calls.find(([event]) => event === "click")?.[1] as (() => void) | undefined;
+    act(() => markerClick?.());
+    expect(
+      within(view.container).getByRole("button", {
+        name: "おもいでドロワーを閉じる",
+      }),
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(view.container.querySelector("#post-post-1")).toHaveClass("selected");
   });
 });
 
