@@ -54,6 +54,8 @@ type View =
   | "editor"
   | "journal"
   | LegalKind;
+type JournalSource = "today" | "history";
+export type CloudSaveStatus = "checking" | "local" | "cloud" | "error";
 const tileUrl = import.meta.env.VITE_MAP_TILE_URL as string;
 const attribution = import.meta.env.VITE_MAP_ATTRIBUTION as string;
 const geolocationOptions: PositionOptions = {
@@ -522,19 +524,24 @@ export default function App() {
     return "today";
   });
   const [selectedDate, setSelectedDate] = useState("");
+  const [journalSource, setJournalSource] =
+    useState<JournalSource>("today");
   const [editing, setEditing] = useState<Post>();
   const [todayDrawerOpen, setTodayDrawerOpen] = useState(false);
   const [cloudError, setCloudError] = useState("");
-  const [cloudEnabled, setCloudEnabled] = useState(false);
+  const [cloudSaveStatus, setCloudSaveStatus] =
+    useState<CloudSaveStatus>("checking");
   useEffect(() => {
     void syncCloudPosts()
-      .then(setCloudEnabled)
-      .catch(() =>
+      .then((enabled) => setCloudSaveStatus(enabled ? "cloud" : "local"))
+      .catch(() => {
+        setCloudSaveStatus("error");
         setCloudError(
           "サーバー上のおもいでを読み込めませんでした。通信状態を確認してください。",
-        ),
-      );
+        );
+      });
   }, []);
+  const cloudEnabled = cloudSaveStatus === "cloud";
   const today = settings ? todayLogicalDate(settings.dayBoundaryTime) : "";
   const date = selectedDate || today;
   const dayPosts = useMemo(
@@ -578,8 +585,9 @@ export default function App() {
     setEditing(post);
     setView("editor");
   };
-  const openJournal = (d: string) => {
+  const openJournal = (d: string, source: JournalSource) => {
     setSelectedDate(d);
+    setJournalSource(source);
     setView("journal");
   };
   return (
@@ -602,7 +610,7 @@ export default function App() {
             journal={journals.find((j) => j.logicalDate === today)}
             settings={settings}
             onNew={openEditor}
-            onJournal={() => openJournal(today)}
+            onJournal={() => openJournal(today, "today")}
             onDrawerOpenChange={setTodayDrawerOpen}
           />
         ) : null}
@@ -611,14 +619,14 @@ export default function App() {
             posts={posts}
             journals={journals}
             settings={settings}
-            onOpen={openJournal}
+            onOpen={(historyDate) => openJournal(historyDate, "history")}
           />
         ) : null}
         {view === "plushes" ? <Plushes plushes={plushes} /> : null}
         {view === "settings" ? (
           <SettingsView
             settings={settings}
-            cloudEnabled={cloudEnabled}
+            cloudSaveStatus={cloudSaveStatus}
             onLegal={openLegal}
           />
         ) : null}
@@ -643,12 +651,17 @@ export default function App() {
             posts={dayPosts}
             plushes={plushes}
             journal={journals.find((j) => j.logicalDate === date)}
+            title={
+              journalSource === "today"
+                ? "きょうの日記"
+                : `${formatDate(date)}の日記`
+            }
+            showDate={journalSource === "today"}
             onEdit={openEditor}
-            onBack={() => setView(date === today ? "today" : "history")}
           />
         ) : null}
       </main>
-      {!["editor", "journal"].includes(view) ? (
+      {view !== "editor" ? (
         <>
           {view === "today" ? (
             <button
@@ -670,7 +683,11 @@ export default function App() {
             ).map(([id, label]) => (
               <button
                 key={id}
-                className={view === id ? "active" : ""}
+                className={
+                  view === id || (view === "journal" && journalSource === id)
+                    ? "active"
+                    : ""
+                }
                 onClick={() => setView(id)}
               >
                 {id === "today" ? (
@@ -1241,15 +1258,16 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
     </>
   );
 }
-function SettingsView({
+export function SettingsView({
   settings,
-  cloudEnabled,
+  cloudSaveStatus,
   onLegal,
 }: {
   settings: Settings;
-  cloudEnabled: boolean;
+  cloudSaveStatus: CloudSaveStatus;
   onLegal: (kind: LegalKind) => void;
 }) {
+  const cloudEnabled = cloudSaveStatus === "cloud";
   const [boundary, setBoundary] = useState(settings.dayBoundaryTime);
   const [prompt, setPrompt] = useState(settings.journalPromptTime);
   const [message, setMessage] = useState("");
@@ -1294,9 +1312,13 @@ function SettingsView({
       <section className="notice">
         <h2>保存について</h2>
         <p>
-          {cloudEnabled
-            ? "LINEログイン中です。投稿と写真はサーバーにも保存され、このブラウザにも保持されます。"
-            : "現在はこのブラウザ内だけに保存されています。ブラウザデータの削除、端末の故障・紛失時には復元できない可能性があります。"}
+          {cloudSaveStatus === "checking"
+            ? "保存状態を確認しています。"
+            : cloudSaveStatus === "cloud"
+              ? "LINEログイン中です。投稿と写真はサーバーにも保存され、このブラウザにも保持されます。"
+              : cloudSaveStatus === "error"
+                ? "保存状態を確認できませんでした。通信状態を確認してから、もう一度アプリを開いてください。"
+                : "LINEログインしていないため、現在はこのブラウザ内だけに保存されています。ブラウザデータの削除、端末の故障・紛失時には復元できない可能性があります。"}
         </p>
       </section>
       <section className="form-card">
@@ -1767,15 +1789,17 @@ export function JournalView({
   posts,
   plushes,
   journal,
+  title = "きょうの日記",
+  showDate = true,
   onEdit,
-  onBack,
 }: {
   date: string;
   posts: Post[];
   plushes: Plush[];
   journal?: Journal;
+  title?: string;
+  showDate?: boolean;
   onEdit: (p: Post) => void;
-  onBack: () => void;
 }) {
   const [body, setBody] = useState(journal?.body ?? "");
   const [message, setMessage] = useState("");
@@ -1817,15 +1841,11 @@ export function JournalView({
             場所付きのおもいでがないため、地図は空です。
           </div>
         )}
-        <button className="back journal-back" onClick={onBack}>
-          <ArrowBackRoundedIcon aria-hidden="true" />
-          戻る
-        </button>
         <div className="journal-heading-card">
           <h1 id="journal-heading" className="page-title">
-            きょうの日記
+            {title}
           </h1>
-          <p className="journal-date">{formatDate(date)}</p>
+          {showDate ? <p className="journal-date">{formatDate(date)}</p> : null}
           {names.length ? (
             <p className="lead">{names.join("・")}とおでかけ</p>
           ) : null}

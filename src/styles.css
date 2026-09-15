@@ -373,16 +373,6 @@ h2 {
   background: #eee6db;
   color: #665950;
 }
-.journal-back {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  z-index: 500;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: #fffdf9eb;
-  box-shadow: 0 4px 14px #3e332c2b;
-}
 .journal-heading-card {
   position: absolute;
   right: 14px;

@@ -9,7 +9,14 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { JournalView, Plushes, PostCard, PostEditor, Today } from "./App";
+import {
+  JournalView,
+  Plushes,
+  PostCard,
+  PostEditor,
+  SettingsView,
+  Today,
+} from "./App";
 import type { Plush, Post, Settings } from "./types";
 
 const {
@@ -555,7 +562,6 @@ describe("きょうの日記", () => {
         posts={[post]}
         plushes={[]}
         onEdit={() => undefined}
-        onBack={() => undefined}
       />,
     );
 
@@ -574,6 +580,48 @@ describe("きょうの日記", () => {
     expect(view.container.querySelector(".journal-compose")).toHaveTextContent(
       "きょうの気持ちを残す",
     );
+    expect(
+      within(view.container).queryByRole("button", { name: "戻る" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("思い出から開いた日記は日付を見出しにする", () => {
+    const view = render(
+      <JournalView
+        date="2026-09-14"
+        posts={[]}
+        plushes={[]}
+        title="2026年9月14日の日記"
+        showDate={false}
+        onEdit={() => undefined}
+      />,
+    );
+
+    expect(
+      within(view.container).getByRole("heading", {
+        name: "2026年9月14日の日記",
+      }),
+    ).toHaveClass("page-title");
+    expect(view.container.querySelector(".journal-date")).not.toBeInTheDocument();
+  });
+});
+
+describe("設定画面の保存状態", () => {
+  it.each([
+    ["checking", "保存状態を確認しています。"],
+    ["cloud", "投稿と写真はサーバーにも保存され"],
+    ["local", "LINEログインしていないため"],
+    ["error", "保存状態を確認できませんでした。"],
+  ] as const)("%s の案内を表示する", (cloudSaveStatus, message) => {
+    render(
+      <SettingsView
+        settings={settings}
+        cloudSaveStatus={cloudSaveStatus}
+        onLegal={() => undefined}
+      />,
+    );
+
+    expect(screen.getByText(message, { exact: false })).toBeVisible();
   });
 });
 
