@@ -606,13 +606,15 @@ export default function App() {
       </main>
       {!["editor", "journal"].includes(view) ? (
         <>
-          <button
-            className={`fab${view === "today" ? " today-view" : ""}${view === "today" && todayDrawerOpen ? " today-drawer-open" : ""}`}
-            onClick={() => openEditor()}
-            aria-label="新しい投稿"
-          >
-            <AddRoundedIcon aria-hidden="true" />
-          </button>
+          {view === "today" ? (
+            <button
+              className={`fab today-view${todayDrawerOpen ? " today-drawer-open" : ""}`}
+              onClick={() => openEditor()}
+              aria-label="新しい投稿"
+            >
+              <AddRoundedIcon aria-hidden="true" />
+            </button>
+          ) : null}
           <nav aria-label="メインメニュー">
             {(
               [
