@@ -657,7 +657,13 @@ function Onboarding({
 }) {
   return (
     <main className="onboarding">
-      <span className="hero-icon">ぬ</span>
+      <img
+        className="hero-icon"
+        src="/icons/nuito-icon.png"
+        alt=""
+        width="112"
+        height="112"
+      />
       <h1>ぬいと</h1>
       <p>ぬいぐるみとの一日を、写真と場所でそっと残そう。</p>
       <section className="notice">

@@ -44,15 +44,8 @@ textarea:focus-visible {
   box-shadow: 0 0 40px #6d4c3520;
 }
 .hero-icon {
-  display: inline-grid;
-  place-items: center;
-  background: #d7784a;
-  color: white;
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  margin-right: 8px;
-  font-weight: 800;
+  display: block;
+  object-fit: contain;
 }
 main {
   padding: 24px 18px;
@@ -879,10 +872,9 @@ nav button.active {
   padding: 30px;
 }
 .onboarding .hero-icon {
-  width: 90px;
-  height: 90px;
-  font-size: 38px;
-  margin: 0;
+  width: 112px;
+  height: 112px;
+  margin: 0 auto;
 }
 .onboarding .notice {
   text-align: left;
