@@ -12,11 +12,12 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Plushes, PostCard, PostEditor, Today } from "./App";
 import type { Plush, Post, Settings } from "./types";
 
-const { mapOn, mapSetView, leafletDivIcon, leafletMarker } = vi.hoisted(() => ({
+const { mapOn, mapSetView, leafletDivIcon, leafletMarker, leafletPolyline } = vi.hoisted(() => ({
   mapOn: vi.fn(),
   mapSetView: vi.fn(),
   leafletDivIcon: vi.fn((options) => options),
   leafletMarker: vi.fn(),
+  leafletPolyline: vi.fn(),
 }));
 
 vi.mock("leaflet", () => ({
@@ -27,6 +28,7 @@ vi.mock("leaflet", () => ({
         return this;
       },
       on: mapOn,
+      fitBounds: vi.fn(),
       remove: vi.fn(),
     }),
     circleMarker: () => ({
@@ -38,6 +40,11 @@ vi.mock("leaflet", () => ({
       },
     }),
     divIcon: leafletDivIcon,
+    latLngBounds: vi.fn((points) => points),
+    polyline: (...args: unknown[]) => {
+      leafletPolyline(...args);
+      return { addTo: vi.fn() };
+    },
     marker: (...args: unknown[]) => {
       leafletMarker(...args);
       return {
@@ -276,6 +283,42 @@ describe("きょうの投稿ドロワー", () => {
 });
 
 describe("日別地図の投稿ピン", () => {
+  it("時刻順の地点を補間して緩やかな曲線の点線にする", () => {
+    const second = {
+      ...post,
+      id: "post-2",
+      occurredLocalDateTime: "2026-09-14T16:30",
+      place: { ...post.place!, latitude: 35.7, longitude: 139.75 },
+    };
+    const third = {
+      ...post,
+      id: "post-3",
+      occurredLocalDateTime: "2026-09-14T17:30",
+      place: { ...post.place!, latitude: 35.72, longitude: 139.8 },
+    };
+
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[third, post, second]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+
+    const [route, options] = leafletPolyline.mock.calls.at(-1)!;
+    expect(route).toHaveLength(17);
+    expect(route[0]).toEqual([35.6812, 139.7671]);
+    expect(route.at(-1)).toEqual([35.72, 139.8]);
+    expect(route[1]).not.toEqual([
+      35.6812 + (35.7 - 35.6812) / 8,
+      139.7671 + (139.75 - 139.7671) / 8,
+    ]);
+    expect(options).toEqual(expect.objectContaining({ dashArray: "7 10" }));
+  });
+
   it("投稿がなく位置情報が許可済みなら現在地を中心にする", async () => {
     const getCurrentPosition = vi.fn((success) =>
       success({ coords: { latitude: 34.6937, longitude: 135.5023 } }),

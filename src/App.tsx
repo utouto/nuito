@@ -63,6 +63,34 @@ function postMarkerBackground(post: Post, plushes: Plush[]): string {
   return `linear-gradient(135deg, ${colors.join(", ")})`;
 }
 
+function curvedRoute(points: L.LatLngTuple[]): L.LatLngTuple[] {
+  if (points.length < 2) return points;
+  const curved: L.LatLngTuple[] = [points[0]];
+  points.slice(1).forEach((end, index) => {
+    const start = points[index];
+    const latitudeDelta = end[0] - start[0];
+    const longitudeDelta = end[1] - start[1];
+    const bend = 0.12 * (index % 2 ? -1 : 1);
+    const control: L.LatLngTuple = [
+      (start[0] + end[0]) / 2 - longitudeDelta * bend,
+      (start[1] + end[1]) / 2 + latitudeDelta * bend,
+    ];
+    for (let step = 1; step <= 8; step += 1) {
+      const t = step / 8;
+      const inverse = 1 - t;
+      curved.push([
+        inverse * inverse * start[0] +
+          2 * inverse * t * control[0] +
+          t * t * end[0],
+        inverse * inverse * start[1] +
+          2 * inverse * t * control[1] +
+          t * t * end[1],
+      ]);
+    }
+  });
+  return curved;
+}
+
 function BlobImage({
   blob,
   alt,
@@ -199,7 +227,7 @@ export function DayMap({
       (p) => [p.place!.latitude, p.place!.longitude] as L.LatLngTuple,
     );
     if (route.length > 1)
-      L.polyline(route, {
+      L.polyline(curvedRoute(route), {
         dashArray: "7 10",
         color: "#8b5e3c",
         weight: 4,
@@ -640,6 +668,11 @@ export function Today({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const dragStart = useRef<number | undefined>(undefined);
   const dragDistance = useRef(0);
+  const suppressNextClick = useRef(false);
+  useEffect(
+    () => () => onDrawerOpenChange?.(false),
+    [onDrawerOpenChange],
+  );
   const setOpen = (open: boolean) => {
     setDrawerOpen(open);
     onDrawerOpenChange?.(open);
@@ -660,8 +693,10 @@ export function Today({
     dragDistance.current = 0;
     if (event.currentTarget.hasPointerCapture?.(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
-    if (distance < -32) setOpen(true);
-    else if (distance > 32) setOpen(false);
+    if (Math.abs(distance) > 32) {
+      suppressNextClick.current = true;
+      setOpen(distance < 0);
+    }
   };
   const prompt = shouldPromptJournal(
     new Date(),
@@ -704,7 +739,13 @@ export function Today({
           aria-expanded={drawerOpen}
           aria-controls="today-post-drawer"
           aria-label={drawerOpen ? "投稿ドロワーを閉じる" : "投稿ドロワーを開く"}
-          onClick={() => setOpen(!drawerOpen)}
+          onClick={() => {
+            if (suppressNextClick.current) {
+              suppressNextClick.current = false;
+              return;
+            }
+            setOpen(!drawerOpen);
+          }}
           onPointerDown={startDrag}
           onPointerMove={moveDrag}
           onPointerUp={finishDrag}
