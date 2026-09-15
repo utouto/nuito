@@ -64,14 +64,24 @@ function placeFromPosition(position: GeolocationPosition): Place {
 }
 
 function postMarkerBackground(post: Post, plushes: Plush[]): string {
-  const colors = post.plushIds
-    .map((id) => plushes.find((plush) => plush.id === id)?.themeColor)
-    .filter((color): color is string =>
-      Boolean(color && /^#[0-9a-f]{6}$/i.test(color)),
-    );
+  const colors = [
+    ...new Set(
+      post.plushIds
+        .map((id) => plushes.find((plush) => plush.id === id)?.themeColor)
+        .filter((color): color is string =>
+          Boolean(color && /^#[0-9a-f]{6}$/i.test(color)),
+        ),
+    ),
+  ];
   if (!colors.length) return "#687076";
   if (colors.length === 1) return colors[0];
-  return `linear-gradient(135deg, ${colors.join(", ")})`;
+  const width = 100 / colors.length;
+  const blend = Math.min(4, width * 0.15);
+  const stops = colors.flatMap((color, index) => [
+    `${color} ${index === 0 ? 0 : index * width + blend}%`,
+    `${color} ${index === colors.length - 1 ? 100 : (index + 1) * width - blend}%`,
+  ]);
+  return `linear-gradient(135deg, ${stops.join(", ")})`;
 }
 
 function curvedRoute(points: L.LatLngTuple[]): L.LatLngTuple[] {
