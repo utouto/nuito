@@ -160,7 +160,7 @@ describe("投稿編集", () => {
     );
 
     const page = within(screen.getByRole("region", { name: /2026年9月14日/ }));
-    fireEvent.click(page.getByRole("button", { name: "投稿を見る" }));
+    fireEvent.click(page.getByRole("button", { name: "投稿ドロワーを開く" }));
     fireEvent.click(page.getByRole("button", { name: "投稿を編集" }));
 
     expect(onEdit).toHaveBeenCalledWith(post);
@@ -193,7 +193,7 @@ describe("投稿編集", () => {
 });
 
 describe("きょうの投稿ドロワー", () => {
-  it("投稿を地図上のドロワー内で開閉する", () => {
+  it("投稿ドロワーを下部に見せ、ハンドルで開閉する", () => {
     const view = render(
       <Today
         date="2026-09-14"
@@ -206,10 +206,11 @@ describe("きょうの投稿ドロワー", () => {
     );
     const page = within(view.container);
     const drawer = view.container.querySelector(".today-post-drawer");
-    const toggle = page.getByRole("button", { name: "投稿を見る" });
+    const toggle = page.getByRole("button", { name: "投稿ドロワーを開く" });
 
     expect(drawer).toHaveAttribute("aria-label", "きょうの投稿");
-    expect(drawer).not.toBeVisible();
+    expect(drawer).toBeVisible();
+    expect(drawer).not.toHaveAttribute("hidden");
     expect(toggle).toHaveAttribute("aria-expanded", "false");
 
     fireEvent.click(toggle);
@@ -217,8 +218,33 @@ describe("きょうの投稿ドロワー", () => {
     expect(drawer).toBeVisible();
     expect(page.getByText("もとのひとこと")).toBeVisible();
     expect(
-      page.getByRole("button", { name: "投稿を閉じる" }),
+      page.getByRole("button", { name: "投稿ドロワーを閉じる" }),
     ).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("上方向のスワイプでドロワーを開き、日記ボタンを退避する", () => {
+    const onDrawerOpenChange = vi.fn();
+    const view = render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+        onDrawerOpenChange={onDrawerOpenChange}
+      />,
+    );
+    const page = within(view.container);
+    const handle = page.getByRole("button", { name: "投稿ドロワーを開く" });
+
+    fireEvent.pointerDown(handle, { pointerId: 1, clientY: 300 });
+    fireEvent.pointerMove(handle, { pointerId: 1, clientY: 240 });
+    fireEvent.pointerUp(handle, { pointerId: 1, clientY: 240 });
+
+    expect(view.container.querySelector(".today-post-drawer")).toHaveClass("open");
+    expect(view.container.querySelector(".today-journal-button")).toHaveClass("drawer-open");
+    expect(onDrawerOpenChange).toHaveBeenLastCalledWith(true);
   });
 
   it("件数と上部投稿ボタンを表示せず、本アイコンで日記を開く", () => {

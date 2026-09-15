@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import L from "leaflet";
 import { db, deleteAllData, getSettings } from "./db";
@@ -340,6 +347,7 @@ export default function App() {
   });
   const [selectedDate, setSelectedDate] = useState("");
   const [editing, setEditing] = useState<Post>();
+  const [todayDrawerOpen, setTodayDrawerOpen] = useState(false);
   if (!settings)
     return (
       <main>
@@ -401,6 +409,7 @@ export default function App() {
             settings={settings}
             onNew={openEditor}
             onJournal={() => openJournal(today)}
+            onDrawerOpenChange={setTodayDrawerOpen}
           />
         ) : null}
         {view === "history" ? (
@@ -443,7 +452,7 @@ export default function App() {
       {!["editor", "journal"].includes(view) ? (
         <>
           <button
-            className="fab"
+            className={`fab${view === "today" && todayDrawerOpen ? " today-drawer-open" : ""}`}
             onClick={() => openEditor()}
             aria-label="新しい投稿"
           >
@@ -589,6 +598,7 @@ export function Today({
   settings,
   onNew,
   onJournal,
+  onDrawerOpenChange,
 }: {
   date: string;
   posts: Post[];
@@ -597,8 +607,34 @@ export function Today({
   settings: Settings;
   onNew: (post?: Post) => void;
   onJournal: () => void;
+  onDrawerOpenChange?: (open: boolean) => void;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const dragStart = useRef<number | undefined>(undefined);
+  const dragDistance = useRef(0);
+  const setOpen = (open: boolean) => {
+    setDrawerOpen(open);
+    onDrawerOpenChange?.(open);
+  };
+  const startDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    dragStart.current = event.clientY;
+    dragDistance.current = 0;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+  const moveDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (dragStart.current === undefined) return;
+    dragDistance.current = event.clientY - dragStart.current;
+  };
+  const finishDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (dragStart.current === undefined) return;
+    const distance = dragDistance.current;
+    dragStart.current = undefined;
+    dragDistance.current = 0;
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (distance < -32) setOpen(true);
+    else if (distance > 32) setOpen(false);
+  };
   const prompt = shouldPromptJournal(
     new Date(),
     settings.dayBoundaryTime,
@@ -612,9 +648,7 @@ export function Today({
         <h1 id="today-heading">{formatDate(date)}</h1>
       </div>
       <button
-        className={
-          prompt ? "today-journal-button prompt" : "today-journal-button"
-        }
+        className={`${prompt ? "today-journal-button prompt" : "today-journal-button"}${drawerOpen ? " drawer-open" : ""}`}
         onClick={onJournal}
         aria-label={
           journal
@@ -626,20 +660,26 @@ export function Today({
       >
         <span aria-hidden="true">📖</span>
       </button>
-      <button
-        className="today-drawer-toggle"
-        aria-expanded={drawerOpen}
-        aria-controls="today-post-drawer"
-        onClick={() => setDrawerOpen((open) => !open)}
-      >
-        {drawerOpen ? "投稿を閉じる" : "投稿を見る"}
-      </button>
       <aside
         id="today-post-drawer"
-        className="today-post-drawer"
+        className={`today-post-drawer${drawerOpen ? " open" : ""}`}
         aria-label="きょうの投稿"
-        hidden={!drawerOpen}
       >
+        <button
+          type="button"
+          className="today-drawer-handle"
+          aria-expanded={drawerOpen}
+          aria-controls="today-post-drawer"
+          aria-label={drawerOpen ? "投稿ドロワーを閉じる" : "投稿ドロワーを開く"}
+          onClick={() => setOpen(!drawerOpen)}
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={finishDrag}
+          onPointerCancel={finishDrag}
+        >
+          <span aria-hidden="true" />
+          <strong>きょうの投稿</strong>
+        </button>
         <section className="stack">
           {posts.length ? (
             posts.map((p) => (

@@ -241,23 +241,14 @@ h2 {
   background: #fffdf9;
   box-shadow: 0 5px 18px #3e332c4d;
   font-size: 26px;
+  transition: bottom 220ms ease;
+}
+.today-journal-button.drawer-open {
+  bottom: min(calc(62vh + 14px), 574px);
 }
 .today-journal-button.prompt {
   background: #d96337;
   box-shadow: 0 5px 18px #d9633770;
-}
-.today-drawer-toggle {
-  position: absolute;
-  right: 14px;
-  bottom: 18px;
-  z-index: 510;
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 999px;
-  background: #8b5e3c;
-  color: white;
-  box-shadow: 0 5px 18px #3e332c4d;
-  font-weight: 800;
 }
 .today-post-drawer {
   position: absolute;
@@ -265,13 +256,37 @@ h2 {
   bottom: 0;
   left: 0;
   z-index: 505;
-  max-height: min(62vh, 560px);
-  padding: 18px 18px 78px;
+  height: min(62vh, 560px);
+  padding: 0 18px 78px;
   overflow-y: auto;
   border-radius: 22px 22px 0 0;
   background: #fffaf4f7;
   box-shadow: 0 -8px 28px #3e332c33;
   backdrop-filter: blur(10px);
+  transform: translateY(calc(100% - 72px));
+  transition: transform 220ms ease;
+  touch-action: pan-y;
+}
+.today-post-drawer.open {
+  transform: translateY(0);
+}
+.today-drawer-handle {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 12px 12px;
+  border: 0;
+  background: transparent;
+  color: #5f402d;
+  touch-action: none;
+}
+.today-drawer-handle span {
+  width: 44px;
+  height: 5px;
+  border-radius: 999px;
+  background: #c7b6a7;
 }
 .today-post-drawer .stack {
   margin-top: 0;
@@ -712,6 +727,10 @@ h2 {
   font-size: 30px;
   box-shadow: 0 8px 24px #8b3d2760;
   z-index: 50;
+  transition: bottom 220ms ease;
+}
+.fab.today-drawer-open {
+  bottom: min(calc(62vh + 80px), 640px);
 }
 nav {
   position: fixed;
