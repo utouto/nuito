@@ -19,6 +19,10 @@ type CloudPlushRow = {
   id: string;
   name: string;
   theme_color: string | null;
+  has_icon: number;
+  icon_crop_x: number | null;
+  icon_crop_y: number | null;
+  icon_crop_zoom: number | null;
   hidden: number;
   created_at: string;
   updated_at: string;
@@ -91,6 +95,8 @@ export async function saveCloudPost(post: Post, plushes: Plush[]) {
         id: plush.id,
         name: plush.name,
         themeColor: plush.themeColor,
+        hasIcon: Boolean(plush.icon),
+        iconCrop: plush.iconCrop,
         hidden: plush.hidden,
         createdAt: plush.createdAt,
         updatedAt: plush.updatedAt,
@@ -114,6 +120,10 @@ export async function saveCloudPost(post: Post, plushes: Plush[]) {
       image.thumbnail,
       `${image.id}-thumbnail`,
     );
+  });
+  companions.forEach((plush) => {
+    if (plush.icon)
+      form.set(`plushIcon:${plush.id}`, plush.icon, `${plush.id}-icon`);
   });
   const saved = Boolean(
     await checkedFetch(`/api/posts/${encodeURIComponent(post.id)}`, {
@@ -143,9 +153,14 @@ export async function deleteCloudPost(postId: string) {
   return deleted;
 }
 
-async function imageBlob(imageId: string, variant: "full" | "thumbnail") {
+async function imageBlob(
+  imageId: string,
+  variant: "full" | "thumbnail" | "plush",
+) {
   const response = await checkedFetch(
-    `/api/post-images/${encodeURIComponent(imageId)}/${variant}`,
+    variant === "plush"
+      ? `/api/plush-icons/${encodeURIComponent(imageId)}`
+      : `/api/post-images/${encodeURIComponent(imageId)}/${variant}`,
   );
   if (!response) throw new Error("cloud_session_expired");
   return response.blob();
@@ -168,15 +183,28 @@ export async function syncCloudPosts() {
     allLocalPlushes.map((plush) => [plush.id, plush]),
   );
   await db.plushes.bulkPut(
-    cloud.plushes.map((row) => ({
-      ...localPlushes.get(row.id),
-      id: row.id,
-      name: row.name,
-      themeColor: row.theme_color ?? undefined,
-      hidden: Boolean(row.hidden),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    })),
+    await Promise.all(
+      cloud.plushes.map(async (row) => ({
+        ...localPlushes.get(row.id),
+        id: row.id,
+        name: row.name,
+        icon: row.has_icon ? await imageBlob(row.id, "plush") : undefined,
+        iconCrop:
+          row.icon_crop_x !== null &&
+          row.icon_crop_y !== null &&
+          row.icon_crop_zoom !== null
+            ? {
+                x: row.icon_crop_x,
+                y: row.icon_crop_y,
+                zoom: row.icon_crop_zoom,
+              }
+            : undefined,
+        themeColor: row.theme_color ?? undefined,
+        hidden: Boolean(row.hidden),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      })),
+    ),
   );
 
   const allLocalPosts = await db.posts.toArray();

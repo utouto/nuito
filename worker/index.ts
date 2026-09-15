@@ -307,7 +307,8 @@ export async function handleRequest(
   if (
     url.pathname === "/api/posts" ||
     url.pathname.startsWith("/api/posts/") ||
-    url.pathname.startsWith("/api/post-images/")
+    url.pathname.startsWith("/api/post-images/") ||
+    url.pathname.startsWith("/api/plush-icons/")
   ) {
     try {
       const userId = await authenticatedUserId(request, env);

@@ -19,6 +19,8 @@ type PlushInput = {
   id: string;
   name: string;
   themeColor?: string;
+  hasIcon: boolean;
+  iconCrop?: { x: number; y: number; zoom: number };
   hidden: boolean;
   createdAt: string;
   updatedAt: string;
@@ -47,6 +49,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const LOCAL_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const MAX_FULL_BYTES = 12 * 1024 * 1024;
 const MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024;
+const MAX_PLUSH_ICON_BYTES = 5 * 1024 * 1024;
 
 const response = (body: unknown, status = 200) =>
   Response.json(body, {
@@ -110,6 +113,13 @@ function validPost(value: unknown): value is PostInput {
         plush.name.length < 1 ||
         plush.name.length > 60 ||
         typeof plush.hidden !== "boolean" ||
+        typeof plush.hasIcon !== "boolean" ||
+        (plush.iconCrop !== undefined &&
+          (!Number.isFinite(plush.iconCrop.x) ||
+            !Number.isFinite(plush.iconCrop.y) ||
+            !Number.isFinite(plush.iconCrop.zoom) ||
+            plush.iconCrop.zoom < 1 ||
+            plush.iconCrop.zoom > 4)) ||
         !validTimestamp(plush.createdAt) ||
         !validTimestamp(plush.updatedAt),
     )
@@ -151,6 +161,9 @@ const objectKeys = (
     thumbnail: `${userId}/posts/${postId}/${imageId}/${safeVersion}/thumbnail`,
   };
 };
+
+const plushIconKey = (userId: string, plushId: string, version: string) =>
+  `${userId}/plushes/${plushId}/${version.replace(/[^0-9A-Za-z]/g, "")}/icon`;
 
 async function savePost(
   request: Request,
@@ -206,6 +219,21 @@ async function savePost(
     full: File;
     thumbnail: File;
   }>;
+  const plushIconFiles = input.plushes.map((plush) => ({
+    plush,
+    icon: form.get(`plushIcon:${plush.id}`),
+  }));
+  if (
+    plushIconFiles.some(
+      ({ plush, icon }) =>
+        plush.hasIcon !== (icon instanceof File) ||
+        (icon instanceof File &&
+          (!icon.type.startsWith("image/") ||
+            icon.size < 1 ||
+            icon.size > MAX_PLUSH_ICON_BYTES)),
+    )
+  )
+    return response({ error: "invalid_image" }, 400);
 
   const uploaded: string[] = [];
   try {
@@ -220,12 +248,29 @@ async function savePost(
       });
       uploaded.push(keys.thumbnail);
     }
+    for (const { plush, icon } of plushIconFiles) {
+      if (!(icon instanceof File)) continue;
+      const key = plushIconKey(userId, plush.id, plush.updatedAt);
+      await env.IMAGES.put(key, icon.stream(), {
+        httpMetadata: { contentType: icon.type },
+      });
+      uploaded.push(key);
+    }
 
     const previous = await env.DB.prepare(
       "SELECT full_object_key,thumbnail_object_key FROM post_images WHERE post_id=?",
     )
       .bind(postId)
       .all<{ full_object_key: string; thumbnail_object_key: string }>();
+    const previousPlushIcons = await Promise.all(
+      input.plushes.map((plush) =>
+        env.DB.prepare(
+          "SELECT icon_object_key FROM plushes WHERE id=? AND user_id=?",
+        )
+          .bind(plush.id, userId)
+          .first<{ icon_object_key: string | null }>(),
+      ),
+    );
     const statements: D1PreparedStatement[] = [
       env.DB.prepare(
         `INSERT INTO posts(id,user_id,body,time_mode,occurred_local_datetime,manual_logical_date,latitude,longitude,place_name,place_source,created_at,updated_at)
@@ -252,15 +297,21 @@ async function savePost(
     input.plushes.forEach((plush, index) => {
       statements.push(
         env.DB.prepare(
-          `INSERT INTO plushes(id,user_id,name,theme_color,hidden,created_at,updated_at)
-           VALUES(?,?,?,?,?,?,?)
-           ON CONFLICT(id) DO UPDATE SET name=excluded.name,theme_color=excluded.theme_color,hidden=excluded.hidden,updated_at=excluded.updated_at
+          `INSERT INTO plushes(id,user_id,name,icon_object_key,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at)
+           VALUES(?,?,?,?,?,?,?,?,?,?,?)
+           ON CONFLICT(id) DO UPDATE SET name=excluded.name,icon_object_key=excluded.icon_object_key,theme_color=excluded.theme_color,icon_crop_x=excluded.icon_crop_x,icon_crop_y=excluded.icon_crop_y,icon_crop_zoom=excluded.icon_crop_zoom,hidden=excluded.hidden,updated_at=excluded.updated_at
            WHERE plushes.user_id=excluded.user_id`,
         ).bind(
           plush.id,
           userId,
           plush.name,
+          plush.hasIcon
+            ? plushIconKey(userId, plush.id, plush.updatedAt)
+            : null,
           plush.themeColor ?? null,
+          plush.iconCrop?.x ?? null,
+          plush.iconCrop?.y ?? null,
+          plush.iconCrop?.zoom ?? null,
           plush.hidden ? 1 : 0,
           plush.createdAt,
           plush.updatedAt,
@@ -293,11 +344,17 @@ async function savePost(
     await env.DB.batch(statements);
     const retained = new Set(uploaded);
     await Promise.all(
-      previous.results.flatMap((image) =>
-        [image.full_object_key, image.thumbnail_object_key]
-          .filter((key) => !retained.has(key))
-          .map((key) => env.IMAGES.delete(key)),
-      ),
+      [
+        ...previous.results.flatMap((image) => [
+          image.full_object_key,
+          image.thumbnail_object_key,
+        ]),
+        ...previousPlushIcons.flatMap((plush) =>
+          plush?.icon_object_key ? [plush.icon_object_key] : [],
+        ),
+      ]
+        .filter((key) => !retained.has(key))
+        .map((key) => env.IMAGES.delete(key)),
     );
     return response({ ok: true });
   } catch {
@@ -312,7 +369,7 @@ async function listPosts(env: PostsEnv, userId: string) {
       .bind(userId)
       .all<Record<string, unknown>>(),
     env.DB.prepare(
-      "SELECT id,name,theme_color,hidden,created_at,updated_at FROM plushes WHERE user_id=?",
+      "SELECT id,name,icon_object_key IS NOT NULL AS has_icon,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at FROM plushes WHERE user_id=?",
     )
       .bind(userId)
       .all<Record<string, unknown>>(),
@@ -352,6 +409,28 @@ async function imageResponse(
   const object = await env.IMAGES.get(
     variant === "full" ? image.full_object_key : image.thumbnail_object_key,
   );
+  if (!object) return response({ error: "not_found" }, 404);
+  const headers = new Headers({
+    "cache-control": "private, max-age=31536000, immutable",
+    "x-content-type-options": "nosniff",
+  });
+  object.writeHttpMetadata(headers);
+  return new Response(object.body, { headers });
+}
+
+async function plushIconResponse(
+  env: PostsEnv,
+  userId: string,
+  plushId: string,
+) {
+  if (!ID.test(plushId)) return response({ error: "not_found" }, 404);
+  const plush = await env.DB.prepare(
+    "SELECT icon_object_key FROM plushes WHERE id=? AND user_id=?",
+  )
+    .bind(plushId, userId)
+    .first<{ icon_object_key: string | null }>();
+  if (!plush?.icon_object_key) return response({ error: "not_found" }, 404);
+  const object = await env.IMAGES.get(plush.icon_object_key);
   if (!object) return response({ error: "not_found" }, 404);
   const headers = new Headers({
     "cache-control": "private, max-age=31536000, immutable",
@@ -404,5 +483,8 @@ export async function handlePosts(
       imageMatch[1],
       imageMatch[2] as "full" | "thumbnail",
     );
+  const plushMatch = url.pathname.match(/^\/api\/plush-icons\/([^/]+)$/);
+  if (plushMatch && request.method === "GET")
+    return plushIconResponse(env, userId, plushMatch[1]);
   return response({ error: "not_found" }, 404);
 }

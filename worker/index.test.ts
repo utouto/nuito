@@ -83,6 +83,7 @@ describe("投稿保存API", () => {
       {
         id: "plush-1",
         name: "くま",
+        hasIcon: false,
         hidden: false,
         createdAt: "2026-09-15T00:00:00.000Z",
         updatedAt: "2026-09-15T00:00:00.000Z",

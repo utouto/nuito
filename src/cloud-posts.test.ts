@@ -28,6 +28,7 @@ const post: Post = {
 const plush: Plush = {
   id: "plush-1",
   name: "くま",
+  icon: new Blob(["icon"], { type: "image/webp" }),
   hidden: false,
   createdAt: "2026-09-15T00:00:00.000Z",
   updatedAt: "2026-09-15T00:00:00.000Z",
@@ -49,10 +50,11 @@ describe("クラウド投稿クライアント", () => {
     const form = init.body as FormData;
     expect(form.get("full:image-1")).toBeInstanceOf(File);
     expect(form.get("thumbnail:image-1")).toBeInstanceOf(File);
+    expect(form.get("plushIcon:plush-1")).toBeInstanceOf(File);
     expect(JSON.parse(form.get("metadata") as string)).toMatchObject({
       id: "post-1",
       body: "公園へ行った",
-      plushes: [{ id: "plush-1", name: "くま" }],
+      plushes: [{ id: "plush-1", name: "くま", hasIcon: true }],
       images: [{ id: "image-1", byteSize: 4 }],
     });
   });
