@@ -154,7 +154,9 @@ describe("投稿編集", () => {
       />,
     );
 
-    screen.getByRole("button", { name: "投稿を編集" }).click();
+    const page = within(screen.getByRole("region", { name: /2026年9月14日/ }));
+    fireEvent.click(page.getByRole("button", { name: "投稿を見る" }));
+    fireEvent.click(page.getByRole("button", { name: "投稿を編集" }));
 
     expect(onEdit).toHaveBeenCalledWith(post);
   });
@@ -182,6 +184,36 @@ describe("投稿編集", () => {
       "東京駅",
     );
     expect(form.getByText("投稿を編集")).toBeInTheDocument();
+  });
+});
+
+describe("きょうの投稿ドロワー", () => {
+  it("投稿を地図上のドロワー内で開閉する", () => {
+    const view = render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+    const page = within(view.container);
+    const drawer = view.container.querySelector(".today-post-drawer");
+    const toggle = page.getByRole("button", { name: "投稿を見る" });
+
+    expect(drawer).toHaveAttribute("aria-label", "きょうの投稿");
+    expect(drawer).not.toBeVisible();
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(toggle);
+
+    expect(drawer).toBeVisible();
+    expect(page.getByText("もとのひとこと")).toBeVisible();
+    expect(
+      page.getByRole("button", { name: "投稿を閉じる" }),
+    ).toHaveAttribute("aria-expanded", "true");
   });
 });
 

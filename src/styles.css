@@ -178,6 +178,78 @@ h2 {
   color: #71645b;
   margin: 5px 4px;
 }
+.today-main {
+  padding: 0;
+}
+.today-map-view {
+  position: relative;
+  height: calc(100dvh - 126px);
+  min-height: 430px;
+  overflow: hidden;
+}
+.today-map,
+.today-map .map-stage,
+.today-map .map {
+  height: 100%;
+}
+.today-map {
+  margin: 0;
+}
+.today-map .map {
+  border: 0;
+  border-radius: 0;
+}
+.today-map .map-note {
+  display: none;
+}
+.today-summary {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 500;
+  width: min(360px, calc(100% - 28px));
+  padding: 14px;
+  border-radius: 16px;
+  background: #fffdf9eb;
+  box-shadow: 0 5px 20px #3e332c2b;
+  backdrop-filter: blur(8px);
+}
+.today-summary h1 {
+  font-size: 22px;
+}
+.today-summary .actions {
+  margin: 12px 0 0;
+}
+.today-drawer-toggle {
+  position: absolute;
+  right: 14px;
+  bottom: 18px;
+  z-index: 510;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #8b5e3c;
+  color: white;
+  box-shadow: 0 5px 18px #3e332c4d;
+  font-weight: 800;
+}
+.today-post-drawer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 505;
+  max-height: min(62vh, 560px);
+  padding: 18px 18px 78px;
+  overflow-y: auto;
+  border-radius: 22px 22px 0 0;
+  background: #fffaf4f7;
+  box-shadow: 0 -8px 28px #3e332c33;
+  backdrop-filter: blur(10px);
+}
+.today-post-drawer .stack {
+  margin-top: 0;
+}
 .stack {
   display: grid;
   gap: 12px;

@@ -123,11 +123,13 @@ export function DayMap({
   pick,
   onPick,
   control,
+  className,
 }: {
   posts: Post[];
   pick?: Place;
   onPick?: (p: Place) => void;
   control?: ReactNode;
+  className?: string;
 }) {
   const element = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -196,7 +198,7 @@ export function DayMap({
     };
   }, [posts, pick, onPick]);
   return (
-    <div className="map-wrap">
+    <div className={className ? `map-wrap ${className}` : "map-wrap"}>
       <div className="map-stage">
         <div
           ref={element}
@@ -371,7 +373,7 @@ export default function App() {
           <span className="env">{import.meta.env.VITE_APP_ENV}</span>
         )}
       </header>
-      <main>
+      <main className={view === "today" ? "today-main" : undefined}>
         {view === "today" ? (
           <Today
             date={today}
@@ -578,53 +580,71 @@ export function Today({
   onNew: (post?: Post) => void;
   onJournal: () => void;
 }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const prompt = shouldPromptJournal(
     new Date(),
     settings.dayBoundaryTime,
     settings.journalPromptTime,
   );
   return (
-    <>
-      <p className="eyebrow">きょう</p>
-      <h1>{formatDate(date)}</h1>
-      <p className="lead">
-        {posts.length
-          ? `${posts.length}件の思い出があります`
-          : "最初の思い出を残しましょう"}
-      </p>
-      <div className="actions">
-        <button className="primary" onClick={() => onNew()}>
-          ＋ 今の記録を残す
-        </button>
-        <button
-          className={prompt ? "journal-cta prompt" : "journal-cta"}
-          onClick={onJournal}
-        >
-          {journal
-            ? "きょうの日記を見る・編集する"
-            : prompt
-              ? "きょうの日記を書く"
-              : "きょうの日記"}
-        </button>
-      </div>
-      {posts.length ? (
-        <DayMap posts={posts} />
-      ) : (
-        <div className="empty">
-          写真やひとこと、場所を記録すると、ここに一日が並びます。
+    <section className="today-map-view" aria-labelledby="today-heading">
+      <DayMap posts={posts} className="today-map" />
+      <div className="today-summary">
+        <p className="eyebrow">きょう</p>
+        <h1 id="today-heading">{formatDate(date)}</h1>
+        <p className="lead">
+          {posts.length
+            ? `${posts.length}件の思い出があります`
+            : "最初の思い出を残しましょう"}
+        </p>
+        <div className="actions">
+          <button className="primary" onClick={() => onNew()}>
+            ＋ 今の記録を残す
+          </button>
+          <button
+            className={prompt ? "journal-cta prompt" : "journal-cta"}
+            onClick={onJournal}
+          >
+            {journal
+              ? "きょうの日記を見る・編集する"
+              : prompt
+                ? "きょうの日記を書く"
+                : "きょうの日記"}
+          </button>
         </div>
-      )}
-      <section className="stack">
-        {posts.map((p) => (
-          <PostCard
-            key={p.id}
-            post={p}
-            plushes={plushes}
-            onEdit={() => onNew(p)}
-          />
-        ))}
-      </section>
-    </>
+      </div>
+      <button
+        className="today-drawer-toggle"
+        aria-expanded={drawerOpen}
+        aria-controls="today-post-drawer"
+        onClick={() => setDrawerOpen((open) => !open)}
+      >
+        {drawerOpen ? "投稿を閉じる" : "投稿を見る"}
+      </button>
+      <aside
+        id="today-post-drawer"
+        className="today-post-drawer"
+        aria-label="きょうの投稿"
+        hidden={!drawerOpen}
+      >
+        <section className="stack">
+          {posts.length ? (
+            posts.map((p) => (
+              <PostCard
+                key={p.id}
+                post={p}
+                plushes={plushes}
+                onEdit={() => onNew(p)}
+              />
+            ))
+          ) : (
+            <div className="empty">
+              写真やひとこと、場所を記録すると、ここに一日が並びます。
+            </div>
+          )}
+        </section>
+      </aside>
+    </section>
   );
 }
 function History({
