@@ -9,7 +9,7 @@
 | 法務情報 | FR-007〜FR-008 | SC-01, SC-08, SC-10, SC-11 | なし | AC-003 |
 | ぬいぐるみ | FR-010〜FR-019 | SC-07, SC-03 | Plush, PostPlush | AC-001, AC-005〜AC-008, AC-086 |
 | 投稿本文 | FR-020〜FR-023 | SC-03 | Post | AC-010 |
-| 投稿写真 | FR-024〜FR-025, FR-040〜FR-055 | SC-02, SC-03, SC-05 | PostImage | AC-011, AC-012, AC-014 |
+| 投稿写真 | FR-024〜FR-025, FR-040〜FR-057 | SC-02, SC-03, SC-05 | PostImage | AC-011, AC-012, AC-014 |
 | 行動日時 | FR-026〜FR-028, FR-100〜FR-107 | SC-03, SC-08 | Post, UserSettings | AC-013, AC-020〜AC-022 |
 | 場所 | FR-029, FR-060〜FR-066 | SC-03, SC-04 | Location | AC-070, AC-071, AC-073, AC-074 |
 | 地図・足あと | FR-068〜FR-079 | SC-02, SC-05 | Post, Location | AC-030〜AC-035 |
