@@ -29,6 +29,20 @@ type View =
   | LegalKind;
 const tileUrl = import.meta.env.VITE_MAP_TILE_URL as string;
 const attribution = import.meta.env.VITE_MAP_ATTRIBUTION as string;
+const geolocationOptions: PositionOptions = {
+  enableHighAccuracy: true,
+  timeout: 10000,
+};
+
+function placeFromPosition(position: GeolocationPosition): Place {
+  return {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+    name: "現在地",
+    source: "current",
+  };
+}
+
 function BlobImage({
   blob,
   alt,
@@ -988,6 +1002,33 @@ export function PostEditor({
     setPlace(post?.place);
     setError("");
   }, [post, settings.dayBoundaryTime]);
+  useEffect(() => {
+    if (post || !navigator.geolocation || !navigator.permissions) return;
+    let active = true;
+    void navigator.permissions
+      .query({ name: "geolocation" })
+      .then((permission) => {
+        if (!active || permission.state !== "granted") return;
+        setBusy(true);
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            if (!active) return;
+            setPlace(placeFromPosition(position));
+            setBusy(false);
+          },
+          () => {
+            if (active) setBusy(false);
+          },
+          geolocationOptions,
+        );
+      })
+      .catch(() => {
+        // 権限状態を確認できないブラウザでは、自動で許可を要求しない。
+      });
+    return () => {
+      active = false;
+    };
+  }, [post]);
   const valid = body.trim() || images.length || place;
   async function filesChosen(files: FileList | null) {
     if (!files) return;
@@ -1028,19 +1069,14 @@ export function PostEditor({
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        setPlace({
-          latitude: p.coords.latitude,
-          longitude: p.coords.longitude,
-          name: "現在地",
-          source: "current",
-        });
+        setPlace(placeFromPosition(p));
         setBusy(false);
       },
       () => {
         setError("現在地を取得できませんでした。場所なしでも保存できます。");
         setBusy(false);
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      geolocationOptions,
     );
   }
   async function save() {

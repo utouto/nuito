@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Plushes, PostCard, PostEditor, Today } from "./App";
@@ -192,6 +198,54 @@ describe("投稿のぬい選択", () => {
 });
 
 describe("投稿の場所選択", () => {
+  it("位置情報が許可済みなら現在地を初期場所にする", async () => {
+    const getCurrentPosition = vi.fn((success) =>
+      success({ coords: { latitude: 35.6812, longitude: 139.7671 } }),
+    );
+    const query = vi.fn().mockResolvedValue({ state: "granted" });
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query },
+    });
+
+    const view = render(<Subject />);
+    const form = within(view.container);
+
+    await waitFor(() =>
+      expect(form.getByRole("textbox", { name: "場所名" })).toHaveValue(
+        "現在地",
+      ),
+    );
+    expect(query).toHaveBeenCalledWith({ name: "geolocation" });
+    expect(getCurrentPosition).toHaveBeenCalledOnce();
+    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 13);
+  });
+
+  it("位置情報が未許可なら自動で取得を要求しない", async () => {
+    const getCurrentPosition = vi.fn();
+    const query = vi.fn().mockResolvedValue({ state: "prompt" });
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query },
+    });
+
+    const view = render(<Subject />);
+
+    await waitFor(() => expect(query).toHaveBeenCalledOnce());
+    expect(getCurrentPosition).not.toHaveBeenCalled();
+    expect(
+      within(view.container).queryByRole("textbox", { name: "場所名" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("現在地付近へ移動し、ドラッグ可能なピンを表示する", () => {
     const getCurrentPosition = vi.fn((success) =>
       success({ coords: { latitude: 35.6812, longitude: 139.7671 } }),
@@ -199,6 +253,10 @@ describe("投稿の場所選択", () => {
     Object.defineProperty(navigator, "geolocation", {
       configurable: true,
       value: { getCurrentPosition },
+    });
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query: vi.fn().mockResolvedValue({ state: "prompt" }) },
     });
     const view = render(<Subject />);
     const form = within(view.container);
