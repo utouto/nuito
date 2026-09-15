@@ -276,6 +276,62 @@ describe("きょうの投稿ドロワー", () => {
 });
 
 describe("日別地図の投稿ピン", () => {
+  it("投稿がなく位置情報が許可済みなら現在地を中心にする", async () => {
+    const getCurrentPosition = vi.fn((success) =>
+      success({ coords: { latitude: 34.6937, longitude: 135.5023 } }),
+    );
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query: vi.fn().mockResolvedValue({ state: "granted" }) },
+    });
+
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(mapSetView).toHaveBeenLastCalledWith([34.6937, 135.5023], 13),
+    );
+    expect(getCurrentPosition).toHaveBeenCalledOnce();
+  });
+
+  it("投稿がなく位置情報が未許可なら自動で権限を要求しない", async () => {
+    const getCurrentPosition = vi.fn();
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query: vi.fn().mockResolvedValue({ state: "prompt" }) },
+    });
+
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+
+    await act(async () => undefined);
+    expect(getCurrentPosition).not.toHaveBeenCalled();
+  });
+
   it("同行した複数のぬいのテーマカラーをグラデーション表示する", () => {
     render(
       <Today

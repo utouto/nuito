@@ -144,6 +144,7 @@ export function DayMap({
   onPick,
   control,
   className,
+  centerOnCurrentWhenEmpty = false,
 }: {
   posts: Post[];
   plushes?: Plush[];
@@ -151,6 +152,7 @@ export function DayMap({
   onPick?: (p: Place) => void;
   control?: ReactNode;
   className?: string;
+  centerOnCurrentWhenEmpty?: boolean;
 }) {
   const element = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -166,6 +168,31 @@ export function DayMap({
       all[0] ?? [35.6812, 139.7671],
       all.length ? 13 : 5,
     );
+    let active = true;
+    if (
+      centerOnCurrentWhenEmpty &&
+      !all.length &&
+      navigator.geolocation &&
+      navigator.permissions
+    ) {
+      void navigator.permissions
+        .query({ name: "geolocation" })
+        .then((permission) => {
+          if (!active || permission.state !== "granted") return;
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              if (active)
+                map.setView(
+                  [position.coords.latitude, position.coords.longitude],
+                  13,
+                );
+            },
+            () => undefined,
+            geolocationOptions,
+          );
+        })
+        .catch(() => undefined);
+    }
     if (tileUrl && navigator.onLine)
       L.tileLayer(tileUrl, { attribution }).addTo(map);
     const route = sortPosts(located.filter((p) => p.timeMode === "known")).map(
@@ -219,9 +246,10 @@ export function DayMap({
         }),
       );
     return () => {
+      active = false;
       map.remove();
     };
-  }, [posts, plushes, pick, onPick]);
+  }, [posts, plushes, pick, onPick, centerOnCurrentWhenEmpty]);
   return (
     <div className={className ? `map-wrap ${className}` : "map-wrap"}>
       <div className="map-stage">
@@ -642,7 +670,12 @@ export function Today({
   );
   return (
     <section className="today-map-view" aria-labelledby="today-heading">
-      <DayMap posts={posts} plushes={plushes} className="today-map" />
+      <DayMap
+        posts={posts}
+        plushes={plushes}
+        className="today-map"
+        centerOnCurrentWhenEmpty
+      />
       <div className="today-summary">
         <p className="eyebrow">きょう</p>
         <h1 id="today-heading">{formatDate(date)}</h1>
