@@ -17,7 +17,7 @@ class NuitoDatabase extends Dexie {
   }
 }
 export const db = new NuitoDatabase();
-export async function getSettings() {
+export async function getSettings(): Promise<Settings> {
   return (await db.settings.get("settings")) ?? DEFAULT_SETTINGS;
 }
 export async function initialize() {

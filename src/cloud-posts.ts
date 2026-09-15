@@ -200,26 +200,30 @@ export async function syncCloudPosts() {
   );
   await db.plushes.bulkPut(
     await Promise.all(
-      cloud.plushes.map(async (row) => ({
-        ...localPlushes.get(row.id),
-        id: row.id,
-        name: row.name,
-        icon: row.has_icon ? await imageBlob(row.id, "plush") : undefined,
-        iconCrop:
-          row.icon_crop_x !== null &&
-          row.icon_crop_y !== null &&
-          row.icon_crop_zoom !== null
-            ? {
-                x: row.icon_crop_x,
-                y: row.icon_crop_y,
-                zoom: row.icon_crop_zoom,
-              }
-            : undefined,
-        themeColor: row.theme_color ?? undefined,
-        hidden: Boolean(row.hidden),
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-      })),
+      cloud.plushes.map(async (row) => {
+        const local = localPlushes.get(row.id);
+        if (local && local.updatedAt > row.updated_at) return local;
+        return {
+          ...local,
+          id: row.id,
+          name: row.name,
+          icon: row.has_icon ? await imageBlob(row.id, "plush") : undefined,
+          iconCrop:
+            row.icon_crop_x !== null &&
+            row.icon_crop_y !== null &&
+            row.icon_crop_zoom !== null
+              ? {
+                  x: row.icon_crop_x,
+                  y: row.icon_crop_y,
+                  zoom: row.icon_crop_zoom,
+                }
+              : undefined,
+          themeColor: row.theme_color ?? undefined,
+          hidden: Boolean(row.hidden),
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
+      }),
     ),
   );
 

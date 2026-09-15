@@ -8,6 +8,7 @@ export interface Settings {
   imageQuality: number;
   schemaVersion: number;
   started: boolean;
+  updatedAt?: string;
 }
 export interface Plush {
   id: string;

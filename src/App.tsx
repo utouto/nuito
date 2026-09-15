@@ -29,6 +29,7 @@ import {
   saveCloudPost,
   syncCloudPosts,
 } from "./cloud-posts";
+import { saveCloudJournal, saveCloudPlush, saveCloudSettings, syncCloudProfile } from "./cloud-profile";
 import {
   effectiveLogicalDate,
   formatDate,
@@ -534,7 +535,10 @@ export default function App() {
     useState<CloudSaveStatus>("checking");
   useEffect(() => {
     void syncCloudPosts()
-      .then((enabled) => setCloudSaveStatus(enabled ? "cloud" : "local"))
+      .then(async (enabled) => {
+        if (enabled) await syncCloudProfile();
+        setCloudSaveStatus(enabled ? "cloud" : "local");
+      })
       .catch(() => {
         setCloudSaveStatus("error");
         setCloudError(
@@ -624,7 +628,7 @@ export default function App() {
             onOpen={(historyDate) => openJournal(historyDate, "history")}
           />
         ) : null}
-        {view === "plushes" ? <Plushes plushes={plushes} /> : null}
+        {view === "plushes" ? <Plushes plushes={plushes} cloudEnabled={cloudEnabled} /> : null}
         {view === "settings" ? (
           <SettingsView
             settings={settings}
@@ -659,6 +663,7 @@ export default function App() {
                 : `${formatDate(date)}の日記`
             }
             showDate={journalSource === "today"}
+            cloudEnabled={cloudEnabled}
             onEdit={openEditor}
           />
         ) : null}
@@ -1060,7 +1065,7 @@ export function History({
     </>
   );
 }
-export function Plushes({ plushes }: { plushes: Plush[] }) {
+export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; cloudEnabled?: boolean }) {
   const defaultOpaqueThemeColor = "#9a5438";
   const themeColorName = useId();
   const [editing, setEditing] = useState<Plush>();
@@ -1109,7 +1114,7 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
   async function save() {
     if (!name.trim()) return;
     const now = new Date().toISOString();
-    await db.plushes.put({
+    const value: Plush = {
       id: editing?.id ?? crypto.randomUUID(),
       name: name.trim(),
       icon,
@@ -1118,8 +1123,19 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
       hidden: editing?.hidden ?? false,
       createdAt: editing?.createdAt ?? now,
       updatedAt: now,
-    });
-    edit();
+    };
+    setBusy(true);
+    setError("");
+    try {
+      const savedToCloud = await saveCloudPlush(value);
+      if (cloudEnabled && !savedToCloud) throw new Error("cloud_session_expired");
+      await db.plushes.put(value);
+      edit();
+    } catch {
+      setError("ぬいを保存できませんでした。通信状態を確認して、もう一度お試しください。");
+    } finally {
+      setBusy(false);
+    }
   }
   async function remove() {
     if (
@@ -1326,12 +1342,21 @@ export function SettingsView({
       )
     )
       return;
-    await db.settings.put({
+    const value: Settings = {
       ...settings,
       dayBoundaryTime: boundary,
       journalPromptTime: prompt,
-    });
-    setMessage("設定を保存しました。");
+      updatedAt: new Date().toISOString(),
+    };
+    setError("");
+    try {
+      const savedToCloud = await saveCloudSettings(value);
+      if (cloudEnabled && !savedToCloud) throw new Error("cloud_session_expired");
+      await db.settings.put(value);
+      setMessage("設定を保存しました。");
+    } catch {
+      setError("設定を保存できませんでした。通信状態を確認して、もう一度お試しください。");
+    }
   }
   async function clear() {
     if (
@@ -1361,7 +1386,7 @@ export function SettingsView({
           {cloudSaveStatus === "checking"
             ? "保存状態を確認しています。"
             : cloudSaveStatus === "cloud"
-              ? "LINEログイン中です。投稿と写真はサーバーにも保存され、このブラウザにも保持されます。"
+              ? "LINEログイン中です。おもいで、写真、ぬい、日記、設定はサーバーにも保存され、このブラウザにも保持されます。"
               : cloudSaveStatus === "error"
                 ? "保存状態を確認できませんでした。通信状態を確認してから、もう一度アプリを開いてください。"
                 : "LINEログインしていないため、現在はこのブラウザ内だけに保存されています。ブラウザデータの削除、端末の故障・紛失時には復元できない可能性があります。"}
@@ -1391,6 +1416,7 @@ export function SettingsView({
           設定を保存
         </button>
         {message ? <p role="status">{message}</p> : null}
+        {error ? <p className="error" role="alert">{error}</p> : null}
       </section>
       <section className="danger">
         <h2>すべてのデータを削除</h2>
@@ -1398,7 +1424,6 @@ export function SettingsView({
         {cloudEnabled ? (
           <small>LINEアカウント連携とクラウド上の投稿・画像も削除します。</small>
         ) : null}
-        {error ? <p className="error" role="alert">{error}</p> : null}
       </section>
       <section className="legal-links settings-links" aria-label="法務情報">
         <button onClick={() => onLegal("privacy")}>プライバシーポリシー</button>
@@ -1837,6 +1862,7 @@ export function JournalView({
   journal,
   title = "きょうの日記",
   showDate = true,
+  cloudEnabled = false,
   onEdit,
 }: {
   date: string;
@@ -1845,10 +1871,12 @@ export function JournalView({
   journal?: Journal;
   title?: string;
   showDate?: boolean;
+  cloudEnabled?: boolean;
   onEdit: (p: Post) => void;
 }) {
   const [body, setBody] = useState(journal?.body ?? "");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const names = [
     ...new Set(
       posts
@@ -1868,14 +1896,22 @@ export function JournalView({
   async function save() {
     if (body.length > 1000) return;
     const now = new Date().toISOString();
-    await db.journals.put({
+    const value: Journal = {
       logicalDate: date,
       body,
       createdAt: journal?.createdAt ?? now,
       updatedAt: now,
       lastPostChangeAtAtSave: latest,
-    });
-    setMessage("日記を保存しました。");
+    };
+    setError("");
+    try {
+      const savedToCloud = await saveCloudJournal(value);
+      if (cloudEnabled && !savedToCloud) throw new Error("cloud_session_expired");
+      await db.journals.put(value);
+      setMessage("日記を保存しました。");
+    } catch {
+      setError("日記を保存できませんでした。通信状態を確認して、もう一度お試しください。");
+    }
   }
   return (
     <section className="journal-view" aria-labelledby="journal-heading">
@@ -1930,6 +1966,7 @@ export function JournalView({
           日記を保存
         </button>
         {message ? <p role="status">{message}</p> : null}
+        {error ? <p className="error" role="alert">{error}</p> : null}
         {journal ? (
           <small>
             最終更新: {new Date(journal.updatedAt).toLocaleString("ja-JP")}
