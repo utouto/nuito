@@ -7,7 +7,7 @@
 | 利用開始 | FR-001〜FR-006 | SC-01 | AppMetadata, UserSettings | AC-001, AC-002 |
 | LINE認証・招待 | FR-004, FR-006, FR-009 | SC-01 | User, AuthAttempt, Session | AC-004 |
 | 法務情報 | FR-007〜FR-008 | SC-01, SC-08, SC-10, SC-11 | なし | AC-003 |
-| ぬいぐるみ | FR-010〜FR-019 | SC-07, SC-03 | Plush, PostPlush | AC-001 |
+| ぬいぐるみ | FR-010〜FR-019 | SC-07, SC-03 | Plush, PostPlush | AC-001, AC-005 |
 | 投稿本文 | FR-020〜FR-023 | SC-03 | Post | AC-010 |
 | 投稿写真 | FR-024〜FR-025, FR-040〜FR-054 | SC-03, SC-05 | PostImage | AC-011, AC-012 |
 | 行動日時 | FR-026〜FR-028, FR-100〜FR-107 | SC-03, SC-08 | Post, UserSettings | AC-013, AC-020〜AC-022 |

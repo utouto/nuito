@@ -22,6 +22,9 @@
 | id | UUID/string | Yes | 一意なID |
 | name | string | Yes | 表示名 |
 | iconImageId | string/null | No | アイコン画像 |
+| iconCropX | number | No | 円形表示の横位置。0〜100、初期値50 |
+| iconCropY | number | No | 円形表示の縦位置。0〜100、初期値50 |
+| iconZoom | number | No | 円形表示の拡大率。1〜3、初期値1 |
 | isHidden | boolean | Yes | 新規選択肢から非表示にするか |
 | createdAt | datetime | Yes | 作成日時 |
 | updatedAt | datetime | Yes | 更新日時 |
@@ -29,6 +32,8 @@
 ### 制約
 
 - 名前は空文字不可。
+- アイコンの位置と拡大率は表示用設定とし、元画像Blobの縦横比と内容を変更しない。
+- 既存データに表示用設定がない場合は、中央位置・拡大率1として表示する。
 - 非表示にしても、過去のPostPlushを削除しない。
 - 完全削除を行う場合の過去表示は未決事項とする。
 
