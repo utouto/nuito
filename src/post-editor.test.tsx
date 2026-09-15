@@ -5,10 +5,16 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Plushes, PostCard, PostEditor, Today } from "./App";
 import type { Plush, Post, Settings } from "./types";
 
+const { mapSetView, leafletMarker } = vi.hoisted(() => ({
+  mapSetView: vi.fn(),
+  leafletMarker: vi.fn(),
+}));
+
 vi.mock("leaflet", () => ({
   default: {
     map: () => ({
-      setView() {
+      setView(...args: unknown[]) {
+        mapSetView(...args);
         return this;
       },
       on: vi.fn(),
@@ -22,17 +28,20 @@ vi.mock("leaflet", () => ({
         return this;
       },
     }),
-    marker: () => ({
-      addTo() {
-        return this;
-      },
-      on() {
-        return this;
-      },
-      getLatLng() {
-        return { lat: 35.6812, lng: 139.7671 };
-      },
-    }),
+    marker: (...args: unknown[]) => {
+      leafletMarker(...args);
+      return {
+        addTo() {
+          return this;
+        },
+        on() {
+          return this;
+        },
+        getLatLng() {
+          return { lat: 35.6812, lng: 139.7671 };
+        },
+      };
+    },
   },
 }));
 
@@ -193,10 +202,22 @@ describe("投稿の場所選択", () => {
     });
     const view = render(<Subject />);
     const form = within(view.container);
+    const locationButton = form.getByRole("button", {
+      name: "現在地付近を表示",
+    });
 
-    fireEvent.click(form.getByRole("button", { name: "現在地付近を表示" }));
+    expect(locationButton.closest(".map-stage")).toContainElement(
+      form.getByLabelText("場所を選択する地図"),
+    );
+
+    fireEvent.click(locationButton);
 
     expect(getCurrentPosition).toHaveBeenCalledOnce();
+    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 13);
+    expect(leafletMarker).toHaveBeenLastCalledWith(
+      [35.6812, 139.7671],
+      expect.objectContaining({ draggable: true }),
+    );
     expect(form.getByRole("textbox", { name: "場所名" })).toHaveValue("現在地");
     expect(form.getByLabelText("場所を選択する地図")).toBeInTheDocument();
     expect(

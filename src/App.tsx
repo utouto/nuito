@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import L from "leaflet";
 import { db, deleteAllData, getSettings } from "./db";
@@ -107,10 +107,12 @@ export function DayMap({
   posts,
   pick,
   onPick,
+  control,
 }: {
   posts: Post[];
   pick?: Place;
   onPick?: (p: Place) => void;
+  control?: ReactNode;
 }) {
   const element = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -180,11 +182,14 @@ export function DayMap({
   }, [posts, pick, onPick]);
   return (
     <div className="map-wrap">
-      <div
-        ref={element}
-        className="map"
-        aria-label={onPick ? "場所を選択する地図" : "日別地図"}
-      />
+      <div className="map-stage">
+        <div
+          ref={element}
+          className="map"
+          aria-label={onPick ? "場所を選択する地図" : "日別地図"}
+        />
+        {control ? <div className="map-control">{control}</div> : null}
+      </div>
       {!navigator.onLine ? (
         <p className="map-note">
           オフラインのため背景地図を表示できません。記録済み地点のみ表示します。
@@ -1237,11 +1242,23 @@ export function PostEditor({
         </fieldset>
         <fieldset>
           <legend>場所（任意）</legend>
-          <button onClick={current} disabled={busy}>
-            現在地付近を表示
-          </button>
           <p>地図をタップするか、ピンをドラッグして場所を指定できます。</p>
-          <DayMap posts={[]} pick={place} onPick={setPlace} />
+          <DayMap
+            posts={[]}
+            pick={place}
+            onPick={setPlace}
+            control={
+              <button
+                className="map-location-button"
+                onClick={current}
+                disabled={busy}
+                aria-label="現在地付近を表示"
+              >
+                <span aria-hidden="true">◎</span>
+                <span>{busy ? "取得中…" : "現在地"}</span>
+              </button>
+            }
+          />
           {place ? (
             <>
               <label>
