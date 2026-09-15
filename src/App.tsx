@@ -75,13 +75,14 @@ function postMarkerBackground(post: Post, plushes: Plush[]): string {
   ];
   if (!colors.length) return "#687076";
   if (colors.length === 1) return colors[0];
-  const width = 100 / colors.length;
-  const blend = Math.min(4, width * 0.15);
+  const slice = 360 / colors.length;
+  const blend = Math.min(4, slice * 0.15);
   const stops = colors.flatMap((color, index) => [
-    `${color} ${index === 0 ? 0 : index * width + blend}%`,
-    `${color} ${index === colors.length - 1 ? 100 : (index + 1) * width - blend}%`,
+    `${color} ${index === 0 ? 0 : index * slice + blend}deg`,
+    `${color} ${(index + 1) * slice - blend}deg`,
   ]);
-  return `linear-gradient(135deg, ${stops.join(", ")})`;
+  stops.push(`${colors[0]} 360deg`);
+  return `conic-gradient(from -2deg, ${stops.join(", ")})`;
 }
 
 function curvedRoute(points: L.LatLngTuple[]): L.LatLngTuple[] {

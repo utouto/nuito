@@ -492,7 +492,7 @@ describe("日別地図の投稿ピン", () => {
     expect(getCurrentPosition).not.toHaveBeenCalled();
   });
 
-  it("同行した複数のぬいの色を広く残して境界だけグラデーション表示する", () => {
+  it("同行した複数のぬいの色を扇形に分けて境界だけなじませる", () => {
     render(
       <Today
         date="2026-09-14"
@@ -524,7 +524,7 @@ describe("日別地図の投稿ピン", () => {
     expect(leafletDivIcon).toHaveBeenCalledWith(
       expect.objectContaining({
         html: expect.stringMatching(
-          /<span style="background:linear-gradient\(135deg, #3a7bd5 0%, #3a7bd5 46%, #d55a87 54%, #d55a87 100%\)"><i style="background:linear-gradient\(135deg, #3a7bd5 0%, #3a7bd5 46%, #d55a87 54%, #d55a87 100%\)"><\/i><\/span>/,
+          /<span style="background:conic-gradient\(from -2deg, #3a7bd5 0deg, #3a7bd5 176deg, #d55a87 184deg, #d55a87 356deg, #3a7bd5 360deg\)"><i style="background:conic-gradient\(from -2deg, #3a7bd5 0deg, #3a7bd5 176deg, #d55a87 184deg, #d55a87 356deg, #3a7bd5 360deg\)"><\/i><\/span>/,
         ),
       }),
     );
