@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { Plushes, PostCard, PostEditor, Today } from "./App";
+import { JournalView, Plushes, PostCard, PostEditor, Today } from "./App";
 import type { Plush, Post, Settings } from "./types";
 
 const {
@@ -464,6 +464,33 @@ describe("日別地図の投稿ピン", () => {
           /<span style="background:linear-gradient\(135deg, #3a7bd5, #d55a87\)"><i style="background:linear-gradient\(135deg, #3a7bd5, #d55a87\)"><\/i><\/span>/,
         ),
       }),
+    );
+  });
+});
+
+describe("きょうの日記", () => {
+  it("きょう画面と共通する地図主体のレイアウトで表示する", () => {
+    const view = render(
+      <JournalView
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        onEdit={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
+
+    expect(
+      view.container.querySelector(".journal-hero .journal-map"),
+    ).toBeVisible();
+    expect(
+      view.container.querySelector(".journal-heading-card"),
+    ).toHaveTextContent("2026年9月14日");
+    expect(
+      within(view.container).getByRole("region", { name: "この日の投稿" }),
+    ).toHaveTextContent("もとのひとこと");
+    expect(view.container.querySelector(".journal-compose")).toHaveTextContent(
+      "きょうの気持ちを残す",
     );
   });
 });

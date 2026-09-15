@@ -16,7 +16,7 @@
 | 地図非公開 | FR-080〜FR-084, FR-194 | SC-05, SC-09 | なし | AC-060 |
 | きょう画面 | FR-090〜FR-098 | SC-02 | Post, DailyJournal, UserSettings | AC-040〜AC-044 |
 | 日記案内時刻 | FR-110〜FR-116 | SC-02, SC-08 | UserSettings | AC-040〜AC-042 |
-| きょうの日記 | FR-120〜FR-154 | SC-05 | DailyJournal, Post, PostImage, Location | AC-050〜AC-053 |
+| きょうの日記 | FR-120〜FR-155 | SC-05 | DailyJournal, Post, PostImage, Location | AC-050〜AC-054 |
 | 履歴 | FR-160〜FR-167 | SC-06, SC-05 | Post, DailyJournal | AC-080 |
 | ローカル保存 | FR-170〜FR-181 | SC-01, SC-08 | 全データ | AC-002, AC-072 |
 | 印刷・PDF | FR-190〜FR-196 | SC-09 | DailyJournal, Post, PostImage | 将来追加 |

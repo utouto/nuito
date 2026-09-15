@@ -1527,7 +1527,7 @@ export function PostEditor({
   );
 }
 
-function JournalView({
+export function JournalView({
   date,
   posts,
   plushes,
@@ -1573,24 +1573,30 @@ function JournalView({
     setMessage("日記を保存しました。");
   }
   return (
-    <>
-      <button className="back" onClick={onBack}>
-        ← 戻る
-      </button>
-      <p className="eyebrow">きょうの日記</p>
-      <h1>{formatDate(date)}</h1>
-      {names.length ? (
-        <p className="lead">{names.join("・")}とおでかけ</p>
-      ) : null}
+    <section className="journal-view" aria-labelledby="journal-heading">
+      <div className="journal-hero">
+        {posts.some((p) => p.place) ? (
+          <DayMap posts={posts} plushes={plushes} className="journal-map" />
+        ) : (
+          <div className="journal-map-empty">
+            場所付きの投稿がないため、地図は空です。
+          </div>
+        )}
+        <button className="back journal-back" onClick={onBack}>
+          ← 戻る
+        </button>
+        <div className="journal-heading-card">
+          <p className="eyebrow">きょうの日記</p>
+          <h1 id="journal-heading">{formatDate(date)}</h1>
+          {names.length ? (
+            <p className="lead">{names.join("・")}とおでかけ</p>
+          ) : null}
+        </div>
+      </div>
       {changed ? (
         <p className="notice">日記の保存後に記録が更新されています。</p>
       ) : null}
-      {posts.some((p) => p.place) ? (
-        <DayMap posts={posts} plushes={plushes} />
-      ) : (
-        <div className="empty">場所付きの投稿がないため、地図は空です。</div>
-      )}
-      <section className="stack">
+      <section className="stack journal-posts" aria-label="この日の投稿">
         {posts.map((p) => (
           <PostCard
             key={p.id}
@@ -1600,8 +1606,9 @@ function JournalView({
           />
         ))}
       </section>
-      <section className="form-card">
-        <h2>一日のまとめ</h2>
+      <section className="form-card journal-compose">
+        <p className="eyebrow">一日のまとめ</p>
+        <h2>きょうの気持ちを残す</h2>
         <textarea
           rows={8}
           value={body}
@@ -1625,6 +1632,6 @@ function JournalView({
           </small>
         ) : null}
       </section>
-    </>
+    </section>
   );
 }
