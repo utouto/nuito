@@ -96,6 +96,20 @@ function Subject({ postToEdit }: { postToEdit?: Post }) {
 }
 
 describe("投稿編集", () => {
+  it("新規投稿では現在時刻が選ばれ、3つの行動時刻指定方法を選べる", () => {
+    const view = render(<Subject />);
+    const form = within(view.container);
+
+    expect(form.getByRole("radio", { name: "現在時刻" })).toBeChecked();
+    expect(form.queryByLabelText("行動日時")).not.toBeInTheDocument();
+
+    fireEvent.click(form.getByRole("radio", { name: "時刻を設定する" }));
+    expect(form.getByLabelText("行動日時")).toBeVisible();
+
+    fireEvent.click(form.getByRole("radio", { name: "時刻を設定しない" }));
+    expect(form.getByLabelText("論理日付")).toBeVisible();
+  });
+
   it("きょう画面の編集ボタンから対象の投稿を渡す", () => {
     const onEdit = vi.fn();
     render(
@@ -115,25 +129,28 @@ describe("投稿編集", () => {
   });
 
   it("フォームの表示後に編集対象が届いても元の内容を反映する", () => {
-    const { rerender } = render(<Subject />);
+    const view = render(<Subject />);
+    const { rerender } = view;
+    const form = within(view.container);
 
     rerender(<Subject postToEdit={post} />);
 
-    expect(screen.getByRole("textbox", { name: /ひとこと/ })).toHaveValue(
+    expect(form.getByRole("textbox", { name: /ひとこと/ })).toHaveValue(
       "もとのひとこと",
     );
-    expect(screen.getByLabelText("行動日時")).toHaveValue(
+    expect(form.getByRole("radio", { name: "時刻を設定する" })).toBeChecked();
+    expect(form.getByLabelText("行動日時")).toHaveValue(
       "2026-09-14T15:30",
     );
-    expect(screen.getByRole("checkbox", { name: "くま" })).toBeChecked();
-    expect(screen.getByAltText("選択写真 1")).toHaveAttribute(
+    expect(form.getByRole("checkbox", { name: "くま" })).toBeChecked();
+    expect(form.getByAltText("選択写真 1")).toHaveAttribute(
       "src",
       "blob:post-image",
     );
-    expect(screen.getByRole("textbox", { name: "場所名" })).toHaveValue(
+    expect(form.getByRole("textbox", { name: "場所名" })).toHaveValue(
       "東京駅",
     );
-    expect(screen.getByText("投稿を編集")).toBeInTheDocument();
+    expect(form.getByText("投稿を編集")).toBeInTheDocument();
   });
 });
 

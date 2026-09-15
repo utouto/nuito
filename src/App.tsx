@@ -936,8 +936,12 @@ export function PostEditor({
   settings: Settings;
   onDone: () => void;
 }) {
+  type TimeChoice = "current" | "manual" | "unknown";
   const [body, setBody] = useState(post?.body ?? "");
   const [mode, setMode] = useState(post?.timeMode ?? "known");
+  const [timeChoice, setTimeChoice] = useState<TimeChoice>(
+    post ? (post.timeMode === "known" ? "manual" : "unknown") : "current",
+  );
   const [dateTime, setDateTime] = useState(
     post?.occurredLocalDateTime ?? localDateTime(),
   );
@@ -952,6 +956,9 @@ export function PostEditor({
   useEffect(() => {
     setBody(post?.body ?? "");
     setMode(post?.timeMode ?? "known");
+    setTimeChoice(
+      post ? (post.timeMode === "known" ? "manual" : "unknown") : "current",
+    );
     setDateTime(post?.occurredLocalDateTime ?? localDateTime());
     setManualDate(
       post?.manualLogicalDate ?? todayLogicalDate(settings.dayBoundaryTime),
@@ -1028,13 +1035,16 @@ export function PostEditor({
     setBusy(true);
     setError("");
     const now = new Date().toISOString();
+    const occurredLocalDateTime =
+      timeChoice === "current" ? localDateTime() : dateTime;
     const value: Post = {
       id: post?.id ?? crypto.randomUUID(),
       body,
       plushIds: selected,
       images,
       timeMode: mode,
-      occurredLocalDateTime: mode === "known" ? dateTime : undefined,
+      occurredLocalDateTime:
+        mode === "known" ? occurredLocalDateTime : undefined,
       manualLogicalDate: mode === "unknown" ? manualDate : undefined,
       place,
       createdAt: post?.createdAt ?? now,
@@ -1110,33 +1120,56 @@ export function PostEditor({
           <label className="check">
             <input
               type="radio"
-              checked={mode === "known"}
-              onChange={() => setMode("known")}
+              name="time-choice"
+              checked={timeChoice === "current"}
+              onChange={() => {
+                setTimeChoice("current");
+                setMode("known");
+                setDateTime(localDateTime());
+              }}
             />
-            時刻あり
+            現在時刻
           </label>
           <label className="check">
             <input
               type="radio"
-              checked={mode === "unknown"}
-              onChange={() => setMode("unknown")}
+              name="time-choice"
+              checked={timeChoice === "manual"}
+              onChange={() => {
+                setTimeChoice("manual");
+                setMode("known");
+              }}
             />
-            時間不明
+            時刻を設定する
           </label>
-          {mode === "known" ? (
+          <label className="check">
+            <input
+              type="radio"
+              name="time-choice"
+              checked={timeChoice === "unknown"}
+              onChange={() => {
+                setTimeChoice("unknown");
+                setMode("unknown");
+              }}
+            />
+            時刻を設定しない
+          </label>
+          {timeChoice === "manual" ? (
             <input
               aria-label="行動日時"
               type="datetime-local"
               value={dateTime}
               onChange={(e) => setDateTime(e.target.value)}
             />
-          ) : (
+          ) : timeChoice === "unknown" ? (
             <input
               aria-label="論理日付"
               type="date"
               value={manualDate}
               onChange={(e) => setManualDate(e.target.value)}
             />
+          ) : (
+            <small>保存時の現在日時を記録します。</small>
           )}
         </fieldset>
         <fieldset>
