@@ -13,6 +13,7 @@ type ImageInput = {
   byteSize: number;
   displayOrder: number;
   isCover: boolean;
+  pinCrop?: { x: number; y: number; zoom: number };
 };
 
 type PlushInput = {
@@ -158,6 +159,13 @@ function validPost(value: unknown): value is PostInput {
       image.byteSize < 1 ||
       image.displayOrder !== index ||
       typeof image.isCover !== "boolean"
+      || (image.pinCrop !== undefined &&
+        (!Number.isFinite(image.pinCrop.x) ||
+          !Number.isFinite(image.pinCrop.y) ||
+          !Number.isFinite(image.pinCrop.zoom) ||
+          image.pinCrop.x < 0 || image.pinCrop.x > 100 ||
+          image.pinCrop.y < 0 || image.pinCrop.y > 100 ||
+          image.pinCrop.zoom < 1 || image.pinCrop.zoom > 4))
     )
       return false;
     imageIds.add(image.id);
@@ -357,7 +365,7 @@ async function savePost(
       const keys = objectKeys(userId, postId, image.id, input.updatedAt);
       statements.push(
         env.DB.prepare(
-          "INSERT INTO post_images(id,post_id,full_object_key,thumbnail_object_key,display_order,is_cover,width,height,mime_type,byte_size,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO post_images(id,post_id,full_object_key,thumbnail_object_key,display_order,is_cover,width,height,mime_type,byte_size,created_at,pin_crop_x,pin_crop_y,pin_crop_zoom) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         ).bind(
           image.id,
           postId,
@@ -370,6 +378,9 @@ async function savePost(
           image.mimeType,
           image.byteSize,
           input.createdAt,
+          image.pinCrop?.x ?? null,
+          image.pinCrop?.y ?? null,
+          image.pinCrop?.zoom ?? null,
         ),
       );
     });
@@ -411,7 +422,7 @@ async function listPosts(env: PostsEnv, userId: string) {
       .bind(userId)
       .all<Record<string, unknown>>(),
     env.DB.prepare(
-      "SELECT pi.id,pi.post_id,pi.display_order,pi.is_cover,pi.width,pi.height,pi.mime_type,pi.byte_size FROM post_images pi JOIN posts p ON p.id=pi.post_id WHERE p.user_id=? ORDER BY pi.display_order",
+      "SELECT pi.id,pi.post_id,pi.display_order,pi.is_cover,pi.width,pi.height,pi.mime_type,pi.byte_size,pi.pin_crop_x,pi.pin_crop_y,pi.pin_crop_zoom FROM post_images pi JOIN posts p ON p.id=pi.post_id WHERE p.user_id=? ORDER BY pi.display_order",
     )
       .bind(userId)
       .all<Record<string, unknown>>(),

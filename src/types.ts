@@ -41,6 +41,7 @@ export interface PostImage {
   byteSize: number;
   displayOrder: number;
   isCover: boolean;
+  pinCrop?: PlushIconCrop;
 }
 export interface Post {
   id: string;

@@ -43,6 +43,9 @@ type CloudImageRow = {
   height: number;
   mime_type: string;
   byte_size: number;
+  pin_crop_x: number | null;
+  pin_crop_y: number | null;
+  pin_crop_zoom: number | null;
 };
 
 type CloudPosts = {
@@ -110,6 +113,7 @@ export async function saveCloudPost(post: Post, plushes: Plush[]) {
         byteSize: image.byteSize,
         displayOrder: image.displayOrder,
         isCover: image.isCover,
+        pinCrop: image.pinCrop,
       })),
     }),
   );
@@ -260,6 +264,16 @@ export async function syncCloudPosts() {
                 byteSize: image.byte_size,
                 displayOrder: image.display_order,
                 isCover: Boolean(image.is_cover),
+                pinCrop:
+                  typeof image.pin_crop_x === "number" &&
+                  typeof image.pin_crop_y === "number" &&
+                  typeof image.pin_crop_zoom === "number"
+                    ? {
+                        x: image.pin_crop_x,
+                        y: image.pin_crop_y,
+                        zoom: image.pin_crop_zoom,
+                      }
+                    : undefined,
               })),
             );
       return {
