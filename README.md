@@ -22,6 +22,8 @@ npm run dev
 
 ログインせずに利用する場合、データは同じブラウザ・同じoriginのIndexedDBへ保存されます。LINEログイン中は投稿メタデータをD1、投稿画像・サムネイル・投稿に紐づくぬいアイコンを非公開R2にも保存し、IndexedDBを端末側キャッシュとして利用します。日記本文、設定、投稿に使われていないぬいは現時点では端末内保存です。
 
+設定画面の全データ削除は、LINEログイン中の場合、端末内データに加えてクラウド上の投稿・画像・session・アカウント連携も削除します。
+
 LINEログインをローカルで試す場合は `.dev.vars.example` を `.dev.vars` へコピーし、実値を設定します。`.dev.vars` はGit管理されません。新規登録には `INVITE_PHRASE` の一致が必要で、登録済みLINEアカウントはあいことばなしで再ログインできます。本番設定は [LINEログイン設定手順](docs/operations/line-login-setup.md) を参照してください。
 
 Cloudflareへ初回公開する場合は、資源作成、staging確認、production公開、rollbackまでをまとめた[Cloudflare初回公開手順](docs/operations/cloudflare-production-release.md)に従ってください。本番用Wrangler設定はexampleから作成し、環境固有IDを含む実ファイルはGit管理しません。

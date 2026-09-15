@@ -42,6 +42,14 @@ HttpOnly・Secure・SameSite=Lax cookieのsessionを確認または破棄しま�
 
 所有者確認後、投稿に紐づいて同期されたぬいアイコンを非公開R2から返します。
 
+### `DELETE /api/plushes/:plushId`
+
+所有者のぬいを削除します。過去の投稿は保持し、`post_plushes`の関連とR2上のアイコンを削除します。同じIDを再度削除しても成功として扱います。
+
+### `DELETE /api/account`
+
+認証済み利用者のD1データを外部キーcascadeで削除し、所有者prefixのR2オブジェクトを削除してsession cookieを破棄します。R2削除だけが失敗した場合は`cleanupPending: true`を返します。
+
 ### その他の `/api/*`
 
 未実装のAPIは`501`を返します。日記本文、設定、投稿に紐づかないぬいぐるみの同期APIはまだありません。

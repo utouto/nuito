@@ -74,6 +74,8 @@ curl --fail-with-body https://<STAGING_HOST>/api/health
 - ログイン中に投稿した写真付きのおもいでがブラウザ再起動後も表示される
 - 同じLINEアカウントで別ブラウザからログインし、投稿と画像を取得できる
 - 未認証または別アカウントから投稿・画像APIへアクセスできない
+- 登録済みのぬいを削除しても過去のおもいでが残り、ぬいとの関連だけが外れる
+- 全データ削除後にアカウントsessionが無効となり、D1データとR2画像が削除される
 - Worker logにOAuth code、token、LINE user ID、あいことばが出ない
 
 ## 6. production公開
