@@ -19,12 +19,14 @@ const {
   leafletMarker,
   leafletPolyline,
   mapOn,
+  mapPanBy,
   mapSetView,
   zoomSetPosition,
 } = vi.hoisted(() => ({
   attributionSetPosition: vi.fn(),
   leafletMap: vi.fn(),
   mapOn: vi.fn(),
+  mapPanBy: vi.fn(),
   mapSetView: vi.fn(),
   zoomSetPosition: vi.fn(),
   leafletDivIcon: vi.fn((options) => options),
@@ -44,6 +46,7 @@ vi.mock("leaflet", () => ({
           return this;
         },
         getZoom: () => 11,
+        panBy: mapPanBy,
         on: mapOn,
         fitBounds: vi.fn(),
         remove: vi.fn(),
@@ -307,11 +310,40 @@ describe("きょうの投稿ドロワー", () => {
     );
     const page = within(view.container);
     fireEvent.click(page.getByRole("button", { name: "投稿ドロワーを開く" }));
+    vi.spyOn(
+      page.getByLabelText("日別地図"),
+      "getBoundingClientRect",
+    ).mockReturnValue({
+      top: 0,
+      right: 400,
+      bottom: 800,
+      left: 0,
+      width: 400,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => undefined,
+    });
+    vi.spyOn(
+      view.container.querySelector("#today-post-drawer")!,
+      "getBoundingClientRect",
+    ).mockReturnValue({
+      top: 300,
+      right: 400,
+      bottom: 800,
+      left: 0,
+      width: 400,
+      height: 500,
+      x: 0,
+      y: 300,
+      toJSON: () => undefined,
+    });
 
     const postCard = page.getByLabelText("東京駅を地図の中心に表示");
     fireEvent.click(postCard);
 
     expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 11);
+    expect(mapPanBy).toHaveBeenLastCalledWith([0, 250], { animate: false });
     expect(postCard).toHaveClass("selected");
   });
 

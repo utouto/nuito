@@ -185,6 +185,7 @@ export function DayMap({
   className,
   centerOnCurrentWhenEmpty = false,
   focusPostId,
+  occludedById,
 }: {
   posts: Post[];
   plushes?: Plush[];
@@ -194,6 +195,7 @@ export function DayMap({
   className?: string;
   centerOnCurrentWhenEmpty?: boolean;
   focusPostId?: string;
+  occludedById?: string;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | undefined>(undefined);
@@ -306,7 +308,24 @@ export function DayMap({
       [focused.place.latitude, focused.place.longitude],
       mapInstance.current.getZoom(),
     );
-  }, [focusPostId, posts]);
+    const mapBounds = element.current?.getBoundingClientRect();
+    const occluderBounds = occludedById
+      ? element.current
+          ?.closest(".today-map-view")
+          ?.querySelector<HTMLElement>(`#${occludedById}`)
+          ?.getBoundingClientRect()
+      : undefined;
+    if (!mapBounds || !occluderBounds) return;
+    const overlap = Math.min(
+      mapBounds.height,
+      Math.max(
+        0,
+        mapBounds.bottom - Math.max(mapBounds.top, occluderBounds.top),
+      ),
+    );
+    if (overlap > 0)
+      mapInstance.current.panBy([0, overlap / 2], { animate: false });
+  }, [focusPostId, occludedById, posts]);
   return (
     <div className={className ? `map-wrap ${className}` : "map-wrap"}>
       <div className="map-stage">
@@ -779,6 +798,7 @@ export function Today({
         className="today-map"
         centerOnCurrentWhenEmpty
         focusPostId={focusedPostId}
+        occludedById="today-post-drawer"
       />
       <div className="today-summary">
         <p className="eyebrow">きょう</p>
