@@ -53,7 +53,7 @@ describe("ぬいぐるみアイコン調整", () => {
     );
     expect(
       screen.getByAltText("円形アイコンのプレビュー"),
-    ).toBeInTheDocument();
+    ).toHaveAttribute("draggable", "false");
     expect(
       screen.getByAltText("円形アイコンのプレビュー").parentElement
         ?.parentElement,
@@ -69,5 +69,34 @@ describe("ぬいぐるみアイコン調整", () => {
       target: { value: "75" },
     });
     expect(onChange).toHaveBeenCalledWith({ x: 75, y: 50, zoom: 1 });
+  });
+
+  it("操作面での縦ドラッグを位置変更として通知する", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <PlushIconEditor
+        blob={new Blob(["image"], { type: "image/webp" })}
+        crop={DEFAULT_PLUSH_ICON_CROP}
+        onChange={onChange}
+        onApply={() => undefined}
+        onCancel={() => undefined}
+      />,
+    );
+    const surface = container.querySelector(
+      ".icon-gesture-surface",
+    ) as HTMLDivElement;
+    surface.setPointerCapture = vi.fn();
+    surface.getBoundingClientRect = vi.fn(
+      () =>
+        ({
+          width: 200,
+          height: 200,
+        }) as DOMRect,
+    );
+
+    fireEvent.pointerDown(surface, { pointerId: 1, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(surface, { pointerId: 1, clientX: 100, clientY: 140 });
+
+    expect(onChange).toHaveBeenLastCalledWith({ x: 50, y: 30, zoom: 1 });
   });
 });

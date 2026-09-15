@@ -237,6 +237,8 @@ h2 {
   max-width: none;
   object-fit: cover;
   transform: translate(-50%, -50%);
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 .icon-editor {
   display: grid;

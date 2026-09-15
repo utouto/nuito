@@ -42,7 +42,7 @@ export function PlushIcon({
   };
   return (
     <span className={`plush-icon ${className}`.trim()}>
-      {url ? <img src={url} alt={alt} style={style} /> : null}
+      {url ? <img src={url} alt={alt} style={style} draggable={false} /> : null}
     </span>
   );
 }
