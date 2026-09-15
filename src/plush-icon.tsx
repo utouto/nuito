@@ -150,7 +150,9 @@ export function PlushIconEditor({
           onPointerCancel={pointerEnd}
         >
           <PlushIcon blob={blob} crop={crop} alt="円形アイコンのプレビュー" />
-          <span aria-hidden="true">ドラッグ・ピンチで調整</span>
+          <span className="icon-gesture-hint" aria-hidden="true">
+            ドラッグ・ピンチで調整
+          </span>
         </div>
         <div className="icon-preview-details">
           <strong>プレビュー</strong>

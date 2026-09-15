@@ -62,6 +62,9 @@ describe("ぬいぐるみアイコン調整", () => {
       "icon-preview-details",
     );
     expect(screen.getByText(/ドラッグして位置/)).toBeInTheDocument();
+    expect(screen.getByText("ドラッグ・ピンチで調整")).toHaveClass(
+      "icon-gesture-hint",
+    );
     fireEvent.change(screen.getByRole("slider", { name: "横の位置" }), {
       target: { value: "75" },
     });
