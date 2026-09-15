@@ -40,7 +40,11 @@ HttpOnly・Secure・SameSite=Lax cookieのsessionを確認または破棄しま�
 
 ### `GET /api/plush-icons/:plushId`
 
-所有者確認後、投稿に紐づいて同期されたぬいアイコンを非公開R2から返します。
+所有者確認後、ぬいアイコンを非公開R2から返します。
+
+### `PUT /api/plushes/:plushId`
+
+`multipart/form-data`でぬいのmetadataと任意のアイコンを受け取り、投稿との関連がないぬいもD1と非公開R2へ保存します。同じIDは所有者本人だけが更新できます。
 
 ### `DELETE /api/plushes/:plushId`
 
@@ -50,9 +54,21 @@ HttpOnly・Secure・SameSite=Lax cookieのsessionを確認または破棄しま�
 
 認証済み利用者のD1データを外部キーcascadeで削除し、所有者prefixのR2オブジェクトを削除してsession cookieを破棄します。R2削除だけが失敗した場合は`cleanupPending: true`を返します。
 
+### `GET /api/profile-data`
+
+認証済み利用者の設定と日記を返します。初回ログインとアプリ起動時の端末キャッシュ同期に使用します。
+
+### `PUT /api/settings`
+
+一日の切り替え時刻、日記案内時刻、timezone、schema version、更新日時を検証して所有者の設定として保存します。
+
+### `PUT /api/journals/:logicalDate`
+
+論理日付、1000文字以内の本文、投稿変更日時、作成・更新日時を検証して所有者の日記として保存します。
+
 ### その他の `/api/*`
 
-未実装のAPIは`501`を返します。日記本文、設定、投稿に紐づかないぬいぐるみの同期APIはまだありません。
+未実装のAPIは`501`を返します。
 
 ## APIの安全要件
 
