@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import L from "leaflet";
 import { db, deleteAllData, getSettings } from "./db";
@@ -33,12 +33,13 @@ const geolocationOptions: PositionOptions = {
   enableHighAccuracy: true,
   timeout: 10000,
 };
+const defaultPlaceName = "ここで遊んだよ";
 
 function placeFromPosition(position: GeolocationPosition): Place {
   return {
     latitude: position.coords.latitude,
     longitude: position.coords.longitude,
-    name: "現在地",
+    name: defaultPlaceName,
     source: "current",
   };
 }
@@ -186,7 +187,7 @@ export function DayMap({
         onPick({
           latitude: e.latlng.lat,
           longitude: e.latlng.lng,
-          name: "地図で選んだ場所",
+          name: defaultPlaceName,
           source: "map",
         }),
       );
@@ -971,6 +972,7 @@ export function PostEditor({
   onDone: () => void;
 }) {
   type TimeChoice = "current" | "manual" | "unknown";
+  const placeRecordingName = useId();
   const [body, setBody] = useState(post?.body ?? "");
   const [mode, setMode] = useState(post?.timeMode ?? "known");
   const [timeChoice, setTimeChoice] = useState<TimeChoice>(
@@ -985,6 +987,7 @@ export function PostEditor({
   const [selected, setSelected] = useState<string[]>(post?.plushIds ?? []);
   const [images, setImages] = useState<PostImage[]>(post?.images ?? []);
   const [place, setPlace] = useState<Place | undefined>(post?.place);
+  const [recordPlace, setRecordPlace] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -1000,10 +1003,17 @@ export function PostEditor({
     setSelected(post?.plushIds ?? []);
     setImages(post?.images ?? []);
     setPlace(post?.place);
+    setRecordPlace(true);
     setError("");
   }, [post, settings.dayBoundaryTime]);
   useEffect(() => {
-    if (post || !navigator.geolocation || !navigator.permissions) return;
+    if (
+      post ||
+      !recordPlace ||
+      !navigator.geolocation ||
+      !navigator.permissions
+    )
+      return;
     let active = true;
     void navigator.permissions
       .query({ name: "geolocation" })
@@ -1028,7 +1038,7 @@ export function PostEditor({
     return () => {
       active = false;
     };
-  }, [post]);
+  }, [post, recordPlace]);
   const valid = body.trim() || images.length || place;
   async function filesChosen(files: FileList | null) {
     if (!files) return;
@@ -1136,6 +1146,54 @@ export function PostEditor({
         </p>
       ) : null}
       <section className="form-card">
+        <fieldset>
+          <legend>いっしょにいたぬい</legend>
+          {plushes.length ? (
+            <div className="plush-choices">
+              {plushes.map((p) => (
+                <label className="plush-choice" key={p.id}>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(p.id)}
+                    onChange={(e) =>
+                      setSelected(
+                        e.target.checked
+                          ? [...selected, p.id]
+                          : selected.filter((id) => id !== p.id),
+                      )
+                    }
+                  />
+                  <span className="plush-choice-icon" aria-hidden="true">
+                    {p.icon ? (
+                      <PlushIcon
+                        blob={p.icon}
+                        crop={p.iconCrop}
+                        alt=""
+                        themeColor={p.themeColor}
+                      />
+                    ) : (
+                      <span
+                        className="plush-icon plush-icon-fallback"
+                        style={{
+                          borderColor:
+                            p.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
+                        }}
+                      >
+                        ぬ
+                      </span>
+                    )}
+                    <span className="plush-choice-check">✓</span>
+                  </span>
+                  <span className="plush-choice-name">{p.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <small>
+              「ぬいたち」から登録できます。選択なしでも保存できます。
+            </small>
+          )}
+        </fieldset>
         <label>
           ひとこと
           <textarea
@@ -1229,84 +1287,64 @@ export function PostEditor({
           )}
         </fieldset>
         <fieldset>
-          <legend>いっしょにいたぬい</legend>
-          {plushes.length ? (
-            <div className="plush-choices">
-              {plushes.map((p) => (
-                <label className="plush-choice" key={p.id}>
+          <legend>場所（任意）</legend>
+          <label className="check">
+            <input
+              type="radio"
+              name={placeRecordingName}
+              checked={recordPlace}
+              onChange={() => setRecordPlace(true)}
+            />
+            場所を記録する
+          </label>
+          <label className="check">
+            <input
+              type="radio"
+              name={placeRecordingName}
+              checked={!recordPlace}
+              onChange={() => {
+                setRecordPlace(false);
+                setPlace(undefined);
+              }}
+            />
+            場所を記録しない
+          </label>
+          {recordPlace ? (
+            <>
+              <p>
+                地図をタップするか、ピンをドラッグして場所を指定できます。
+              </p>
+              <DayMap
+                posts={[]}
+                pick={place}
+                onPick={setPlace}
+                control={
+                  <button
+                    className="map-location-button"
+                    onClick={current}
+                    disabled={busy}
+                    aria-label="現在地付近を表示"
+                  >
+                    <span aria-hidden="true">◎</span>
+                    <span>{busy ? "取得中…" : "現在地"}</span>
+                  </button>
+                }
+              />
+              {place ? (
+                <label>
+                  場所
                   <input
-                    type="checkbox"
-                    checked={selected.includes(p.id)}
+                    value={place.name}
                     onChange={(e) =>
-                      setSelected(
-                        e.target.checked
-                          ? [...selected, p.id]
-                          : selected.filter((id) => id !== p.id),
-                      )
+                      setPlace({ ...place, name: e.target.value })
                     }
                   />
-                  <span className="plush-choice-icon" aria-hidden="true">
-                    {p.icon ? (
-                      <PlushIcon
-                        blob={p.icon}
-                        crop={p.iconCrop}
-                        alt=""
-                        themeColor={p.themeColor}
-                      />
-                    ) : (
-                      <span
-                        className="plush-icon plush-icon-fallback"
-                        style={{
-                          borderColor:
-                            p.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
-                        }}
-                      >
-                        ぬ
-                      </span>
-                    )}
-                    <span className="plush-choice-check">✓</span>
-                  </span>
-                  <span className="plush-choice-name">{p.name}</span>
                 </label>
-              ))}
-            </div>
-          ) : (
-            <small>
-              「ぬいたち」から登録できます。選択なしでも保存できます。
-            </small>
-          )}
-        </fieldset>
-        <fieldset>
-          <legend>場所（任意）</legend>
-          <p>地図をタップするか、ピンをドラッグして場所を指定できます。</p>
-          <DayMap
-            posts={[]}
-            pick={place}
-            onPick={setPlace}
-            control={
-              <button
-                className="map-location-button"
-                onClick={current}
-                disabled={busy}
-                aria-label="現在地付近を表示"
-              >
-                <span aria-hidden="true">◎</span>
-                <span>{busy ? "取得中…" : "現在地"}</span>
-              </button>
-            }
-          />
-          {place ? (
-            <>
-              <label>
-                場所名
-                <input
-                  value={place.name}
-                  onChange={(e) => setPlace({ ...place, name: e.target.value })}
-                />
-              </label>
-              <button onClick={() => setPlace(undefined)}>場所を外す</button>
+              ) : null}
             </>
-          ) : null}
+          ) : (
+            <small>この投稿には場所を保存しません。</small>
+          )}
         </fieldset>
         <button
           className="primary"

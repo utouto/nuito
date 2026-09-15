@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -11,7 +12,8 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Plushes, PostCard, PostEditor, Today } from "./App";
 import type { Plush, Post, Settings } from "./types";
 
-const { mapSetView, leafletMarker } = vi.hoisted(() => ({
+const { mapOn, mapSetView, leafletMarker } = vi.hoisted(() => ({
+  mapOn: vi.fn(),
   mapSetView: vi.fn(),
   leafletMarker: vi.fn(),
 }));
@@ -23,7 +25,7 @@ vi.mock("leaflet", () => ({
         mapSetView(...args);
         return this;
       },
-      on: vi.fn(),
+      on: mapOn,
       remove: vi.fn(),
     }),
     circleMarker: () => ({
@@ -126,6 +128,9 @@ describe("投稿編集", () => {
     const view = render(<Subject />);
     const form = within(view.container);
 
+    expect(
+      view.container.querySelector(".form-card")?.firstElementChild,
+    ).toHaveTextContent("いっしょにいたぬい");
     expect(form.getByRole("radio", { name: "現在時刻" })).toBeChecked();
     expect(form.queryByLabelText("行動日時")).not.toBeInTheDocument();
 
@@ -173,7 +178,7 @@ describe("投稿編集", () => {
       "src",
       "blob:post-image",
     );
-    expect(form.getByRole("textbox", { name: "場所名" })).toHaveValue(
+    expect(form.getByRole("textbox", { name: "場所" })).toHaveValue(
       "東京駅",
     );
     expect(form.getByText("投稿を編集")).toBeInTheDocument();
@@ -198,6 +203,31 @@ describe("投稿のぬい選択", () => {
 });
 
 describe("投稿の場所選択", () => {
+  it("場所を記録するが初期選択され、記録しない場合は場所選択を隠す", async () => {
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query: vi.fn().mockResolvedValue({ state: "prompt" }) },
+    });
+    const view = render(<Subject postToEdit={post} />);
+    const form = within(view.container);
+
+    expect(
+      form.getByRole("radio", { name: "場所を記録する" }),
+    ).toBeChecked();
+    expect(form.getByRole("textbox", { name: "場所" })).toHaveValue("東京駅");
+
+    fireEvent.click(form.getByRole("radio", { name: "場所を記録しない" }));
+
+    await waitFor(() =>
+      expect(
+        form.getByRole("radio", { name: "場所を記録しない" }),
+      ).toBeChecked(),
+    );
+    expect(form.queryByLabelText("場所を選択する地図")).not.toBeInTheDocument();
+    expect(form.queryByRole("textbox", { name: "場所" })).not.toBeInTheDocument();
+    expect(form.getByText("この投稿には場所を保存しません。")).toBeVisible();
+  });
+
   it("位置情報が許可済みなら現在地を初期場所にする", async () => {
     const getCurrentPosition = vi.fn((success) =>
       success({ coords: { latitude: 35.6812, longitude: 139.7671 } }),
@@ -216,8 +246,8 @@ describe("投稿の場所選択", () => {
     const form = within(view.container);
 
     await waitFor(() =>
-      expect(form.getByRole("textbox", { name: "場所名" })).toHaveValue(
-        "現在地",
+      expect(form.getByRole("textbox", { name: "場所" })).toHaveValue(
+        "ここで遊んだよ",
       ),
     );
     expect(query).toHaveBeenCalledWith({ name: "geolocation" });
@@ -242,7 +272,7 @@ describe("投稿の場所選択", () => {
     await waitFor(() => expect(query).toHaveBeenCalledOnce());
     expect(getCurrentPosition).not.toHaveBeenCalled();
     expect(
-      within(view.container).queryByRole("textbox", { name: "場所名" }),
+      within(view.container).queryByRole("textbox", { name: "場所" }),
     ).not.toBeInTheDocument();
   });
 
@@ -276,11 +306,37 @@ describe("投稿の場所選択", () => {
       [35.6812, 139.7671],
       expect.objectContaining({ draggable: true }),
     );
-    expect(form.getByRole("textbox", { name: "場所名" })).toHaveValue("現在地");
+    expect(form.getByRole("textbox", { name: "場所" })).toHaveValue(
+      "ここで遊んだよ",
+    );
     expect(form.getByLabelText("場所を選択する地図")).toBeInTheDocument();
     expect(
       form.getByText("地図をタップするか、ピンをドラッグして場所を指定できます。"),
     ).toBeVisible();
+  });
+
+  it("地図をタップして立てたピンの場所を既定名で表示する", () => {
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query: vi.fn().mockResolvedValue({ state: "prompt" }) },
+    });
+    const view = render(<Subject />);
+    const clickHandler = [...mapOn.mock.calls]
+      .reverse()
+      .find(([eventName]) => eventName === "click")?.[1] as
+      | ((event: { latlng: { lat: number; lng: number } }) => void)
+      | undefined;
+
+    expect(clickHandler).toBeDefined();
+    act(() => clickHandler?.({ latlng: { lat: 35.7, lng: 139.8 } }));
+
+    expect(
+      within(view.container).getByRole("textbox", { name: "場所" }),
+    ).toHaveValue("ここで遊んだよ");
+    expect(leafletMarker).toHaveBeenLastCalledWith(
+      [35.7, 139.8],
+      expect.objectContaining({ draggable: true }),
+    );
   });
 });
 
