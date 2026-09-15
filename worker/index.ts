@@ -282,6 +282,30 @@ async function logout(request: Request, env: Env) {
     "set-cookie": cookie("nuito_session", "", 0, env),
   });
 }
+async function deleteAccount(env: Env, userId: string) {
+  const keys: string[] = [];
+  let cursor: string | undefined;
+  try {
+    do {
+      const page = await env.IMAGES.list({ prefix: `${userId}/`, cursor });
+      keys.push(...page.objects.map((object) => object.key));
+      cursor = page.truncated ? page.cursor : undefined;
+    } while (cursor);
+  } catch {
+    return json({ error: "service_unavailable" }, 503);
+  }
+  await env.DB.prepare("DELETE FROM users WHERE id=?").bind(userId).run();
+  let cleanupPending = false;
+  try {
+    for (let index = 0; index < keys.length; index += 1000)
+      await env.IMAGES.delete(keys.slice(index, index + 1000));
+  } catch {
+    cleanupPending = true;
+  }
+  return json({ ok: true, cleanupPending }, 200, {
+    "set-cookie": cookie("nuito_session", "", 0, env),
+  });
+}
 export async function handleRequest(
   request: Request,
   env: Env,
@@ -304,10 +328,20 @@ export async function handleRequest(
     return currentUser(request, env);
   if (url.pathname === "/api/auth/logout" && request.method === "POST")
     return logout(request, env);
+  if (url.pathname === "/api/account" && request.method === "DELETE") {
+    try {
+      const userId = await authenticatedUserId(request, env);
+      if (!userId) return json({ error: "unauthorized" }, 401);
+      return deleteAccount(env, userId);
+    } catch {
+      return json({ error: "service_unavailable" }, 503);
+    }
+  }
   if (
     url.pathname === "/api/posts" ||
     url.pathname.startsWith("/api/posts/") ||
     url.pathname.startsWith("/api/post-images/") ||
+    url.pathname.startsWith("/api/plushes/") ||
     url.pathname.startsWith("/api/plush-icons/")
   ) {
     try {

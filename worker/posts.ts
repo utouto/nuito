@@ -492,6 +492,32 @@ async function deletePost(env: PostsEnv, userId: string, postId: string) {
   return response({ ok: true });
 }
 
+async function deletePlush(env: PostsEnv, userId: string, plushId: string) {
+  if (!ID.test(plushId)) return response({ error: "not_found" }, 404);
+  const plush = await env.DB.prepare(
+    "SELECT icon_object_key FROM plushes WHERE id=? AND user_id=?",
+  )
+    .bind(plushId, userId)
+    .first<{ icon_object_key: string | null }>();
+  if (!plush) return response({ ok: true });
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM post_plushes WHERE plush_id=?").bind(plushId),
+    env.DB.prepare("DELETE FROM plushes WHERE id=? AND user_id=?").bind(
+      plushId,
+      userId,
+    ),
+  ]);
+  let cleanupPending = false;
+  if (plush.icon_object_key) {
+    try {
+      await env.IMAGES.delete(plush.icon_object_key);
+    } catch {
+      cleanupPending = true;
+    }
+  }
+  return response({ ok: true, cleanupPending });
+}
+
 export async function handlePosts(
   request: Request,
   env: PostsEnv,
@@ -505,6 +531,9 @@ export async function handlePosts(
     return savePost(request, env, userId, postMatch[1]);
   if (postMatch && request.method === "DELETE")
     return deletePost(env, userId, postMatch[1]);
+  const plushMatch = url.pathname.match(/^\/api\/plushes\/([^/]+)$/);
+  if (plushMatch && request.method === "DELETE")
+    return deletePlush(env, userId, plushMatch[1]);
   const imageMatch = url.pathname.match(
     /^\/api\/post-images\/([^/]+)\/(full|thumbnail)$/,
   );
@@ -515,8 +544,8 @@ export async function handlePosts(
       imageMatch[1],
       imageMatch[2] as "full" | "thumbnail",
     );
-  const plushMatch = url.pathname.match(/^\/api\/plush-icons\/([^/]+)$/);
-  if (plushMatch && request.method === "GET")
-    return plushIconResponse(env, userId, plushMatch[1]);
+  const plushIconMatch = url.pathname.match(/^\/api\/plush-icons\/([^/]+)$/);
+  if (plushIconMatch && request.method === "GET")
+    return plushIconResponse(env, userId, plushIconMatch[1]);
   return response({ error: "not_found" }, 404);
 }

@@ -204,3 +204,65 @@ describe("投稿保存API", () => {
     expect(bindings.DB.batch).not.toHaveBeenCalled();
   });
 });
+
+describe("データ削除API", () => {
+  it("ぬいと投稿との関連を削除してアイコンをR2から除く", async () => {
+    const bindings = env();
+    bindings.DB.prepare = vi.fn(() => ({
+      bind() {
+        return this;
+      },
+      first: vi.fn().mockResolvedValue({ icon_object_key: "user-1/plush/icon" }),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+    })) as never;
+
+    const response = await handlePosts(
+      new Request("http://local/api/plushes/plush-1", { method: "DELETE" }),
+      bindings as never,
+      "user-1",
+    );
+
+    expect(response.status).toBe(200);
+    expect(bindings.DB.batch).toHaveBeenCalledOnce();
+    expect(bindings.IMAGES.delete).toHaveBeenCalledWith("user-1/plush/icon");
+  });
+
+  it("アカウントと所有するR2オブジェクトを削除してsessionを破棄する", async () => {
+    const bindings = env();
+    bindings.DB.prepare = vi.fn((sql: string) => ({
+      bind() {
+        return this;
+      },
+      first: vi
+        .fn()
+        .mockResolvedValue(
+          sql.includes("SELECT user_id FROM sessions")
+            ? { user_id: "user-1" }
+            : null,
+        ),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+    })) as never;
+    bindings.IMAGES.list = vi.fn().mockResolvedValue({
+      objects: [{ key: "user-1/posts/post-1/image" }],
+      truncated: false,
+    });
+
+    const response = await handleRequest(
+      new Request("http://local/api/account", {
+        method: "DELETE",
+        headers: { cookie: "nuito_session=session" },
+      }),
+      bindings as never,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie")).toContain(
+      "nuito_session=; Path=/; HttpOnly;",
+    );
+    expect(bindings.IMAGES.delete).toHaveBeenCalledWith([
+      "user-1/posts/post-1/image",
+    ]);
+  });
+});
