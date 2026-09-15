@@ -1161,9 +1161,7 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
               画像を削除
             </button>
           </div>
-        ) : (
-          <small>画像を選ぶと、円形アイコンのプレビューを調整できます。</small>
-        )}
+        ) : null}
         {editing ? (
           <label className="check">
             <input

@@ -860,6 +860,11 @@ describe("ぬいぐるみのテーマカラー設定", () => {
     });
     const color = screen.getByLabelText("テーマカラー");
 
+    expect(
+      screen.queryByText(
+        "画像を選ぶと、円形アイコンのプレビューを調整できます。",
+      ),
+    ).not.toBeInTheDocument();
     expect(disabled).toBeChecked();
     expect(enabled).not.toBeChecked();
     expect(color).toBeDisabled();
