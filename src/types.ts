@@ -13,9 +13,15 @@ export interface Plush {
   id: string;
   name: string;
   icon?: Blob;
+  iconCrop?: PlushIconCrop;
   createdAt: string;
   updatedAt: string;
   hidden: boolean;
+}
+export interface PlushIconCrop {
+  x: number;
+  y: number;
+  zoom: number;
 }
 export interface Place {
   latitude: number;

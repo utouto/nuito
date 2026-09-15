@@ -26,6 +26,23 @@ function canvasBlob(canvas: HTMLCanvasElement, quality: number) {
     ),
   );
 }
+export async function optimizePlushIcon(file: File): Promise<Blob> {
+  if (!file.type.startsWith("image/"))
+    throw new Error("静止画ファイルを選択してください。");
+  const img = await loadImage(file);
+  const maxEdge = 1024;
+  const scale = Math.min(
+    1,
+    maxEdge / Math.max(img.naturalWidth, img.naturalHeight),
+  );
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.naturalWidth * scale);
+  canvas.height = Math.round(img.naturalHeight * scale);
+  canvas
+    .getContext("2d")!
+    .drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvasBlob(canvas, 0.82);
+}
 export async function optimizeImage(
   file: File,
   maxEdge: number,

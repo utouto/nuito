@@ -10,8 +10,13 @@ import {
   sortPosts,
   todayLogicalDate,
 } from "./domain";
-import { optimizeImage } from "./image";
+import { optimizeImage, optimizePlushIcon } from "./image";
 import { LegalPage, type LegalKind } from "./legal";
+import {
+  PlushIcon,
+  PlushIconEditor,
+} from "./plush-icon";
+import { DEFAULT_PLUSH_ICON_CROP } from "./plush-icon-crop";
 import type { Journal, Place, Plush, Post, PostImage, Settings } from "./types";
 type View =
   | "today"
@@ -523,11 +528,35 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
   const [editing, setEditing] = useState<Plush>();
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<Blob>();
+  const [iconCrop, setIconCrop] = useState(DEFAULT_PLUSH_ICON_CROP);
+  const [draftIcon, setDraftIcon] = useState<Blob>();
+  const [draftCrop, setDraftCrop] = useState(DEFAULT_PLUSH_ICON_CROP);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const edit = (p?: Plush) => {
     setEditing(p);
     setName(p?.name ?? "");
     setIcon(p?.icon);
+    setIconCrop(p?.iconCrop ?? DEFAULT_PLUSH_ICON_CROP);
+    setDraftIcon(undefined);
+    setError("");
   };
+  async function chooseIcon(file?: File) {
+    if (!file) return;
+    setBusy(true);
+    setError("");
+    try {
+      const optimized = await optimizePlushIcon(file);
+      setDraftIcon(optimized);
+      setDraftCrop(DEFAULT_PLUSH_ICON_CROP);
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "画像を読み込めませんでした。",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   async function save() {
     if (!name.trim()) return;
     const now = new Date().toISOString();
@@ -535,6 +564,7 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
       id: editing?.id ?? crypto.randomUUID(),
       name: name.trim(),
       icon,
+      iconCrop: icon ? iconCrop : undefined,
       hidden: editing?.hidden ?? false,
       createdAt: editing?.createdAt ?? now,
       updatedAt: now,
@@ -548,7 +578,11 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
       <div className="plush-grid">
         {plushes.map((p) => (
           <button key={p.id} className="plush" onClick={() => edit(p)}>
-            {p.icon ? <BlobImage blob={p.icon} alt="" /> : <span>ぬ</span>}
+            {p.icon ? (
+              <PlushIcon blob={p.icon} crop={p.iconCrop} alt="" />
+            ) : (
+              <span>ぬ</span>
+            )}
             <strong>{p.name}</strong>
             {p.hidden ? <small>非表示</small> : null}
           </button>
@@ -569,9 +603,53 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setIcon(e.target.files?.[0])}
+            disabled={busy}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              void chooseIcon(file);
+            }}
           />
         </label>
+        {busy ? <p role="status">画像を準備しています…</p> : null}
+        {error ? <p className="error" role="alert">{error}</p> : null}
+        {draftIcon ? (
+          <PlushIconEditor
+            blob={draftIcon}
+            crop={draftCrop}
+            onChange={setDraftCrop}
+            onCancel={() => setDraftIcon(undefined)}
+            onApply={() => {
+              setIcon(draftIcon);
+              setIconCrop(draftCrop);
+              setDraftIcon(undefined);
+            }}
+          />
+        ) : icon ? (
+          <div className="saved-icon-preview">
+            <PlushIcon blob={icon} crop={iconCrop} alt="現在のアイコン" />
+            <button
+              type="button"
+              onClick={() => {
+                setDraftIcon(icon);
+                setDraftCrop(iconCrop);
+              }}
+            >
+              位置とサイズを調整
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIcon(undefined);
+                setIconCrop(DEFAULT_PLUSH_ICON_CROP);
+              }}
+            >
+              画像を削除
+            </button>
+          </div>
+        ) : (
+          <small>画像を選ぶと、円形アイコンのプレビューを調整できます。</small>
+        )}
         {editing ? (
           <label className="check">
             <input
@@ -584,7 +662,11 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
             新しい投稿では非表示にする
           </label>
         ) : null}
-        <button className="primary" disabled={!name.trim()} onClick={save}>
+        <button
+          className="primary"
+          disabled={!name.trim() || busy || Boolean(draftIcon)}
+          onClick={save}
+        >
           保存
         </button>
       </section>

@@ -208,7 +208,6 @@ h2 {
   gap: 5px;
   place-items: center;
 }
-.plush img,
 .plush span {
   width: 55px;
   height: 55px;
@@ -220,6 +219,85 @@ h2 {
   place-items: center;
   background: #f0dfce;
   color: #9a5438;
+}
+.plush-icon {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  overflow: hidden;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: #f0dfce;
+}
+.plush-icon img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+}
+.icon-editor {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #d8c5b4;
+  border-radius: 16px;
+  background: #fff9f3;
+}
+.icon-editor legend {
+  padding: 0 6px;
+  font-weight: 800;
+}
+.icon-editor p {
+  margin: 0;
+  color: #62574f;
+}
+.icon-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-width: 0;
+}
+.icon-preview-row > .plush-icon {
+  width: min(52vw, 220px);
+  height: min(52vw, 220px);
+  box-shadow: 0 0 0 5px #fff, 0 0 0 7px #d8c5b4;
+}
+.icon-preview-row > div {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  max-width: 130px;
+  text-align: center;
+}
+.icon-preview-row small {
+  color: #71645b;
+}
+.plush-icon.small {
+  width: 55px;
+  height: 55px;
+}
+.icon-editor input[type="range"] {
+  width: 100%;
+  accent-color: #9d4d2c;
+}
+.icon-editor-actions,
+.saved-icon-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.icon-editor-actions button {
+  flex: 1;
+}
+.saved-icon-preview .plush-icon {
+  width: 72px;
+  height: 72px;
 }
 .form-card {
   display: grid;
