@@ -1,5 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
+import { handlePosts } from "./posts";
+
 interface Env {
   DB: D1Database;
   IMAGES: R2Bucket;
@@ -260,6 +262,16 @@ async function currentUser(request: Request, env: Env) {
     .first();
   return json(user ? { authenticated: true, user } : { authenticated: false });
 }
+async function authenticatedUserId(request: Request, env: Env) {
+  const token = sessionToken(request);
+  if (!token) return undefined;
+  const session = await env.DB.prepare(
+    "SELECT user_id FROM sessions WHERE token_hash=? AND expires_at>?",
+  )
+    .bind(await sha256(token), new Date().toISOString())
+    .first<{ user_id: string }>();
+  return session?.user_id;
+}
 async function logout(request: Request, env: Env) {
   const token = sessionToken(request);
   if (token)
@@ -292,6 +304,19 @@ export async function handleRequest(
     return currentUser(request, env);
   if (url.pathname === "/api/auth/logout" && request.method === "POST")
     return logout(request, env);
+  if (
+    url.pathname === "/api/posts" ||
+    url.pathname.startsWith("/api/posts/") ||
+    url.pathname.startsWith("/api/post-images/")
+  ) {
+    try {
+      const userId = await authenticatedUserId(request, env);
+      if (!userId) return json({ error: "unauthorized" }, 401);
+      return handlePosts(request, env, userId);
+    } catch {
+      return json({ error: "service_unavailable" }, 503);
+    }
+  }
   if (url.pathname.startsWith("/api/"))
     return json({ error: "not_implemented" }, 501);
   return json({ error: "not_found" }, 404);

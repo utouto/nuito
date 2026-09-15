@@ -1,16 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
 import { handleRequest } from "./index";
+import { handlePosts } from "./posts";
 
 const env = (fails = false) => ({
   DB: {
     prepare: () => ({
+      bind() {
+        return this;
+      },
       first: fails
         ? vi.fn().mockRejectedValue(new Error())
         : vi.fn().mockResolvedValue({ ok: 1 }),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
     }),
+    batch: vi.fn().mockResolvedValue([]),
   },
   IMAGES: {
     list: vi.fn().mockResolvedValue({ objects: [], truncated: false }),
+    put: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
   },
   ENVIRONMENT: "local",
 });
@@ -32,7 +41,8 @@ describe("Cloudflare API", () => {
       new Request("http://local/api/posts"),
       env() as never,
     );
-    expect(response.status).toBe(501);
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: "unauthorized" });
   });
   it("認証開始の不正なJSONを400で拒否する", async () => {
     const response = await handleRequest(
@@ -62,5 +72,105 @@ describe("Cloudflare API", () => {
     );
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ status: "unavailable" });
+  });
+});
+
+describe("投稿保存API", () => {
+  const post = {
+    id: "post-1",
+    body: "公園へ行った",
+    plushes: [
+      {
+        id: "plush-1",
+        name: "くま",
+        hidden: false,
+        createdAt: "2026-09-15T00:00:00.000Z",
+        updatedAt: "2026-09-15T00:00:00.000Z",
+      },
+    ],
+    images: [
+      {
+        id: "image-1",
+        width: 1200,
+        height: 800,
+        mimeType: "image/webp",
+        byteSize: 4,
+        displayOrder: 0,
+        isCover: true,
+      },
+    ],
+    timeMode: "known",
+    occurredLocalDateTime: "2026-09-15T12:30",
+    place: {
+      latitude: 35.6812,
+      longitude: 139.7671,
+      name: "東京駅",
+      source: "map",
+    },
+    createdAt: "2026-09-15T12:31:00.000Z",
+    updatedAt: "2026-09-15T12:31:00.000Z",
+  } as const;
+
+  it("検証済みの投稿をD1へ、画像を非公開R2へ保存する", async () => {
+    const bindings = env();
+    bindings.DB.prepare = vi.fn((sql: string) => ({
+      bind() {
+        return this;
+      },
+      first: vi.fn().mockResolvedValue(null),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+      sql,
+    })) as never;
+    const form = new FormData();
+    form.set("metadata", JSON.stringify(post));
+    form.set("full:image-1", new File(["full"], "full.webp", { type: "image/webp" }));
+    form.set(
+      "thumbnail:image-1",
+      new File(["thumb"], "thumbnail.webp", { type: "image/webp" }),
+    );
+
+    const response = await handlePosts(
+      new Request("http://local/api/posts/post-1", {
+        method: "PUT",
+        body: form,
+      }),
+      bindings as never,
+      "user-1",
+    );
+
+    expect(response.status).toBe(200);
+    expect(bindings.IMAGES.put).toHaveBeenCalledTimes(2);
+    expect(bindings.IMAGES.put).toHaveBeenCalledWith(
+      expect.stringMatching(/^user-1\/posts\/post-1\/image-1\/.+\/full$/),
+      expect.anything(),
+      expect.objectContaining({ httpMetadata: { contentType: "image/webp" } }),
+    );
+    expect(bindings.DB.batch).toHaveBeenCalledOnce();
+  });
+
+  it("画像が5枚ある投稿を拒否する", async () => {
+    const input = {
+      ...post,
+      images: Array.from({ length: 5 }, (_, index) => ({
+        ...post.images[0],
+        id: `image-${index}`,
+        displayOrder: index,
+      })),
+    };
+    const form = new FormData();
+    form.set("metadata", JSON.stringify(input));
+
+    const response = await handlePosts(
+      new Request("http://local/api/posts/post-1", {
+        method: "PUT",
+        body: form,
+      }),
+      env() as never,
+      "user-1",
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "invalid_request" });
   });
 });
