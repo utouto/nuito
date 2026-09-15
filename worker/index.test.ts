@@ -174,4 +174,33 @@ describe("投稿保存API", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "invalid_request" });
   });
+
+  it("別ユーザーが所有する投稿IDの更新を404で拒否する", async () => {
+    const bindings = env();
+    bindings.DB.prepare = vi.fn(() => ({
+      bind() {
+        return this;
+      },
+      first: vi.fn().mockResolvedValue({ user_id: "other-user" }),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 0 } }),
+    })) as never;
+    const input = { ...post, plushes: [], images: [] };
+    const form = new FormData();
+    form.set("metadata", JSON.stringify(input));
+
+    const response = await handlePosts(
+      new Request("http://local/api/posts/post-1", {
+        method: "PUT",
+        body: form,
+      }),
+      bindings as never,
+      "user-1",
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "not_found" });
+    expect(bindings.IMAGES.put).not.toHaveBeenCalled();
+    expect(bindings.DB.batch).not.toHaveBeenCalled();
+  });
 });
