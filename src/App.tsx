@@ -610,27 +610,22 @@ export function Today({
       <div className="today-summary">
         <p className="eyebrow">きょう</p>
         <h1 id="today-heading">{formatDate(date)}</h1>
-        <p className="lead">
-          {posts.length
-            ? `${posts.length}件の思い出があります`
-            : "最初の思い出を残しましょう"}
-        </p>
-        <div className="actions">
-          <button className="primary" onClick={() => onNew()}>
-            ＋ 今の記録を残す
-          </button>
-          <button
-            className={prompt ? "journal-cta prompt" : "journal-cta"}
-            onClick={onJournal}
-          >
-            {journal
-              ? "きょうの日記を見る・編集する"
-              : prompt
-                ? "きょうの日記を書く"
-                : "きょうの日記"}
-          </button>
-        </div>
       </div>
+      <button
+        className={
+          prompt ? "today-journal-button prompt" : "today-journal-button"
+        }
+        onClick={onJournal}
+        aria-label={
+          journal
+            ? "きょうの日記を見る・編集する"
+            : prompt
+              ? "きょうの日記を書く"
+              : "きょうの日記を見る"
+        }
+      >
+        <span aria-hidden="true">📖</span>
+      </button>
       <button
         className="today-drawer-toggle"
         aria-expanded={drawerOpen}

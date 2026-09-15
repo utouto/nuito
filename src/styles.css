@@ -229,8 +229,22 @@ h2 {
 .today-summary h1 {
   font-size: 22px;
 }
-.today-summary .actions {
-  margin: 12px 0 0;
+.today-journal-button {
+  position: absolute;
+  bottom: 18px;
+  left: 14px;
+  z-index: 510;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: #fffdf9;
+  box-shadow: 0 5px 18px #3e332c4d;
+  font-size: 26px;
+}
+.today-journal-button.prompt {
+  background: #d96337;
+  box-shadow: 0 5px 18px #d9633770;
 }
 .today-drawer-toggle {
   position: absolute;

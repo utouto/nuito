@@ -220,6 +220,33 @@ describe("きょうの投稿ドロワー", () => {
       page.getByRole("button", { name: "投稿を閉じる" }),
     ).toHaveAttribute("aria-expanded", "true");
   });
+
+  it("件数と上部投稿ボタンを表示せず、本アイコンで日記を開く", () => {
+    const onJournal = vi.fn();
+    const view = render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={onJournal}
+      />,
+    );
+    const page = within(view.container);
+
+    expect(page.queryByText("1件の思い出があります")).not.toBeInTheDocument();
+    expect(
+      page.queryByRole("button", { name: "＋ 今の記録を残す" }),
+    ).not.toBeInTheDocument();
+
+    const journalButton = page.getByRole("button", {
+      name: "きょうの日記を見る",
+    });
+    expect(journalButton).toHaveTextContent("📖");
+    fireEvent.click(journalButton);
+    expect(onJournal).toHaveBeenCalledOnce();
+  });
 });
 
 describe("日別地図の投稿ピン", () => {
