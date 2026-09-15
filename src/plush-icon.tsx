@@ -61,6 +61,7 @@ export function PlushIconEditor({
   onApply,
   onCancel,
   themeColor = DEFAULT_PLUSH_THEME_COLOR,
+  subject = "アイコン",
 }: {
   blob: Blob;
   crop: PlushIconCrop;
@@ -68,6 +69,7 @@ export function PlushIconEditor({
   onApply: () => void;
   onCancel: () => void;
   themeColor?: string;
+  subject?: string;
 }) {
   type Point = { x: number; y: number };
   type Gesture = {
@@ -146,9 +148,9 @@ export function PlushIconEditor({
     onChange(clampPlushIconCrop({ ...crop, [key]: value }));
   return (
     <fieldset className="icon-editor">
-      <legend>アイコンを調整</legend>
+      <legend>{subject}を調整</legend>
       <p id="icon-editor-help">
-        円の内側がアイコンになります。画像をドラッグして位置を、2本指でピンチして大きさを調整できます。元画像は切り取りません。
+        円の内側が{subject}になります。画像をドラッグして位置を、2本指でピンチして大きさを調整できます。元画像は切り取りません。
         動かせない方向は、少し拡大すると調整できます。
       </p>
       <div className="icon-preview-row" aria-describedby="icon-editor-help">

@@ -19,6 +19,7 @@ import {
   Today,
 } from "./App";
 import { plushNameInitial } from "./plush-name";
+import { reorderPostImages } from "./post-images";
 import type { Plush, Post, Settings } from "./types";
 
 const {
@@ -181,6 +182,15 @@ describe("投稿編集", () => {
 
     fireEvent.click(form.getByRole("radio", { name: "時刻を設定しない" }));
     expect(form.getByLabelText("論理日付")).toBeVisible();
+  });
+
+  it("1枚目の写真ピン表示範囲を中央から調整できる", () => {
+    const view = render(<Subject postToEdit={post} />);
+    const form = within(view.container);
+    fireEvent.click(form.getByRole("button", { name: "写真ピンの範囲を調整" }));
+    expect(form.getByRole("group", { name: "写真ピンを調整" })).toBeVisible();
+    expect(form.getByLabelText("横の位置")).toHaveValue("50");
+    expect(form.getByLabelText("縦の位置")).toHaveValue("50");
   });
 
   it("きょう画面の編集ボタンから対象の投稿を渡す", () => {
@@ -517,7 +527,7 @@ describe("日別地図の投稿ピン", () => {
     expect(getCurrentPosition).not.toHaveBeenCalled();
   });
 
-  it("同行した複数のぬいの色を扇形に分けて境界だけなじませる", () => {
+  it("写真付き投稿は1枚目を円形の写真ピンに表示する", () => {
     render(
       <Today
         date="2026-09-14"
@@ -548,11 +558,20 @@ describe("日別地図の投稿ピン", () => {
 
     expect(leafletDivIcon).toHaveBeenCalledWith(
       expect.objectContaining({
-        html: expect.stringMatching(
-          /<span style="background:#8b5e3c"><i style="background:conic-gradient\(from -2deg, #3a7bd5 0deg, #3a7bd5 176deg, #d55a87 184deg, #d55a87 356deg, #3a7bd5 360deg\)"><\/i><\/span>/,
-        ),
+        className: "post-map-marker photo-post-map-marker",
+        html: expect.stringContaining('<img src="blob:post-image"'),
+        iconSize: [52, 58],
       }),
     );
+  });
+});
+
+describe("投稿写真の順序", () => {
+  it("移動後の1枚目を代表写真にする", () => {
+    const second = { ...post.images[0], id: "image-2", displayOrder: 1 };
+    const result = reorderPostImages([post.images[0], second], 1, -1);
+    expect(result.map((image) => image.id)).toEqual(["image-2", "image-1"]);
+    expect(result.map((image) => image.isCover)).toEqual([true, false]);
   });
 });
 

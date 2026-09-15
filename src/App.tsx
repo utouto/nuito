@@ -17,6 +17,8 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import KeyboardArrowLeftRoundedIcon from "@mui/icons-material/KeyboardArrowLeftRounded";
+import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
 import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
 import PetsRoundedIcon from "@mui/icons-material/PetsRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
@@ -47,6 +49,7 @@ import {
 } from "./plush-icon";
 import { DEFAULT_PLUSH_ICON_CROP } from "./plush-icon-crop";
 import { plushNameInitial } from "./plush-name";
+import { reorderPostImages } from "./post-images";
 import type { Journal, Place, Plush, Post, PostImage, Settings } from "./types";
 type View =
   | "today"
@@ -287,14 +290,21 @@ export function DayMap({
         color: "#8b5e3c",
         weight: 4,
       }).addTo(map);
+    const objectUrls: string[] = [];
     located.forEach((p) => {
+      const cover = [...p.images].sort((a, b) => a.displayOrder - b.displayOrder)[0];
       const background = postMarkerBackground(p, plushes);
+      const crop = cover?.pinCrop ?? DEFAULT_PLUSH_ICON_CROP;
+      const photoUrl = cover ? URL.createObjectURL(cover.thumbnail) : undefined;
+      if (photoUrl) objectUrls.push(photoUrl);
       L.marker([p.place!.latitude, p.place!.longitude], {
         icon: L.divIcon({
-          className: "post-map-marker",
-          html: `<span style="background:${postMarkerBorderColor}"><i style="background:${background}"></i></span>`,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
+          className: `post-map-marker${cover ? " photo-post-map-marker" : ""}`,
+          html: cover
+            ? `<span><b><img src="${photoUrl}" alt="" style="object-position:${crop.x}% ${crop.y}%;transform:translate(-50%,-50%) scale(${crop.zoom});transform-origin:${crop.x}% ${crop.y}%"></b></span>`
+            : `<span style="background:${postMarkerBorderColor}"><i style="background:${background}"></i></span>`,
+          iconSize: cover ? [52, 58] : [28, 28],
+          iconAnchor: cover ? [26, 58] : [14, 14],
         }),
       })
         .bindTooltip(p.place!.name || "記録した場所")
@@ -330,6 +340,7 @@ export function DayMap({
       );
     return () => {
       active = false;
+      objectUrls.forEach(URL.revokeObjectURL);
       if (mapInstance.current === map) mapInstance.current = undefined;
       map.remove();
     };
@@ -1461,6 +1472,8 @@ export function PostEditor({
   );
   const [selected, setSelected] = useState<string[]>(post?.plushIds ?? []);
   const [images, setImages] = useState<PostImage[]>(post?.images ?? []);
+  const [pinCropImageId, setPinCropImageId] = useState<string>();
+  const [draftPinCrop, setDraftPinCrop] = useState(DEFAULT_PLUSH_ICON_CROP);
   const [place, setPlace] = useState<Place | undefined>(post?.place);
   const [recordPlace, setRecordPlace] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -1546,6 +1559,9 @@ export function PostEditor({
       setBusy(false);
     }
   }
+  const moveImage = (index: number, offset: -1 | 1) => {
+    setImages(reorderPostImages(images, index, offset));
+  };
   function current() {
     if (!navigator.geolocation) {
       setError("このブラウザでは現在地を取得できません。");
@@ -1715,14 +1731,77 @@ export function PostEditor({
           {images.map((im, i) => (
             <div key={im.id}>
               <BlobImage blob={im.thumbnail} alt={`選択写真 ${i + 1}`} />
+              <div className="photo-order-actions">
+                <button
+                  type="button"
+                  disabled={i === 0}
+                  onClick={() => moveImage(i, -1)}
+                  aria-label={`選択写真 ${i + 1}を前へ`}
+                >
+                  <KeyboardArrowLeftRoundedIcon aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  disabled={i === images.length - 1}
+                  onClick={() => moveImage(i, 1)}
+                  aria-label={`選択写真 ${i + 1}を後ろへ`}
+                >
+                  <KeyboardArrowRightRoundedIcon aria-hidden="true" />
+                </button>
+              </div>
+              {i === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPinCropImageId(im.id);
+                    setDraftPinCrop(im.pinCrop ?? DEFAULT_PLUSH_ICON_CROP);
+                  }}
+                >
+                  写真ピンの範囲を調整
+                </button>
+              ) : null}
               <button
-                onClick={() => setImages(images.filter((x) => x.id !== im.id))}
+                onClick={() =>
+                  setImages(
+                    images
+                      .filter((x) => x.id !== im.id)
+                      .map((image, displayOrder) => ({
+                        ...image,
+                        displayOrder,
+                        isCover: displayOrder === 0,
+                      })),
+                  )
+                }
               >
                 削除
               </button>
             </div>
           ))}
         </div>
+        {pinCropImageId
+          ? (() => {
+              const image = images.find((item) => item.id === pinCropImageId);
+              return image ? (
+                <PlushIconEditor
+                  blob={image.thumbnail}
+                  crop={draftPinCrop}
+                  onChange={setDraftPinCrop}
+                  onApply={() => {
+                    setImages(
+                      images.map((item) =>
+                        item.id === image.id
+                          ? { ...item, pinCrop: draftPinCrop }
+                          : item,
+                      ),
+                    );
+                    setPinCropImageId(undefined);
+                  }}
+                  onCancel={() => setPinCropImageId(undefined)}
+                  subject="写真ピン"
+                />
+              ) : null;
+            })()
+          : null}
         <fieldset>
           <legend>行動時刻</legend>
           <label className="check">

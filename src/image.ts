@@ -64,13 +64,11 @@ export async function optimizeImage(
   const full = await canvasBlob(canvas, quality);
   const size = 480;
   const thumb = document.createElement("canvas");
-  thumb.width = size;
-  thumb.height = size;
+  const thumbScale = Math.min(1, size / Math.max(width, height));
+  thumb.width = Math.round(width * thumbScale);
+  thumb.height = Math.round(height * thumbScale);
   const ctx = thumb.getContext("2d")!;
-  const crop = Math.min(width, height),
-    sx = (width - crop) / 2,
-    sy = (height - crop) / 2;
-  ctx.drawImage(canvas, sx, sy, crop, crop, 0, 0, size, size);
+  ctx.drawImage(canvas, 0, 0, width, height, 0, 0, thumb.width, thumb.height);
   const thumbnail = await canvasBlob(thumb, 0.76);
   return {
     id: crypto.randomUUID(),
@@ -82,5 +80,6 @@ export async function optimizeImage(
     byteSize: full.size,
     displayOrder: 0,
     isCover: false,
+    pinCrop: { x: 50, y: 50, zoom: 1 },
   };
 }
