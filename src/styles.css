@@ -219,6 +219,16 @@ h2 {
 .today-map .map-note {
   display: none;
 }
+.today-map .leaflet-control-attribution {
+  margin-top: 6px;
+}
+.today-map .leaflet-control-zoom {
+  position: fixed;
+  top: 50%;
+  right: max(10px, calc((100vw - 740px) / 2));
+  margin: 0;
+  transform: translateY(-50%);
+}
 .today-summary {
   position: absolute;
   top: 14px;
@@ -236,7 +246,7 @@ h2 {
 }
 .today-journal-button {
   position: absolute;
-  bottom: 18px;
+  bottom: 86px;
   left: 14px;
   z-index: 510;
   width: 56px;
@@ -504,7 +514,9 @@ h2 {
   aspect-ratio: 1;
   flex: 0 0 auto;
   border-radius: 50%;
-  box-shadow: 0 0 0 5px #fff, 0 0 0 7px #d8c5b4;
+  box-shadow:
+    0 0 0 5px #fff,
+    0 0 0 7px #d8c5b4;
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -736,6 +748,9 @@ h2 {
 }
 .fab.today-drawer-open {
   bottom: min(calc(62vh + 80px), 640px);
+}
+.fab.today-view:not(.today-drawer-open) {
+  bottom: 148px;
 }
 nav {
   position: fixed;

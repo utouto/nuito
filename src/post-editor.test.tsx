@@ -12,9 +12,21 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Plushes, PostCard, PostEditor, Today } from "./App";
 import type { Plush, Post, Settings } from "./types";
 
-const { mapOn, mapSetView, leafletDivIcon, leafletMarker, leafletPolyline } = vi.hoisted(() => ({
+const {
+  attributionSetPosition,
+  leafletDivIcon,
+  leafletMap,
+  leafletMarker,
+  leafletPolyline,
+  mapOn,
+  mapSetView,
+  zoomSetPosition,
+} = vi.hoisted(() => ({
+  attributionSetPosition: vi.fn(),
+  leafletMap: vi.fn(),
   mapOn: vi.fn(),
   mapSetView: vi.fn(),
+  zoomSetPosition: vi.fn(),
   leafletDivIcon: vi.fn((options) => options),
   leafletMarker: vi.fn(),
   leafletPolyline: vi.fn(),
@@ -22,15 +34,20 @@ const { mapOn, mapSetView, leafletDivIcon, leafletMarker, leafletPolyline } = vi
 
 vi.mock("leaflet", () => ({
   default: {
-    map: () => ({
-      setView(...args: unknown[]) {
-        mapSetView(...args);
-        return this;
-      },
-      on: mapOn,
-      fitBounds: vi.fn(),
-      remove: vi.fn(),
-    }),
+    map: (...args: unknown[]) => {
+      leafletMap(...args);
+      return {
+        attributionControl: { setPosition: attributionSetPosition },
+        zoomControl: { setPosition: zoomSetPosition },
+        setView(...args: unknown[]) {
+          mapSetView(...args);
+          return this;
+        },
+        on: mapOn,
+        fitBounds: vi.fn(),
+        remove: vi.fn(),
+      };
+    },
     circleMarker: () => ({
       bindTooltip() {
         return this;
@@ -184,17 +201,13 @@ describe("投稿編集", () => {
       "もとのひとこと",
     );
     expect(form.getByRole("radio", { name: "時刻を設定する" })).toBeChecked();
-    expect(form.getByLabelText("行動日時")).toHaveValue(
-      "2026-09-14T15:30",
-    );
+    expect(form.getByLabelText("行動日時")).toHaveValue("2026-09-14T15:30");
     expect(form.getByRole("checkbox", { name: "くま" })).toBeChecked();
     expect(form.getByAltText("選択写真 1")).toHaveAttribute(
       "src",
       "blob:post-image",
     );
-    expect(form.getByRole("textbox", { name: "場所" })).toHaveValue(
-      "東京駅",
-    );
+    expect(form.getByRole("textbox", { name: "場所" })).toHaveValue("東京駅");
     expect(form.getByText("投稿を編集")).toBeInTheDocument();
   });
 });
@@ -249,9 +262,35 @@ describe("きょうの投稿ドロワー", () => {
     fireEvent.pointerMove(handle, { pointerId: 1, clientY: 240 });
     fireEvent.pointerUp(handle, { pointerId: 1, clientY: 240 });
 
-    expect(view.container.querySelector(".today-post-drawer")).toHaveClass("open");
-    expect(view.container.querySelector(".today-journal-button")).toHaveClass("drawer-open");
+    expect(view.container.querySelector(".today-post-drawer")).toHaveClass(
+      "open",
+    );
+    expect(view.container.querySelector(".today-journal-button")).toHaveClass(
+      "drawer-open",
+    );
     expect(onDrawerOpenChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it("ドロワー開閉では地図を作り直さない", () => {
+    const view = render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+    const initialMapCalls = leafletMap.mock.calls.length;
+
+    fireEvent.click(
+      within(view.container).getByRole("button", {
+        name: "投稿ドロワーを開く",
+      }),
+    );
+
+    expect(leafletMap).toHaveBeenCalledTimes(initialMapCalls);
   });
 
   it("件数と上部投稿ボタンを表示せず、本アイコンで日記を開く", () => {
@@ -283,6 +322,21 @@ describe("きょうの投稿ドロワー", () => {
 });
 
 describe("日別地図の投稿ピン", () => {
+  it("きょう画面では帰属表示を右上、拡大縮小を右中央へ配置する", () => {
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+
+    expect(attributionSetPosition).toHaveBeenLastCalledWith("topright");
+    expect(zoomSetPosition).toHaveBeenLastCalledWith("topright");
+  });
   it("時刻順の地点を補間して緩やかな曲線の点線にする", () => {
     const second = {
       ...post,
@@ -422,7 +476,9 @@ describe("投稿のぬい選択", () => {
 
     expect(choice).not.toBeChecked();
     expect(form.getByText("くま")).toHaveClass("plush-choice-name");
-    expect(view.container.querySelector(".plush-choice-check")).toHaveTextContent("✓");
+    expect(
+      view.container.querySelector(".plush-choice-check"),
+    ).toHaveTextContent("✓");
 
     fireEvent.click(choice);
 
@@ -440,9 +496,7 @@ describe("投稿の場所選択", () => {
     const view = render(<Subject postToEdit={post} />);
     const form = within(view.container);
 
-    expect(
-      form.getByRole("radio", { name: "場所を記録する" }),
-    ).toBeChecked();
+    expect(form.getByRole("radio", { name: "場所を記録する" })).toBeChecked();
     expect(form.getByRole("textbox", { name: "場所" })).toHaveValue("東京駅");
 
     fireEvent.click(form.getByRole("radio", { name: "場所を記録しない" }));
@@ -453,7 +507,9 @@ describe("投稿の場所選択", () => {
       ).toBeChecked(),
     );
     expect(form.queryByLabelText("場所を選択する地図")).not.toBeInTheDocument();
-    expect(form.queryByRole("textbox", { name: "場所" })).not.toBeInTheDocument();
+    expect(
+      form.queryByRole("textbox", { name: "場所" }),
+    ).not.toBeInTheDocument();
     expect(form.getByText("この投稿には場所を保存しません。")).toBeVisible();
   });
 
@@ -540,7 +596,9 @@ describe("投稿の場所選択", () => {
     );
     expect(form.getByLabelText("場所を選択する地図")).toBeInTheDocument();
     expect(
-      form.getByText("地図をタップするか、ピンをドラッグして場所を指定できます。"),
+      form.getByText(
+        "地図をタップするか、ピンをドラッグして場所を指定できます。",
+      ),
     ).toBeVisible();
   });
 
@@ -553,8 +611,7 @@ describe("投稿の場所選択", () => {
     const clickHandler = [...mapOn.mock.calls]
       .reverse()
       .find(([eventName]) => eventName === "click")?.[1] as
-      | ((event: { latlng: { lat: number; lng: number } }) => void)
-      | undefined;
+      ((event: { latlng: { lat: number; lng: number } }) => void) | undefined;
 
     expect(clickHandler).toBeDefined();
     act(() => clickHandler?.({ latlng: { lat: 35.7, lng: 139.8 } }));
@@ -635,7 +692,9 @@ describe("投稿画像の拡大表示", () => {
       card.getByRole("dialog", { name: "投稿写真 1の拡大表示" }),
     ).toBeVisible();
     expect(card.getByAltText("拡大した投稿写真 1")).toBeVisible();
-    expect(card.getByRole("button", { name: "拡大表示を閉じる" })).toHaveFocus();
+    expect(
+      card.getByRole("button", { name: "拡大表示を閉じる" }),
+    ).toHaveFocus();
 
     fireEvent.keyDown(document, { key: "Escape" });
 

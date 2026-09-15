@@ -1,6 +1,7 @@
 import {
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -41,6 +42,7 @@ const geolocationOptions: PositionOptions = {
   timeout: 10000,
 };
 const defaultPlaceName = "ここで遊んだよ";
+const emptyPosts: Post[] = [];
 
 function placeFromPosition(position: GeolocationPosition): Place {
   return {
@@ -54,9 +56,8 @@ function placeFromPosition(position: GeolocationPosition): Place {
 function postMarkerBackground(post: Post, plushes: Plush[]): string {
   const colors = post.plushIds
     .map((id) => plushes.find((plush) => plush.id === id)?.themeColor)
-    .filter(
-      (color): color is string =>
-        Boolean(color && /^#[0-9a-f]{6}$/i.test(color)),
+    .filter((color): color is string =>
+      Boolean(color && /^#[0-9a-f]{6}$/i.test(color)),
     );
   if (!colors.length) return "#687076";
   if (colors.length === 1) return colors[0];
@@ -196,6 +197,10 @@ export function DayMap({
       all[0] ?? [35.6812, 139.7671],
       all.length ? 13 : 5,
     );
+    if (className === "today-map") {
+      map.attributionControl.setPosition("topright");
+      map.zoomControl.setPosition("topright");
+    }
     let active = true;
     if (
       centerOnCurrentWhenEmpty &&
@@ -277,7 +282,7 @@ export function DayMap({
       active = false;
       map.remove();
     };
-  }, [posts, plushes, pick, onPick, centerOnCurrentWhenEmpty]);
+  }, [posts, plushes, pick, onPick, className, centerOnCurrentWhenEmpty]);
   return (
     <div className={className ? `map-wrap ${className}` : "map-wrap"}>
       <div className="map-stage">
@@ -368,8 +373,7 @@ export function PostCard({
                   key={plush.id}
                   className="companion-icon fallback-icon"
                   style={{
-                    borderColor:
-                      plush.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
+                    borderColor: plush.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
                   }}
                 >
                   ぬ
@@ -393,7 +397,7 @@ export function PostCard({
 }
 export default function App() {
   const settings = useLiveQuery(() => getSettings(), []);
-  const posts = useLiveQuery(() => db.posts.toArray(), []) ?? [];
+  const posts = useLiveQuery(() => db.posts.toArray(), []) ?? emptyPosts;
   const plushes = useLiveQuery(() => db.plushes.toArray(), []) ?? [];
   const journals = useLiveQuery(() => db.journals.toArray(), []) ?? [];
   const [view, setView] = useState<View>(() => {
@@ -404,6 +408,20 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState("");
   const [editing, setEditing] = useState<Post>();
   const [todayDrawerOpen, setTodayDrawerOpen] = useState(false);
+  const today = settings ? todayLogicalDate(settings.dayBoundaryTime) : "";
+  const date = selectedDate || today;
+  const dayPosts = useMemo(
+    () =>
+      settings
+        ? sortPosts(
+            posts.filter(
+              (post) =>
+                effectiveLogicalDate(post, settings.dayBoundaryTime) === date,
+            ),
+          )
+        : [],
+    [date, posts, settings],
+  );
   if (!settings)
     return (
       <main>
@@ -429,13 +447,6 @@ export default function App() {
   }
   if (!settings.started)
     return <Onboarding settings={settings} onLegal={openLegal} />;
-  const today = todayLogicalDate(settings.dayBoundaryTime);
-  const date = selectedDate || today;
-  const dayPosts = sortPosts(
-    posts.filter(
-      (p) => effectiveLogicalDate(p, settings.dayBoundaryTime) === date,
-    ),
-  );
   const openEditor = (post?: Post) => {
     setEditing(post);
     setView("editor");
@@ -508,7 +519,7 @@ export default function App() {
       {!["editor", "journal"].includes(view) ? (
         <>
           <button
-            className={`fab${view === "today" && todayDrawerOpen ? " today-drawer-open" : ""}`}
+            className={`fab${view === "today" ? " today-view" : ""}${view === "today" && todayDrawerOpen ? " today-drawer-open" : ""}`}
             onClick={() => openEditor()}
             aria-label="新しい投稿"
           >
@@ -669,10 +680,7 @@ export function Today({
   const dragStart = useRef<number | undefined>(undefined);
   const dragDistance = useRef(0);
   const suppressNextClick = useRef(false);
-  useEffect(
-    () => () => onDrawerOpenChange?.(false),
-    [onDrawerOpenChange],
-  );
+  useEffect(() => () => onDrawerOpenChange?.(false), [onDrawerOpenChange]);
   const setOpen = (open: boolean) => {
     setDrawerOpen(open);
     onDrawerOpenChange?.(open);
@@ -738,7 +746,9 @@ export function Today({
           className="today-drawer-handle"
           aria-expanded={drawerOpen}
           aria-controls="today-post-drawer"
-          aria-label={drawerOpen ? "投稿ドロワーを閉じる" : "投稿ドロワーを開く"}
+          aria-label={
+            drawerOpen ? "投稿ドロワーを閉じる" : "投稿ドロワーを開く"
+          }
           onClick={() => {
             if (suppressNextClick.current) {
               suppressNextClick.current = false;
@@ -966,7 +976,11 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
           </label>
         </fieldset>
         {busy ? <p role="status">画像を準備しています…</p> : null}
-        {error ? <p className="error" role="alert">{error}</p> : null}
+        {error ? (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        ) : null}
         {draftIcon ? (
           <PlushIconEditor
             blob={draftIcon}
@@ -1463,9 +1477,7 @@ export function PostEditor({
           </label>
           {recordPlace ? (
             <>
-              <p>
-                地図をタップするか、ピンをドラッグして場所を指定できます。
-              </p>
+              <p>地図をタップするか、ピンをドラッグして場所を指定できます。</p>
               <DayMap
                 posts={[]}
                 pick={place}
