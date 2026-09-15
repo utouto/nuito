@@ -45,3 +45,4 @@ vite.config.d.ts
 .wrangler/
 wrangler.staging.jsonc
 wrangler.production.jsonc
+要望.md
