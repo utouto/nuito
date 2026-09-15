@@ -32,6 +32,7 @@ const {
   mapOn,
   mapPanBy,
   mapSetView,
+  markerSetZIndexOffset,
   zoomSetPosition,
 } = vi.hoisted(() => ({
   attributionSetPosition: vi.fn(),
@@ -39,6 +40,7 @@ const {
   mapOn: vi.fn(),
   mapPanBy: vi.fn(),
   mapSetView: vi.fn(),
+  markerSetZIndexOffset: vi.fn(),
   zoomSetPosition: vi.fn(),
   leafletDivIcon: vi.fn((options) => options),
   leafletMarker: vi.fn(),
@@ -94,6 +96,7 @@ vi.mock("leaflet", () => ({
         getLatLng() {
           return { lat: 35.6812, lng: 139.7671 };
         },
+        setZIndexOffset: markerSetZIndexOffset,
         getElement() {
           return document.createElement("div");
         },
@@ -190,13 +193,33 @@ describe("投稿編集", () => {
     expect(form.getByLabelText("論理日付")).toBeVisible();
   });
 
-  it("1枚目の写真ピン表示範囲を中央から調整できる", () => {
+  it("1枚目のピン表示画像を中央から調整できる", () => {
     const view = render(<Subject postToEdit={post} />);
     const form = within(view.container);
-    fireEvent.click(form.getByRole("button", { name: "写真ピンの範囲を調整" }));
-    expect(form.getByRole("group", { name: "写真ピンを調整" })).toBeVisible();
+    const fileInput = form.getByLabelText("写真を追加");
+    expect(fileInput).toHaveClass("photo-file-input");
+    expect(
+      fileInput.closest("label")?.querySelector("[data-testid='AddAPhotoIcon']"),
+    ).toBeInTheDocument();
+
+    const adjustButton = form.getByRole("button", {
+      name: "ピンに表示する画像を調整",
+    });
+    expect(
+      adjustButton.querySelector("[data-testid='EditRoundedIcon']"),
+    ).toBeInTheDocument();
+    expect(
+      form
+        .getByRole("button", { name: "選択写真 1を削除" })
+        .querySelector("[data-testid='HighlightOffIcon']"),
+    ).toBeInTheDocument();
+    fireEvent.click(adjustButton);
+    expect(
+      form.getByRole("group", { name: "ピンに表示する画像を調整" }),
+    ).toBeVisible();
     expect(form.getByLabelText("横の位置")).toHaveValue("50");
     expect(form.getByLabelText("縦の位置")).toHaveValue("50");
+    expect(view.container).not.toHaveTextContent("写真ピン");
   });
 
   it("きょう画面の編集ボタンから対象の投稿を渡す", () => {
@@ -445,6 +468,7 @@ describe("きょうの投稿ドロワー", () => {
     const markerClick = markerOn.mock.calls.find(([event]) => event === "click")?.[1] as (() => void) | undefined;
     act(() => markerClick?.());
 
+    expect(markerSetZIndexOffset).toHaveBeenLastCalledWith(1000);
     expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 11, {
       animate: false,
     });
@@ -466,6 +490,34 @@ describe("きょうの投稿ドロワー", () => {
 });
 
 describe("日別地図の投稿ピン", () => {
+  it("後から選択した投稿ピンを最前面に切り替える", () => {
+    markerSetZIndexOffset.mockClear();
+    const second = {
+      ...post,
+      id: "post-2",
+      place: { ...post.place!, latitude: 35.7, longitude: 139.75 },
+    };
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[post, second]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+    const clicks = markerOn.mock.calls
+      .filter(([event]) => event === "click")
+      .slice(-2)
+      .map(([, handler]) => handler as () => void);
+
+    act(() => clicks[0]());
+    act(() => clicks[1]());
+
+    expect(markerSetZIndexOffset.mock.calls).toEqual([[1000], [0], [1000]]);
+  });
+
   it("きょう画面では帰属表示を右上、拡大縮小を右中央へ配置する", () => {
     render(
       <Today

@@ -946,6 +946,39 @@ h2 {
   margin: 6px 0 8px;
   color: #71645b;
 }
+.photo-upload-field > span {
+  display: block;
+  margin-bottom: 6px;
+}
+.photo-file-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid #b8947a;
+  border-radius: 12px;
+  background: #fffaf4;
+  color: #6e462d;
+  cursor: pointer;
+  font-weight: 800;
+}
+.photo-file-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.photo-file-button:has(.photo-file-input:focus-visible) {
+  outline: 3px solid #d96337;
+  outline-offset: 2px;
+}
+.photo-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .editable button {
   position: absolute;
   bottom: 2px;
@@ -953,6 +986,41 @@ h2 {
   min-height: 32px;
   border: 0;
   border-radius: 7px;
+}
+.editable .photo-delete {
+  top: 2px;
+  right: 2px;
+  bottom: auto;
+  left: auto;
+  display: grid;
+  min-width: 32px;
+  padding: 4px;
+  place-items: center;
+  background: #fffdf9e6;
+  color: #8b3a2b;
+}
+.editable .photo-pin-edit {
+  display: grid;
+  min-width: 32px;
+  padding: 4px;
+  place-items: center;
+  background: #fffdf9e6;
+  color: #6e462d;
+}
+.photo-order-actions {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  display: flex;
+  gap: 2px;
+}
+.editable .photo-order-actions button {
+  position: static;
+  display: grid;
+  min-width: 28px;
+  min-height: 32px;
+  padding: 2px;
+  place-items: center;
 }
 .error {
   padding: 12px;

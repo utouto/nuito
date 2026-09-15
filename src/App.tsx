@@ -11,6 +11,7 @@ import {
 import { useLiveQuery } from "dexie-react-hooks";
 import L from "leaflet";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
@@ -18,6 +19,7 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import KeyboardArrowLeftRoundedIcon from "@mui/icons-material/KeyboardArrowLeftRounded";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
 import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
@@ -300,6 +302,7 @@ export function DayMap({
         weight: 4,
       }).addTo(map);
     const objectUrls: string[] = [];
+    let selectedMarker: L.Marker | undefined;
     located.forEach((p) => {
       const cover = [...p.images].sort((a, b) => a.displayOrder - b.displayOrder)[0];
       const background = postMarkerBackground(p, plushes);
@@ -319,6 +322,9 @@ export function DayMap({
       marker.bindTooltip(p.place!.name || "記録した場所").addTo(map);
       if (onPostSelectRef.current)
         marker.on("click", () => {
+          selectedMarker?.setZIndexOffset(0);
+          marker.setZIndexOffset(1000);
+          selectedMarker = marker;
           element.current
             ?.querySelectorAll(".post-map-marker.selected")
             .forEach((node) => node.classList.remove("selected"));
@@ -1794,20 +1800,28 @@ export function PostEditor({
             {body.length} / 300文字
           </small>
         </label>
-        <label>
-          写真（0〜4枚）
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            disabled={images.length >= 4 || busy}
-            onChange={(e) => filesChosen(e.target.files)}
-          />
-        </label>
+        <div className="photo-upload-field">
+          <span>写真（0〜4枚）</span>
+          <label
+            className="photo-file-button"
+            aria-disabled={images.length >= 4 || busy}
+          >
+            <AddAPhotoIcon aria-hidden="true" />
+            <span>写真を追加</span>
+            <input
+              className="photo-file-input"
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={images.length >= 4 || busy}
+              onChange={(e) => filesChosen(e.target.files)}
+            />
+          </label>
+        </div>
         {busy ? <p role="status">画像処理または位置情報を取得中…</p> : null}
         {images.length > 1 ? (
           <small className="photo-reorder-help">
-            写真をドラッグ、または左右にスワイプして並び替えられます。1枚目が写真ピンになります。
+            写真をドラッグ、または左右にスワイプして並び替えられます。1枚目が地図のピンに表示されます。
           </small>
         ) : null}
         <div className="photos editable">
@@ -1848,16 +1862,21 @@ export function PostEditor({
               </div>
               {i === 0 ? (
                 <button
+                  className="photo-pin-edit"
                   type="button"
                   onClick={() => {
                     setPinCropImageId(im.id);
                     setDraftPinCrop(im.pinCrop ?? DEFAULT_PLUSH_ICON_CROP);
                   }}
+                  aria-label="ピンに表示する画像を調整"
                 >
-                  写真ピンの範囲を調整
+                  <EditRoundedIcon aria-hidden="true" />
                 </button>
               ) : null}
               <button
+                className="photo-delete"
+                type="button"
+                aria-label={`選択写真 ${i + 1}を削除`}
                 onClick={() =>
                   setImages(
                     images
@@ -1870,7 +1889,7 @@ export function PostEditor({
                   )
                 }
               >
-                削除
+                <HighlightOffIcon aria-hidden="true" />
               </button>
             </div>
           ))}
@@ -1894,7 +1913,7 @@ export function PostEditor({
                     setPinCropImageId(undefined);
                   }}
                   onCancel={() => setPinCropImageId(undefined)}
-                  subject="写真ピン"
+                  subject="ピンに表示する画像"
                 />
               ) : null;
             })()
