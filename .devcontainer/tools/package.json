@@ -2,7 +2,7 @@
   "name": "ai-dev-template-container-tools",
   "private": true,
   "dependencies": {
-    "@openai/codex": "0.147.0",
+    "@openai/codex": "0.154.0",
     "opencode-ai": "1.18.18"
   }
 }
