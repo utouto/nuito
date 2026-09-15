@@ -558,6 +558,10 @@ export default function App() {
   };
   return (
     <div className="app">
+      <header className="app-header">
+        <img src="/icons/nuito-icon.png" alt="" width="34" height="34" />
+        <strong>ぬいと</strong>
+      </header>
       <main className={view === "today" ? "today-main" : undefined}>
         {view === "today" ? (
           <Today

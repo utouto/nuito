@@ -43,6 +43,21 @@ textarea:focus-visible {
   padding-bottom: 90px;
   box-shadow: 0 0 40px #6d4c3520;
 }
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 60px;
+  padding: 0 20px;
+  border-bottom: 1px solid #e8ded2;
+  background: #fffdf9;
+}
+.app-header img {
+  object-fit: contain;
+}
 .hero-icon {
   display: block;
   object-fit: contain;
@@ -178,7 +193,7 @@ h2 {
 }
 .today-map-view {
   position: relative;
-  height: calc(100dvh - 66px);
+  height: calc(100dvh - 126px);
   min-height: 430px;
   overflow: hidden;
 }
