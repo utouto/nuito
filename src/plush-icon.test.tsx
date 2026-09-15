@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  adjustPlushIconCrop,
   clampPlushIconCrop,
   DEFAULT_PLUSH_ICON_CROP,
 } from "./plush-icon-crop";
@@ -28,6 +29,17 @@ describe("ぬいぐるみアイコン調整", () => {
     });
   });
 
+  it("ドラッグとピンチから表示位置と拡大率を計算する", () => {
+    expect(
+      adjustPlushIconCrop(
+        DEFAULT_PLUSH_ICON_CROP,
+        { x: 20, y: -10 },
+        { width: 200, height: 200 },
+        2,
+      ),
+    ).toEqual({ x: 45, y: 52.5, zoom: 2 });
+  });
+
   it("円形プレビューを示し、スライダー変更を通知する", () => {
     const onChange = vi.fn();
     render(
@@ -42,7 +54,7 @@ describe("ぬいぐるみアイコン調整", () => {
     expect(
       screen.getByAltText("円形アイコンのプレビュー"),
     ).toBeInTheDocument();
-    expect(screen.getByText(/元画像は切り取らずに保存/)).toBeInTheDocument();
+    expect(screen.getByText(/ドラッグして位置/)).toBeInTheDocument();
     fireEvent.change(screen.getByRole("slider", { name: "横の位置" }), {
       target: { value: "75" },
     });

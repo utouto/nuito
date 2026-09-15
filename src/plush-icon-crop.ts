@@ -13,3 +13,19 @@ export function clampPlushIconCrop(crop: PlushIconCrop): PlushIconCrop {
     zoom: Math.min(3, Math.max(1, crop.zoom)),
   };
 }
+
+export function adjustPlushIconCrop(
+  crop: PlushIconCrop,
+  movement: { x: number; y: number },
+  viewport: { width: number; height: number },
+  scale = 1,
+): PlushIconCrop {
+  const zoom = crop.zoom * scale;
+  const width = Math.max(1, viewport.width);
+  const height = Math.max(1, viewport.height);
+  return clampPlushIconCrop({
+    x: crop.x - (movement.x / (width * zoom)) * 100,
+    y: crop.y - (movement.y / (height * zoom)) * 100,
+    zoom,
+  });
+}

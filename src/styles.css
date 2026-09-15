@@ -262,10 +262,37 @@ h2 {
   gap: 24px;
   min-width: 0;
 }
-.icon-preview-row > .plush-icon {
+.icon-gesture-surface {
+  position: relative;
   width: min(52vw, 220px);
   height: min(52vw, 220px);
+  flex: 0 0 auto;
+  border-radius: 50%;
   box-shadow: 0 0 0 5px #fff, 0 0 0 7px #d8c5b4;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.icon-gesture-surface:active {
+  cursor: grabbing;
+}
+.icon-gesture-surface > .plush-icon {
+  width: 100%;
+  height: 100%;
+}
+.icon-gesture-surface > span {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: max-content;
+  max-width: 86%;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #3e332ccc;
+  color: white;
+  font-size: 11px;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 .icon-preview-row > div {
   display: grid;
