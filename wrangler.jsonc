@@ -4,7 +4,7 @@
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-15",
   "workers_dev": false,
-  "vars": { "ENVIRONMENT": "local" },
+  "vars": { "ENVIRONMENT": "local", "APP_ORIGIN": "http://localhost:5173" },
   "d1_databases": [
     {
       "binding": "DB",

@@ -316,6 +316,8 @@ function Onboarding({
           ブラウザデータの削除、端末の故障・紛失時には、バックアップがない記録を復元できない可能性があります。
         </p>
       </section>
+      <LineAuth />
+      <p className="separator">または</p>
       <button
         className="primary"
         onClick={() => db.settings.put({ ...settings, started: true })}
@@ -327,6 +329,82 @@ function Onboarding({
         <button onClick={() => onLegal("terms")}>利用規約</button>
       </div>
     </main>
+  );
+}
+
+function LineAuth() {
+  const [phrase, setPhrase] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [accountName, setAccountName] = useState("");
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((response) => response.json())
+      .then(
+        (result: {
+          authenticated?: boolean;
+          user?: { displayName?: string };
+        }) => {
+          if (result.authenticated)
+            setAccountName(result.user?.displayName || "LINEユーザー");
+        },
+      )
+      .catch(() => undefined);
+    const reason = new URLSearchParams(location.search).get("auth");
+    if (reason === "registration_closed")
+      setError("新規登録できませんでした。あいことばを確認してください。");
+    if (reason === "failed" || reason === "expired")
+      setError("LINEログインを完了できませんでした。もう一度お試しください。");
+  }, []);
+  async function login() {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/auth/line/start", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ invitePhrase: phrase }),
+      });
+      if (!response.ok) throw new Error();
+      const result = (await response.json()) as { authorizationUrl?: string };
+      if (!result.authorizationUrl) throw new Error();
+      location.assign(result.authorizationUrl);
+    } catch {
+      setError(
+        "LINEログインを開始できませんでした。しばらくしてから再度お試しください。",
+      );
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="line-auth">
+      <h2>LINEでログイン</h2>
+      {accountName ? (
+        <p className="success">{accountName}としてLINEログイン済みです。</p>
+      ) : null}
+      <p>
+        初めて登録するときだけ、招待された人へ共有されたあいことばを入力してください。
+        LINEの友だち、トーク、タイムラインへ自動共有することはありません。
+      </p>
+      <label>
+        あいことば（新規登録時のみ）
+        <input
+          type="password"
+          value={phrase}
+          maxLength={128}
+          autoComplete="off"
+          onChange={(e) => setPhrase(e.target.value)}
+        />
+      </label>
+      <button className="line-button" onClick={login} disabled={busy}>
+        {busy ? "LINEへ移動中…" : "LINEでログイン・新規登録"}
+      </button>
+      {error ? (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
   );
 }
 function Today({

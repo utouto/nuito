@@ -22,6 +22,8 @@ npm run dev
 
 データは現時点では同じブラウザ・同じoriginのIndexedDBへ保存されます。ローカルD1・R2はCloudflare移行用の開発基盤で、認証方式が決まるまで保存APIを公開しません。
 
+LINEログインをローカルで試す場合は `.dev.vars.example` を `.dev.vars` へコピーし、実値を設定します。`.dev.vars` はGit管理されません。新規登録には `INVITE_PHRASE` の一致が必要で、登録済みLINEアカウントはあいことばなしで再ログインできます。本番設定は [LINEログイン設定手順](docs/operations/line-login-setup.md) を参照してください。
+
 ## 環境切り替え
 
 - ローカル: `npm run dev`（`.env.development`）
@@ -36,7 +38,7 @@ npm run dev
 
 フロントエンドだけを起動する場合は `npm run dev:app`、Workerだけは `npm run dev:worker` を使います。ローカルD1 migrationは `npm run db:migrate:local` で再適用できます。`.wrangler/` のローカルD1・R2データはGit管理されません。
 
-- 文書バージョン: `0.3.0-draft`
+- 文書バージョン: `0.4.0-draft`
 - 更新日: `2026-09-15`
 - 対象: 初期リリース（MVP）および将来拡張
 - 正本: [`docs/requirements/README.md`](docs/requirements/README.md)

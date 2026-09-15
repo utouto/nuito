@@ -5,6 +5,7 @@
 | 領域 | 主な機能要件 | 画面 | 主なデータ | 受入基準 |
 |---|---|---|---|---|
 | 利用開始 | FR-001〜FR-006 | SC-01 | AppMetadata, UserSettings | AC-001, AC-002 |
+| LINE認証・招待 | FR-004, FR-006, FR-009 | SC-01 | User, AuthAttempt, Session | AC-004 |
 | 法務情報 | FR-007〜FR-008 | SC-01, SC-08, SC-10, SC-11 | なし | AC-003 |
 | ぬいぐるみ | FR-010〜FR-019 | SC-07, SC-03 | Plush, PostPlush | AC-001 |
 | 投稿本文 | FR-020〜FR-023 | SC-03 | Post | AC-010 |

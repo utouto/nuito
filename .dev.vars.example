@@ -1,0 +1,3 @@
+LINE_CHANNEL_ID=LINE Developers ConsoleのChannel ID
+LINE_CHANNEL_SECRET=wrangler secretで管理するChannel Secret
+INVITE_PHRASE=十分に長いランダムなあいことば

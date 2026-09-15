@@ -34,6 +34,27 @@ describe("Cloudflare API", () => {
     );
     expect(response.status).toBe(501);
   });
+  it("認証開始の不正なJSONを400で拒否する", async () => {
+    const response = await handleRequest(
+      new Request("http://local/api/auth/line/start", {
+        method: "POST",
+        body: "{",
+      }),
+      env() as never,
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "invalid_request" });
+  });
+  it("OAuth state cookieがないcallbackを拒否する", async () => {
+    const response = await handleRequest(
+      new Request("http://local/api/auth/line/callback?code=code&state=state"),
+      { ...env(), APP_ORIGIN: "http://localhost:5173" } as never,
+    );
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:5173/?auth=failed",
+    );
+  });
   it("binding障害時は詳細を漏らさず503を返す", async () => {
     const response = await handleRequest(
       new Request("http://local/api/health"),
