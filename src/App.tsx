@@ -218,7 +218,9 @@ export default function App() {
           <span className="brand-mark">ぬ</span>
           <strong>ぬいと</strong>
         </div>
-        <span className="env">{import.meta.env.VITE_APP_ENV}</span>
+        {import.meta.env.MODE !== "production" && (
+          <span className="env">{import.meta.env.VITE_APP_ENV}</span>
+        )}
       </header>
       <main>
         {view === "today" ? (
