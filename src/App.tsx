@@ -46,6 +46,63 @@ function BlobImage({
   }, [blob]);
   return <img src={url} alt={alt} className={className} />;
 }
+function ImageLightbox({
+  image,
+  imageNumber,
+  onClose,
+  returnFocusTo,
+}: {
+  image: PostImage;
+  imageNumber: number;
+  onClose: () => void;
+  returnFocusTo: HTMLElement | null;
+}) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButton.current?.focus();
+    const keyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      if (event.key === "Tab") {
+        event.preventDefault();
+        closeButton.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", keyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", keyDown);
+      returnFocusTo?.focus();
+    };
+  }, [onClose, returnFocusTo]);
+  return (
+    <div
+      className="image-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`投稿写真 ${imageNumber}の拡大表示`}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <button
+        ref={closeButton}
+        type="button"
+        className="lightbox-close"
+        onClick={onClose}
+        aria-label="拡大表示を閉じる"
+      >
+        ×
+      </button>
+      <BlobImage
+        blob={image.full}
+        alt={`拡大した投稿写真 ${imageNumber}`}
+        className="lightbox-image"
+      />
+    </div>
+  );
+}
 function DayMap({
   posts,
   pick,
@@ -133,6 +190,12 @@ export function PostCard({
   plushes: Plush[];
   onEdit: () => void;
 }) {
+  const [expandedImage, setExpandedImage] = useState<{
+    image: PostImage;
+    imageNumber: number;
+  }>();
+  const imageTrigger = useRef<HTMLButtonElement>(null);
+  const closeExpandedImage = () => setExpandedImage(undefined);
   const companions = post.plushIds
     .map((id) => plushes.find((p) => p.id === id))
     .filter((plush): plush is Plush => Boolean(plush));
@@ -150,11 +213,18 @@ export function PostCard({
       {post.images.length ? (
         <div className="photos">
           {post.images.map((image, i) => (
-            <BlobImage
+            <button
               key={image.id}
-              blob={image.thumbnail}
-              alt={`投稿写真 ${i + 1}`}
-            />
+              type="button"
+              className="photo-expand"
+              aria-label={`投稿写真 ${i + 1}を拡大`}
+              onClick={(event) => {
+                imageTrigger.current = event.currentTarget;
+                setExpandedImage({ image, imageNumber: i + 1 });
+              }}
+            >
+              <BlobImage blob={image.thumbnail} alt={`投稿写真 ${i + 1}`} />
+            </button>
           ))}
         </div>
       ) : null}
@@ -191,6 +261,14 @@ export function PostCard({
           </span>
           <span aria-hidden="true">といっしょ</span>
         </div>
+      ) : null}
+      {expandedImage ? (
+        <ImageLightbox
+          image={expandedImage.image}
+          imageNumber={expandedImage.imageNumber}
+          onClose={closeExpandedImage}
+          returnFocusTo={imageTrigger.current}
+        />
       ) : null}
     </article>
   );

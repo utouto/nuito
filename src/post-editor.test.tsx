@@ -185,6 +185,31 @@ describe("投稿の同行表示", () => {
   });
 });
 
+describe("投稿画像の拡大表示", () => {
+  it("投稿画像を選択して拡大し、Escapeキーで閉じて元の操作へ戻る", () => {
+    const view = render(
+      <PostCard post={post} plushes={[]} onEdit={() => undefined} />,
+    );
+    const card = within(view.container);
+    const trigger = card.getByRole("button", { name: "投稿写真 1を拡大" });
+
+    fireEvent.click(trigger);
+
+    expect(
+      card.getByRole("dialog", { name: "投稿写真 1の拡大表示" }),
+    ).toBeVisible();
+    expect(card.getByAltText("拡大した投稿写真 1")).toBeVisible();
+    expect(card.getByRole("button", { name: "拡大表示を閉じる" })).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(
+      card.queryByRole("dialog", { name: "投稿写真 1の拡大表示" }),
+    ).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+});
+
 describe("ぬいぐるみのテーマカラー設定", () => {
   it("新規登録時は透明で、透明を解除すると色を選択できる", () => {
     render(<Plushes plushes={[]} />);

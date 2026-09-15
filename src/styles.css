@@ -201,6 +201,50 @@ h2 {
   object-fit: cover;
   border-radius: 10px;
 }
+.photo-expand {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: zoom-in;
+}
+.photo-expand:focus-visible {
+  outline: 3px solid #9d4d2c;
+  outline-offset: 2px;
+}
+.image-lightbox {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 56px 16px 24px;
+  background: #1f1814ed;
+}
+.lightbox-image {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 80px);
+  border-radius: 8px;
+  object-fit: contain;
+}
+.lightbox-close {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #ffffff80;
+  border-radius: 50%;
+  background: #2f2722;
+  color: white;
+  font-size: 30px;
+  line-height: 1;
+}
 .history-row {
   width: 100%;
   display: flex;
