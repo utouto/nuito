@@ -76,7 +76,7 @@ curl --fail-with-body https://<STAGING_HOST>/api/health
 
 ## 6. production公開
 
-staging確認後に同じ手順で`nuito-production`と`nuito-images-production`を作り、`wrangler.production.example.jsonc`を`wrangler.production.jsonc`へコピーします。production Worker名は`nuito`とします。production専用のD1 ID、Workers subdomain、Secretを設定してください。stagingのD1、R2、Secretを流用しません。
+staging確認後に同じ手順で`nuito-production`と`nuito-images-production`を作り、`wrangler.production.example.jsonc`を`wrangler.production.jsonc`へコピーします。production Worker名は`app`とします。production専用のD1 ID、Workers subdomain、Secretを設定してください。stagingのD1、R2、Secretを流用しません。
 
 ```bash
 npm run check:deploy:production
