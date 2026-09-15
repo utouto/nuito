@@ -23,6 +23,11 @@ import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import { db, deleteAllData, getSettings } from "./db";
 import {
+  deleteCloudPost,
+  saveCloudPost,
+  syncCloudPosts,
+} from "./cloud-posts";
+import {
   effectiveLogicalDate,
   formatDate,
   localDateTime,
@@ -517,6 +522,14 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState("");
   const [editing, setEditing] = useState<Post>();
   const [todayDrawerOpen, setTodayDrawerOpen] = useState(false);
+  const [cloudError, setCloudError] = useState("");
+  useEffect(() => {
+    void syncCloudPosts().catch(() =>
+      setCloudError(
+        "サーバー上のおもいでを読み込めませんでした。通信状態を確認してください。",
+      ),
+    );
+  }, []);
   const today = settings ? todayLogicalDate(settings.dayBoundaryTime) : "";
   const date = selectedDate || today;
   const dayPosts = useMemo(
@@ -570,6 +583,11 @@ export default function App() {
         <img src="/icons/nuito-icon.png" alt="" width="48" height="48" />
         <strong>ぬいと</strong>
       </header>
+      {cloudError ? (
+        <p className="cloud-error" role="alert">
+          {cloudError}
+        </p>
+      ) : null}
       <main className={view === "today" ? "today-main" : undefined}>
         {view === "today" ? (
           <Today
@@ -1422,6 +1440,7 @@ export function PostEditor({
       updatedAt: now,
     };
     try {
+      await saveCloudPost(value, plushes);
       await db.posts.put(value);
       onDone();
     } catch {
@@ -1434,8 +1453,19 @@ export function PostEditor({
   }
   async function remove() {
     if (post && confirm("このおもいでを削除します。元に戻せません。")) {
-      await db.posts.delete(post.id);
-      onDone();
+      setBusy(true);
+      setError("");
+      try {
+        await deleteCloudPost(post.id);
+        await db.posts.delete(post.id);
+        onDone();
+      } catch {
+        setError(
+          "削除できませんでした。通信状態を確認して、もう一度お試しください。",
+        );
+      } finally {
+        setBusy(false);
+      }
     }
   }
   return (

@@ -65,6 +65,20 @@ textarea:focus-visible {
 .app-header img {
   object-fit: contain;
 }
+.cloud-error {
+  position: fixed;
+  top: 68px;
+  left: 50%;
+  z-index: 1100;
+  width: min(calc(100% - 32px), 700px);
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff0ed;
+  color: #862d22;
+  box-shadow: 0 4px 16px #3e332c33;
+  transform: translateX(-50%);
+}
 .hero-icon {
   display: block;
   object-fit: contain;
