@@ -45,6 +45,7 @@ import {
   PlushIconEditor,
 } from "./plush-icon";
 import { DEFAULT_PLUSH_ICON_CROP } from "./plush-icon-crop";
+import { plushNameInitial } from "./plush-name";
 import type { Journal, Place, Plush, Post, PostImage, Settings } from "./types";
 type View =
   | "today"
@@ -447,7 +448,7 @@ export function PostCard({
                     borderColor: plush.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
                   }}
                 >
-                  ぬ
+                  {plushNameInitial(plush.name)}
                 </span>
               ),
             )}
@@ -1037,7 +1038,7 @@ export function History({
                           }}
                           aria-hidden="true"
                         >
-                          ぬ
+                          {plushNameInitial(plush.name)}
                         </span>
                       ),
                     )}
@@ -1162,7 +1163,7 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
                   borderColor: p.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
                 }}
               >
-                ぬ
+                {plushNameInitial(p.name)}
               </span>
             )}
             <strong>{p.name}</strong>
@@ -1645,7 +1646,7 @@ export function PostEditor({
                             p.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
                         }}
                       >
-                        ぬ
+                        {plushNameInitial(p.name)}
                       </span>
                     )}
                     <span className="plush-choice-check">

@@ -18,6 +18,7 @@ import {
   SettingsView,
   Today,
 } from "./App";
+import { plushNameInitial } from "./plush-name";
 import type { Plush, Post, Settings } from "./types";
 
 const {
@@ -867,8 +868,36 @@ describe("投稿の同行表示", () => {
     expect(container.querySelector(".fallback-icon")).toHaveStyle({
       borderColor: "#d55a87",
     });
-    expect(within(container).getByText("ぬ")).toBeInTheDocument();
+    expect(within(container).getByText("う")).toBeInTheDocument();
     expect(within(container).getByText("といっしょ")).toBeInTheDocument();
+  });
+});
+
+describe("ぬいの代替アイコン", () => {
+  it("名前の前後の空白を除いた最初の文字を表示する", () => {
+    expect(plushNameInitial(" くま ")).toBe("く");
+    expect(plushNameInitial("🐻くま")).toBe("🐻");
+  });
+
+  it("ぬいたち一覧で画像未設定時に名前の最初の文字を表示する", () => {
+    const view = render(
+      <Plushes
+        plushes={[
+          {
+            id: "plush-initial",
+            name: "くま",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      within(view.container).getByText("く", { selector: ".plush-icon-fallback" }),
+    ).toBeVisible();
+    view.unmount();
   });
 });
 
