@@ -1093,7 +1093,7 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
             テーマカラーを設定する
           </label>
           {themeColor !== DEFAULT_PLUSH_THEME_COLOR ? (
-            <label>
+            <label className="theme-color-picker">
               アイコンを囲う色
               <input
                 aria-label="テーマカラー"

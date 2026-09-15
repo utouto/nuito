@@ -722,6 +722,9 @@ h2 {
   align-items: center;
   justify-content: space-between;
 }
+.theme-color-field .theme-color-picker {
+  padding-left: 28px;
+}
 .theme-color-field input[type="color"] {
   width: 52px;
   height: 36px;
