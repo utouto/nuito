@@ -21,9 +21,11 @@ import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
 import PetsRoundedIcon from "@mui/icons-material/PetsRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
-import { db, deleteAllData, getSettings } from "./db";
+import { db, deleteAllData, deletePlush, getSettings } from "./db";
 import {
+  deleteCloudAccount,
   deleteCloudPost,
+  deleteCloudPlush,
   saveCloudPost,
   syncCloudPosts,
 } from "./cloud-posts";
@@ -1056,6 +1058,28 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
     });
     edit();
   }
+  async function remove() {
+    if (
+      !editing ||
+      !confirm(
+        `「${editing.name}」を削除します。過去のおもいでは残りますが、このぬいとの関連は外れます。元に戻せません。続けますか？`,
+      )
+    )
+      return;
+    setBusy(true);
+    setError("");
+    try {
+      await deleteCloudPlush(editing.id);
+      await deletePlush(editing.id);
+      edit();
+    } catch {
+      setError(
+        "ぬいを削除できませんでした。通信状態を確認して、もう一度お試しください。",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <>
       <h1 className="page-title">ぬいたち</h1>
@@ -1208,6 +1232,11 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
         >
           保存
         </button>
+        {editing ? (
+          <button className="delete" disabled={busy} onClick={remove}>
+            このぬいを削除
+          </button>
+        ) : null}
       </section>
     </>
   );
@@ -1224,6 +1253,7 @@ function SettingsView({
   const [boundary, setBoundary] = useState(settings.dayBoundaryTime);
   const [prompt, setPrompt] = useState(settings.journalPromptTime);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   async function save() {
     if (
       boundary !== settings.dayBoundaryTime &&
@@ -1242,10 +1272,21 @@ function SettingsView({
   async function clear() {
     if (
       confirm(
-        "すべてのおもいで、写真、ぬいぐるみ、日記、設定を削除します。元に戻せません。続けますか？",
+        cloudEnabled
+          ? "すべてのおもいで、写真、ぬいぐるみ、日記、設定とLINEアカウント連携を削除します。元に戻せません。続けますか？"
+          : "すべてのおもいで、写真、ぬいぐるみ、日記、設定を削除します。元に戻せません。続けますか？",
       )
-    )
-      await deleteAllData();
+    ) {
+      setError("");
+      try {
+        await deleteCloudAccount();
+        await deleteAllData();
+      } catch {
+        setError(
+          "データを削除できませんでした。通信状態を確認して、もう一度お試しください。",
+        );
+      }
+    }
   }
   return (
     <>
@@ -1286,6 +1327,10 @@ function SettingsView({
       <section className="danger">
         <h2>すべてのデータを削除</h2>
         <button onClick={clear}>全データを削除する</button>
+        {cloudEnabled ? (
+          <small>LINEアカウント連携とクラウド上の投稿・画像も削除します。</small>
+        ) : null}
+        {error ? <p className="error" role="alert">{error}</p> : null}
       </section>
       <section className="legal-links settings-links" aria-label="法務情報">
         <button onClick={() => onLegal("privacy")}>プライバシーポリシー</button>

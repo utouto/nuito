@@ -905,5 +905,8 @@ describe("ぬいぐるみのテーマカラー設定", () => {
       form.getByRole("radio", { name: "テーマカラーを設定しない" }),
     ).not.toBeChecked();
     expect(form.getByLabelText("テーマカラー")).toHaveValue("#3a7bd5");
+    expect(
+      form.getByRole("button", { name: "このぬいを削除" }),
+    ).toBeVisible();
   });
 });

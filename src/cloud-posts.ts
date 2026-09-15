@@ -153,6 +153,22 @@ export async function deleteCloudPost(postId: string) {
   return deleted;
 }
 
+export async function deleteCloudPlush(plushId: string) {
+  return Boolean(
+    await checkedFetch(`/api/plushes/${encodeURIComponent(plushId)}`, {
+      method: "DELETE",
+    }),
+  );
+}
+
+export async function deleteCloudAccount() {
+  const deleted = Boolean(
+    await checkedFetch("/api/account", { method: "DELETE" }),
+  );
+  if (deleted) rememberCloudPostIds([]);
+  return deleted;
+}
+
 async function imageBlob(
   imageId: string,
   variant: "full" | "thumbnail" | "plush",

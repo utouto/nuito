@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { deleteCloudPost, saveCloudPost } from "./cloud-posts";
+import {
+  deleteCloudAccount,
+  deleteCloudPlush,
+  deleteCloudPost,
+  saveCloudPost,
+} from "./cloud-posts";
 import type { Plush, Post } from "./types";
 
 const post: Post = {
@@ -82,5 +87,20 @@ describe("クラウド投稿クライアント", () => {
     await expect(saveCloudPost(post, [plush])).rejects.toThrow(
       "cloud_request_failed:503",
     );
+  });
+
+  it("ぬい削除とアカウント削除を専用APIへ送信する", async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response("{}"));
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(deleteCloudPlush("plush-1")).resolves.toBe(true);
+    await expect(deleteCloudAccount()).resolves.toBe(true);
+
+    expect(fetch).toHaveBeenNthCalledWith(1, "/api/plushes/plush-1", {
+      method: "DELETE",
+    });
+    expect(fetch).toHaveBeenNthCalledWith(2, "/api/account", {
+      method: "DELETE",
+    });
   });
 });

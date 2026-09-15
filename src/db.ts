@@ -42,3 +42,18 @@ export async function deleteAllData() {
     },
   );
 }
+export async function deletePlush(plushId: string) {
+  await db.transaction("rw", db.posts, db.plushes, async () => {
+    const posts = await db.posts
+      .filter((post) => post.plushIds.includes(plushId))
+      .toArray();
+    await db.posts.bulkPut(
+      posts.map((post) => ({
+        ...post,
+        plushIds: post.plushIds.filter((id) => id !== plushId),
+        updatedAt: new Date().toISOString(),
+      })),
+    );
+    await db.plushes.delete(plushId);
+  });
+}
