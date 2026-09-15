@@ -281,8 +281,7 @@ h2 {
   left: 0;
   z-index: 505;
   height: min(62vh, 560px);
-  padding: 0 18px 78px;
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: 22px 22px 0 0;
   background: #fffaf4f7;
   box-shadow: 0 -8px 28px #3e332c33;
@@ -314,6 +313,13 @@ h2 {
 }
 .today-post-drawer .stack {
   margin-top: 0;
+}
+.today-drawer-scroll {
+  height: calc(100% - 72px);
+  padding: 0 18px 78px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 .journal-view {
   margin: -24px -18px 0;

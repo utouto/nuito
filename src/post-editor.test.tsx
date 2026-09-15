@@ -235,6 +235,9 @@ describe("きょうの投稿ドロワー", () => {
     expect(drawer).toHaveAttribute("aria-label", "きょうの投稿");
     expect(drawer).toBeVisible();
     expect(drawer).not.toHaveAttribute("hidden");
+    expect(
+      drawer?.querySelector(".today-drawer-scroll > .stack"),
+    ).toBeInTheDocument();
     expect(toggle).toHaveAttribute("aria-expanded", "false");
 
     fireEvent.click(toggle);

@@ -869,31 +869,33 @@ export function Today({
           <span aria-hidden="true" />
           <strong>きょうの投稿</strong>
         </button>
-        <section className="stack">
-          {posts.length ? (
-            posts.map((p) => (
-              <PostCard
-                key={p.id}
-                post={p}
-                plushes={plushes}
-                onEdit={() => onNew(p)}
-                onSelect={
-                  p.place
-                    ? () => {
-                        setFocusedPostId(p.id);
-                        setFocusRequest((request) => request + 1);
-                      }
-                    : undefined
-                }
-                selected={focusedPostId === p.id}
-              />
-            ))
-          ) : (
-            <div className="empty">
-              写真やひとこと、場所を記録すると、ここに一日が並びます。
-            </div>
-          )}
-        </section>
+        <div className="today-drawer-scroll">
+          <section className="stack">
+            {posts.length ? (
+              posts.map((p) => (
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  plushes={plushes}
+                  onEdit={() => onNew(p)}
+                  onSelect={
+                    p.place
+                      ? () => {
+                          setFocusedPostId(p.id);
+                          setFocusRequest((request) => request + 1);
+                        }
+                      : undefined
+                  }
+                  selected={focusedPostId === p.id}
+                />
+              ))
+            ) : (
+              <div className="empty">
+                写真やひとこと、場所を記録すると、ここに一日が並びます。
+              </div>
+            )}
+          </section>
+        </div>
       </aside>
     </section>
   );
