@@ -185,6 +185,7 @@ export function DayMap({
   className,
   centerOnCurrentWhenEmpty = false,
   focusPostId,
+  focusRequest = 0,
   occludedById,
 }: {
   posts: Post[];
@@ -195,6 +196,7 @@ export function DayMap({
   className?: string;
   centerOnCurrentWhenEmpty?: boolean;
   focusPostId?: string;
+  focusRequest?: number;
   occludedById?: string;
 }) {
   const element = useRef<HTMLDivElement>(null);
@@ -307,6 +309,7 @@ export function DayMap({
     mapInstance.current.setView(
       [focused.place.latitude, focused.place.longitude],
       mapInstance.current.getZoom(),
+      { animate: false },
     );
     const mapBounds = element.current?.getBoundingClientRect();
     const occluderBounds = occludedById
@@ -325,7 +328,7 @@ export function DayMap({
     );
     if (overlap > 0)
       mapInstance.current.panBy([0, overlap / 2], { animate: false });
-  }, [focusPostId, occludedById, posts]);
+  }, [focusPostId, focusRequest, occludedById, posts]);
   return (
     <div className={className ? `map-wrap ${className}` : "map-wrap"}>
       <div className="map-stage">
@@ -756,6 +759,7 @@ export function Today({
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [focusedPostId, setFocusedPostId] = useState<string>();
+  const [focusRequest, setFocusRequest] = useState(0);
   const dragStart = useRef<number | undefined>(undefined);
   const dragDistance = useRef(0);
   const suppressNextClick = useRef(false);
@@ -798,6 +802,7 @@ export function Today({
         className="today-map"
         centerOnCurrentWhenEmpty
         focusPostId={focusedPostId}
+        focusRequest={focusRequest}
         occludedById="today-post-drawer"
       />
       <div className="today-summary">
@@ -853,7 +858,14 @@ export function Today({
                 post={p}
                 plushes={plushes}
                 onEdit={() => onNew(p)}
-                onSelect={p.place ? () => setFocusedPostId(p.id) : undefined}
+                onSelect={
+                  p.place
+                    ? () => {
+                        setFocusedPostId(p.id);
+                        setFocusRequest((request) => request + 1);
+                      }
+                    : undefined
+                }
                 selected={focusedPostId === p.id}
               />
             ))

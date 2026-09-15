@@ -342,9 +342,15 @@ describe("きょうの投稿ドロワー", () => {
     const postCard = page.getByLabelText("東京駅を地図の中心に表示");
     fireEvent.click(postCard);
 
-    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 11);
+    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 11, {
+      animate: false,
+    });
     expect(mapPanBy).toHaveBeenLastCalledWith([0, 250], { animate: false });
     expect(postCard).toHaveClass("selected");
+
+    mapPanBy.mockClear();
+    fireEvent.click(postCard);
+    expect(mapPanBy).toHaveBeenCalledWith([0, 250], { animate: false });
   });
 
   it("件数と上部投稿ボタンを表示せず、本アイコンで日記を開く", () => {
