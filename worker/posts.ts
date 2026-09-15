@@ -50,6 +50,7 @@ const LOCAL_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const MAX_FULL_BYTES = 12 * 1024 * 1024;
 const MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024;
 const MAX_PLUSH_ICON_BYTES = 5 * 1024 * 1024;
+const THEME_COLOR = /^(transparent|#[0-9A-Fa-f]{6})$/;
 
 const response = (body: unknown, status = 200) =>
   Response.json(body, {
@@ -64,6 +65,16 @@ function validTimestamp(value: unknown): value is string {
   return typeof value === "string" && !Number.isNaN(Date.parse(value));
 }
 
+function validDate(value: string) {
+  if (!DATE.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+}
+
+function validLocalDateTime(value: string) {
+  return LOCAL_DATE_TIME.test(value) && !Number.isNaN(Date.parse(value));
+}
+
 function validPost(value: unknown): value is PostInput {
   if (!value || typeof value !== "object") return false;
   const post = value as Partial<PostInput>;
@@ -75,6 +86,7 @@ function validPost(value: unknown): value is PostInput {
     !Array.isArray(post.plushes) ||
     !Array.isArray(post.images) ||
     post.images.length > 4 ||
+    (!post.body.trim() && post.images.length === 0 && !post.place) ||
     !validTimestamp(post.createdAt) ||
     !validTimestamp(post.updatedAt)
   )
@@ -82,11 +94,11 @@ function validPost(value: unknown): value is PostInput {
   if (
     post.timeMode === "known"
       ? !post.occurredLocalDateTime ||
-        !LOCAL_DATE_TIME.test(post.occurredLocalDateTime) ||
+        !validLocalDateTime(post.occurredLocalDateTime) ||
         post.manualLogicalDate !== undefined
       : post.timeMode !== "unknown" ||
         !post.manualLogicalDate ||
-        !DATE.test(post.manualLogicalDate) ||
+        !validDate(post.manualLogicalDate) ||
         post.occurredLocalDateTime !== undefined
   )
     return false;
@@ -103,7 +115,9 @@ function validPost(value: unknown): value is PostInput {
       !["current", "map", "manual"].includes(post.place.source))
   )
     return false;
+  const plushIds = post.plushes.map((plush) => plush?.id);
   if (
+    new Set(plushIds).size !== plushIds.length ||
     post.plushes.some(
       (plush) =>
         !plush ||
@@ -112,6 +126,8 @@ function validPost(value: unknown): value is PostInput {
         typeof plush.name !== "string" ||
         plush.name.length < 1 ||
         plush.name.length > 60 ||
+        (plush.themeColor !== undefined &&
+          !THEME_COLOR.test(plush.themeColor)) ||
         typeof plush.hidden !== "boolean" ||
         typeof plush.hasIcon !== "boolean" ||
         (plush.iconCrop !== undefined &&
