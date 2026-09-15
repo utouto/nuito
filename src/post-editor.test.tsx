@@ -188,8 +188,10 @@ describe("投稿編集", () => {
     );
 
     const page = within(screen.getByRole("region", { name: /2026年9月14日/ }));
-    fireEvent.click(page.getByRole("button", { name: "投稿ドロワーを開く" }));
-    fireEvent.click(page.getByRole("button", { name: "投稿を編集" }));
+    fireEvent.click(
+      page.getByRole("button", { name: "おもいでドロワーを開く" }),
+    );
+    fireEvent.click(page.getByRole("button", { name: "おもいでを編集" }));
 
     expect(onEdit).toHaveBeenCalledWith(post);
   });
@@ -212,7 +214,7 @@ describe("投稿編集", () => {
       "blob:post-image",
     );
     expect(form.getByRole("textbox", { name: "場所" })).toHaveValue("東京駅");
-    expect(form.getByText("投稿を編集")).toBeInTheDocument();
+    expect(form.getByText("おもいでを編集")).toBeInTheDocument();
   });
 });
 
@@ -230,9 +232,11 @@ describe("きょうの投稿ドロワー", () => {
     );
     const page = within(view.container);
     const drawer = view.container.querySelector(".today-post-drawer");
-    const toggle = page.getByRole("button", { name: "投稿ドロワーを開く" });
+    const toggle = page.getByRole("button", {
+      name: "おもいでドロワーを開く",
+    });
 
-    expect(drawer).toHaveAttribute("aria-label", "きょうの投稿");
+    expect(drawer).toHaveAttribute("aria-label", "きょうのおもいで");
     expect(drawer).toBeVisible();
     expect(drawer).not.toHaveAttribute("hidden");
     expect(
@@ -245,7 +249,7 @@ describe("きょうの投稿ドロワー", () => {
     expect(drawer).toBeVisible();
     expect(page.getByText("もとのひとこと")).toBeVisible();
     expect(
-      page.getByRole("button", { name: "投稿ドロワーを閉じる" }),
+      page.getByRole("button", { name: "おもいでドロワーを閉じる" }),
     ).toHaveAttribute("aria-expanded", "true");
   });
 
@@ -263,7 +267,9 @@ describe("きょうの投稿ドロワー", () => {
       />,
     );
     const page = within(view.container);
-    const handle = page.getByRole("button", { name: "投稿ドロワーを開く" });
+    const handle = page.getByRole("button", {
+      name: "おもいでドロワーを開く",
+    });
 
     fireEvent.pointerDown(handle, { pointerId: 1, clientY: 300 });
     fireEvent.pointerMove(handle, { pointerId: 1, clientY: 240 });
@@ -293,7 +299,7 @@ describe("きょうの投稿ドロワー", () => {
 
     fireEvent.click(
       within(view.container).getByRole("button", {
-        name: "投稿ドロワーを開く",
+        name: "おもいでドロワーを開く",
       }),
     );
 
@@ -312,7 +318,9 @@ describe("きょうの投稿ドロワー", () => {
       />,
     );
     const page = within(view.container);
-    fireEvent.click(page.getByRole("button", { name: "投稿ドロワーを開く" }));
+    fireEvent.click(
+      page.getByRole("button", { name: "おもいでドロワーを開く" }),
+    );
     vi.spyOn(
       page.getByLabelText("日別地図"),
       "getBoundingClientRect",
@@ -553,7 +561,7 @@ describe("きょうの日記", () => {
       view.container.querySelector(".journal-heading-card"),
     ).toHaveTextContent("2026年9月14日");
     expect(
-      within(view.container).getByRole("region", { name: "この日の投稿" }),
+      within(view.container).getByRole("region", { name: "この日のおもいで" }),
     ).toHaveTextContent("もとのひとこと");
     expect(view.container.querySelector(".journal-compose")).toHaveTextContent(
       "きょうの気持ちを残す",
@@ -603,7 +611,9 @@ describe("投稿の場所選択", () => {
     expect(
       form.queryByRole("textbox", { name: "場所" }),
     ).not.toBeInTheDocument();
-    expect(form.getByText("この投稿には場所を保存しません。")).toBeVisible();
+    expect(
+      form.getByText("このおもいでには場所を保存しません。"),
+    ).toBeVisible();
   });
 
   it("位置情報が許可済みなら現在地を初期場所にする", async () => {
@@ -777,14 +787,16 @@ describe("投稿画像の拡大表示", () => {
       <PostCard post={post} plushes={[]} onEdit={() => undefined} />,
     );
     const card = within(view.container);
-    const trigger = card.getByRole("button", { name: "投稿写真 1を拡大" });
+    const trigger = card.getByRole("button", {
+      name: "おもいでの写真 1を拡大",
+    });
 
     fireEvent.click(trigger);
 
     expect(
-      card.getByRole("dialog", { name: "投稿写真 1の拡大表示" }),
+      card.getByRole("dialog", { name: "おもいでの写真 1の拡大表示" }),
     ).toBeVisible();
-    expect(card.getByAltText("拡大した投稿写真 1")).toBeVisible();
+    expect(card.getByAltText("拡大したおもいでの写真 1")).toBeVisible();
     expect(
       card.getByRole("button", { name: "拡大表示を閉じる" }),
     ).toHaveFocus();
@@ -792,7 +804,7 @@ describe("投稿画像の拡大表示", () => {
     fireEvent.keyDown(document, { key: "Escape" });
 
     expect(
-      card.queryByRole("dialog", { name: "投稿写真 1の拡大表示" }),
+      card.queryByRole("dialog", { name: "おもいでの写真 1の拡大表示" }),
     ).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });

@@ -173,7 +173,7 @@ function ImageLightbox({
       className="image-lightbox"
       role="dialog"
       aria-modal="true"
-      aria-label={`投稿写真 ${imageNumber}の拡大表示`}
+      aria-label={`おもいでの写真 ${imageNumber}の拡大表示`}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -189,7 +189,7 @@ function ImageLightbox({
       </button>
       <BlobImage
         blob={image.full}
-        alt={`拡大した投稿写真 ${imageNumber}`}
+        alt={`拡大したおもいでの写真 ${imageNumber}`}
         className="lightbox-image"
       />
     </div>
@@ -397,7 +397,7 @@ export function PostCard({
       tabIndex={onSelect ? 0 : undefined}
       aria-label={
         onSelect
-          ? `${post.place?.name || "投稿地点"}を地図の中心に表示`
+          ? `${post.place?.name || "おもいでの場所"}を地図の中心に表示`
           : undefined
       }
       onClick={onSelect}
@@ -412,7 +412,11 @@ export function PostCard({
         }
       }}
     >
-      <button className="card-action" onClick={onEdit} aria-label="投稿を編集">
+      <button
+        className="card-action"
+        onClick={onEdit}
+        aria-label="おもいでを編集"
+      >
         編集
       </button>
       <p className="post-time">
@@ -428,13 +432,16 @@ export function PostCard({
               key={image.id}
               type="button"
               className="photo-expand"
-              aria-label={`投稿写真 ${i + 1}を拡大`}
+              aria-label={`おもいでの写真 ${i + 1}を拡大`}
               onClick={(event) => {
                 imageTrigger.current = event.currentTarget;
                 setExpandedImage({ image, imageNumber: i + 1 });
               }}
             >
-              <BlobImage blob={image.thumbnail} alt={`投稿写真 ${i + 1}`} />
+              <BlobImage
+                blob={image.thumbnail}
+                alt={`おもいでの写真 ${i + 1}`}
+              />
             </button>
           ))}
         </div>
@@ -610,7 +617,7 @@ export default function App() {
             <button
               className={`fab today-view${todayDrawerOpen ? " today-drawer-open" : ""}`}
               onClick={() => openEditor()}
-              aria-label="新しい投稿"
+              aria-label="新しいおもいで"
             >
               <AddRoundedIcon aria-hidden="true" />
             </button>
@@ -846,7 +853,7 @@ export function Today({
       <aside
         id="today-post-drawer"
         className={`today-post-drawer${drawerOpen ? " open" : ""}`}
-        aria-label="きょうの投稿"
+        aria-label="きょうのおもいで"
       >
         <button
           type="button"
@@ -854,7 +861,7 @@ export function Today({
           aria-expanded={drawerOpen}
           aria-controls="today-post-drawer"
           aria-label={
-            drawerOpen ? "投稿ドロワーを閉じる" : "投稿ドロワーを開く"
+            drawerOpen ? "おもいでドロワーを閉じる" : "おもいでドロワーを開く"
           }
           onClick={() => {
             if (suppressNextClick.current) {
@@ -869,7 +876,7 @@ export function Today({
           onPointerCancel={finishDrag}
         >
           <span aria-hidden="true" />
-          <strong>きょうの投稿</strong>
+          <strong>きょうのおもいで</strong>
         </button>
         <div className="today-drawer-scroll">
           <section className="stack">
@@ -1151,7 +1158,7 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
                 setEditing({ ...editing, hidden: e.target.checked })
               }
             />
-            新しい投稿では非表示にする
+            新しいおもいででは非表示にする
           </label>
         ) : null}
         <button
@@ -1179,7 +1186,7 @@ function SettingsView({
     if (
       boundary !== settings.dayBoundaryTime &&
       !confirm(
-        "一日の切り替え時刻を変えると、時刻のある過去の投稿が別の日に分類される場合があります。変更しますか？",
+        "一日の切り替え時刻を変えると、時刻のある過去のおもいでが別の日に分類される場合があります。変更しますか？",
       )
     )
       return;
@@ -1193,7 +1200,7 @@ function SettingsView({
   async function clear() {
     if (
       confirm(
-        "すべての投稿、写真、ぬいぐるみ、日記、設定を削除します。元に戻せません。続けますか？",
+        "すべてのおもいで、写真、ぬいぐるみ、日記、設定を削除します。元に戻せません。続けますか？",
       )
     )
       await deleteAllData();
@@ -1327,7 +1334,7 @@ export function PostEditor({
   async function filesChosen(files: FileList | null) {
     if (!files) return;
     if (images.length + files.length > 4) {
-      setError("写真は1投稿につき4枚までです。");
+      setError("写真は1件のおもいでにつき4枚までです。");
       return;
     }
     setBusy(true);
@@ -1412,7 +1419,7 @@ export function PostEditor({
     }
   }
   async function remove() {
-    if (post && confirm("この投稿を削除します。元に戻せません。")) {
+    if (post && confirm("このおもいでを削除します。元に戻せません。")) {
       await db.posts.delete(post.id);
       onDone();
     }
@@ -1423,7 +1430,7 @@ export function PostEditor({
         <ArrowBackRoundedIcon aria-hidden="true" />
         戻る
       </button>
-      <p className="eyebrow">{post ? "投稿を編集" : "新しい投稿"}</p>
+      <p className="eyebrow">{post ? "おもいでを編集" : "新しいおもいで"}</p>
       <h1>思い出を残す</h1>
       {error ? (
         <p className="error" role="alert">
@@ -1628,7 +1635,7 @@ export function PostEditor({
               ) : null}
             </>
           ) : (
-            <small>この投稿には場所を保存しません。</small>
+            <small>このおもいでには場所を保存しません。</small>
           )}
         </fieldset>
         <button
@@ -1640,7 +1647,7 @@ export function PostEditor({
         </button>
         {post ? (
           <button className="delete" onClick={remove}>
-            この投稿を削除
+            このおもいでを削除
           </button>
         ) : null}
       </section>
@@ -1700,7 +1707,7 @@ export function JournalView({
           <DayMap posts={posts} plushes={plushes} className="journal-map" />
         ) : (
           <div className="journal-map-empty">
-            場所付きの投稿がないため、地図は空です。
+            場所付きのおもいでがないため、地図は空です。
           </div>
         )}
         <button className="back journal-back" onClick={onBack}>
@@ -1718,7 +1725,7 @@ export function JournalView({
       {changed ? (
         <p className="notice">日記の保存後に記録が更新されています。</p>
       ) : null}
-      <section className="stack journal-posts" aria-label="この日の投稿">
+      <section className="stack journal-posts" aria-label="この日のおもいで">
         {posts.map((p) => (
           <PostCard
             key={p.id}
