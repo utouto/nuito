@@ -5,9 +5,9 @@
 ## 1. 公開構成
 
 - Worker: `dist/`の静的ファイルと`/api/*`を同一originで配信
-- D1: LINE利用者、OAuth試行、sessionを保存
-- R2: 将来のクラウド画像保存用。bucket自体は公開しない
-- IndexedDB: 投稿、写真、日記の現時点の正本。ログインしてもクラウド同期はまだ行わない
+- D1: LINE利用者、OAuth試行、session、認証済み利用者の投稿を保存
+- R2: 投稿画像・サムネイル・投稿に紐づくぬいアイコンを保存。bucket自体は公開しない
+- IndexedDB: 未ログイン時の保存先であり、ログイン時は投稿の端末キャッシュとして利用
 
 productionビルドではsource mapを公開物へ含めず、stagingでは障害調査用に生成します。
 
@@ -71,7 +71,9 @@ curl --fail-with-body https://<STAGING_HOST>/api/health
 - 正しいあいことばとLINE認証で登録できる
 - 登録済みアカウントはあいことばなしで再ログインできる
 - session cookieに`HttpOnly`、`Secure`、`SameSite=Lax`が付く
-- 投稿・写真・日記がブラウザ再起動後も同じ端末に残る
+- ログイン中に投稿した写真付きのおもいでがブラウザ再起動後も表示される
+- 同じLINEアカウントで別ブラウザからログインし、投稿と画像を取得できる
+- 未認証または別アカウントから投稿・画像APIへアクセスできない
 - Worker logにOAuth code、token、LINE user ID、あいことばが出ない
 
 ## 6. production公開
@@ -102,6 +104,6 @@ origin移行前のsession cookieは新originへ引き継がれないため、利
 - Workerと静的ファイル: Cloudflare DashboardのWorkers & Pages > 対象Worker > Deploymentsから直前の正常versionへ戻す。
 - Secret: 漏えい時は`wrangler secret put`で直ちにローテーションする。`INVITE_PHRASE`変更後も既存利用者はログインできる。
 - D1: 適用済みmigrationをファイル削除や手動DROPで戻さない。破壊的migrationを避け、原則として追加migrationで前進修正する。
-- R2: 現時点ではアプリから画像を書き込まない。公開bucketへ変更しない。
+- R2: bucketは公開せず、rollback後も画像削除は行わない。直前版が新しいschemaを読めない場合は前進修正する。
 
 公開の実施日時、対象commit、Worker version、migration結果、確認者、既知の問題をリリース記録へ残します。
