@@ -253,8 +253,11 @@ export default function App() {
         ) : null}
         {view === "editor" ? (
           <PostEditor
+            key={editing?.id ?? "new"}
             post={editing}
-            plushes={plushes.filter((p) => !p.hidden)}
+            plushes={plushes.filter(
+              (p) => !p.hidden || editing?.plushIds.includes(p.id),
+            )}
             settings={settings}
             onDone={() => {
               setEditing(undefined);
@@ -752,7 +755,7 @@ function SettingsView({
   );
 }
 
-function PostEditor({
+export function PostEditor({
   post,
   plushes,
   settings,
