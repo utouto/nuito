@@ -20,7 +20,7 @@
 | 履歴 | FR-160〜FR-167 | SC-06, SC-05 | Post, DailyJournal | AC-080 |
 | ローカル保存 | FR-170〜FR-181 | SC-01, SC-08 | 全データ | AC-002, AC-072 |
 | 印刷・PDF | FR-190〜FR-196 | SC-09 | DailyJournal, Post, PostImage | 将来追加 |
-| 共通画面構成・製品アイコン | FR-197〜FR-198 | SC-01〜SC-09 | なし | AC-081, AC-082 |
+| 共通画面構成・製品アイコン | FR-197〜FR-199 | SC-01〜SC-09 | なし | AC-081, AC-082, AC-084 |
 
 ## 非機能要件との対応
 

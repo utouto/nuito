@@ -623,9 +623,9 @@ export default function App() {
             {(
               [
                 ["today", "きょう"],
-                ["history", "思い出"],
+                ["history", "おもいで"],
                 ["plushes", "ぬいたち"],
-                ["settings", "設定"],
+                ["settings", "せってい"],
               ] as const
             ).map(([id, label]) => (
               <button
