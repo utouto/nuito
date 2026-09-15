@@ -12,7 +12,7 @@
 | 投稿写真 | FR-024〜FR-025, FR-040〜FR-055 | SC-02, SC-03, SC-05 | PostImage | AC-011, AC-012, AC-014 |
 | 行動日時 | FR-026〜FR-028, FR-100〜FR-107 | SC-03, SC-08 | Post, UserSettings | AC-013, AC-020〜AC-022 |
 | 場所 | FR-029, FR-060〜FR-066 | SC-03, SC-04 | Location | AC-070, AC-071, AC-073, AC-074 |
-| 地図・足あと | FR-068〜FR-079 | SC-02, SC-05 | Post, Location | AC-030〜AC-034 |
+| 地図・足あと | FR-068〜FR-079 | SC-02, SC-05 | Post, Location | AC-030〜AC-035 |
 | 地図非公開 | FR-080〜FR-084, FR-194 | SC-05, SC-09 | なし | AC-060 |
 | きょう画面 | FR-090〜FR-099, FR-138 | SC-02 | Post, DailyJournal, UserSettings | AC-040〜AC-044, AC-083 |
 | 日記案内時刻 | FR-110〜FR-116 | SC-02, SC-08 | UserSettings | AC-040〜AC-042 |
