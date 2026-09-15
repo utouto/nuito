@@ -55,6 +55,13 @@ describe("ぬいぐるみアイコン調整", () => {
       screen.getByAltText("円形アイコンのプレビュー"),
     ).toHaveAttribute("draggable", "false");
     expect(
+      screen.getByAltText("円形アイコンのプレビュー"),
+    ).toHaveStyle({
+      objectPosition: "50% 50%",
+      transform: "translate(-50%, -50%) scale(1)",
+      transformOrigin: "50% 50%",
+    });
+    expect(
       screen.getByAltText("円形アイコンのプレビュー").parentElement
         ?.parentElement,
     ).toHaveClass("icon-gesture-surface");
@@ -98,5 +105,24 @@ describe("ぬいぐるみアイコン調整", () => {
     fireEvent.pointerMove(surface, { pointerId: 1, clientX: 100, clientY: 140 });
 
     expect(onChange).toHaveBeenLastCalledWith({ x: 50, y: 30, zoom: 1 });
+  });
+
+  it("拡大時は縦位置を拡大の基準点に反映する", () => {
+    render(
+      <PlushIconEditor
+        blob={new Blob(["image"], { type: "image/webp" })}
+        crop={{ x: 50, y: 25, zoom: 2 }}
+        onChange={() => undefined}
+        onApply={() => undefined}
+        onCancel={() => undefined}
+      />,
+    );
+
+    expect(
+      screen.getAllByAltText("円形アイコンのプレビュー").at(-1),
+    ).toHaveStyle({
+      transform: "translate(-50%, -50%) scale(2)",
+      transformOrigin: "50% 25%",
+    });
   });
 });

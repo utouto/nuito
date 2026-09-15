@@ -36,9 +36,9 @@ export function PlushIcon({
   const url = useBlobUrl(blob);
   const safe = clampPlushIconCrop(crop);
   const style: CSSProperties = {
-    width: `${safe.zoom * 100}%`,
-    height: `${safe.zoom * 100}%`,
     objectPosition: `${safe.x}% ${safe.y}%`,
+    transform: `translate(-50%, -50%) scale(${safe.zoom})`,
+    transformOrigin: `${safe.x}% ${safe.y}%`,
   };
   return (
     <span className={`plush-icon ${className}`.trim()}>
@@ -140,6 +140,7 @@ export function PlushIconEditor({
       <legend>アイコンを調整</legend>
       <p id="icon-editor-help">
         円の内側がアイコンになります。画像をドラッグして位置を、2本指でピンチして大きさを調整できます。元画像は切り取りません。
+        動かせない方向は、少し拡大すると調整できます。
       </p>
       <div className="icon-preview-row" aria-describedby="icon-editor-help">
         <div
