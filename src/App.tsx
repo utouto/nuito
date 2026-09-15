@@ -11,8 +11,16 @@ import {
   todayLogicalDate,
 } from "./domain";
 import { optimizeImage } from "./image";
+import { LegalPage, type LegalKind } from "./legal";
 import type { Journal, Place, Plush, Post, PostImage, Settings } from "./types";
-type View = "today" | "history" | "plushes" | "settings" | "editor" | "journal";
+type View =
+  | "today"
+  | "history"
+  | "plushes"
+  | "settings"
+  | "editor"
+  | "journal"
+  | LegalKind;
 const tileUrl = import.meta.env.VITE_MAP_TILE_URL as string;
 const attribution = import.meta.env.VITE_MAP_ATTRIBUTION as string;
 function BlobImage({
@@ -156,7 +164,11 @@ export default function App() {
   const posts = useLiveQuery(() => db.posts.toArray(), []) ?? [];
   const plushes = useLiveQuery(() => db.plushes.toArray(), []) ?? [];
   const journals = useLiveQuery(() => db.journals.toArray(), []) ?? [];
-  const [view, setView] = useState<View>("today");
+  const [view, setView] = useState<View>(() => {
+    if (location.pathname === "/privacy") return "privacy";
+    if (location.pathname === "/terms") return "terms";
+    return "today";
+  });
   const [selectedDate, setSelectedDate] = useState("");
   const [editing, setEditing] = useState<Post>();
   if (!settings)
@@ -165,7 +177,25 @@ export default function App() {
         <p>読み込み中…</p>
       </main>
     );
-  if (!settings.started) return <Onboarding settings={settings} />;
+  const openLegal = (kind: LegalKind) => {
+    history.pushState({}, "", `/${kind}`);
+    setView(kind);
+    window.scrollTo(0, 0);
+  };
+  const closeLegal = () => {
+    history.pushState({}, "", "/");
+    setView("today");
+    window.scrollTo(0, 0);
+  };
+  if (view === "privacy" || view === "terms") {
+    return (
+      <main>
+        <LegalPage kind={view} onBack={closeLegal} />
+      </main>
+    );
+  }
+  if (!settings.started)
+    return <Onboarding settings={settings} onLegal={openLegal} />;
   const today = todayLogicalDate(settings.dayBoundaryTime);
   const date = selectedDate || today;
   const dayPosts = sortPosts(
@@ -211,7 +241,9 @@ export default function App() {
           />
         ) : null}
         {view === "plushes" ? <Plushes plushes={plushes} /> : null}
-        {view === "settings" ? <SettingsView settings={settings} /> : null}
+        {view === "settings" ? (
+          <SettingsView settings={settings} onLegal={openLegal} />
+        ) : null}
         {view === "editor" ? (
           <PostEditor
             post={editing}
@@ -266,7 +298,13 @@ export default function App() {
     </div>
   );
 }
-function Onboarding({ settings }: { settings: Settings }) {
+function Onboarding({
+  settings,
+  onLegal,
+}: {
+  settings: Settings;
+  onLegal: (kind: LegalKind) => void;
+}) {
   return (
     <main className="onboarding">
       <span className="hero-icon">ぬ</span>
@@ -284,6 +322,10 @@ function Onboarding({ settings }: { settings: Settings }) {
       >
         注意事項を確認して、この端末で始める
       </button>
+      <div className="legal-links" aria-label="法務情報">
+        <button onClick={() => onLegal("privacy")}>プライバシーポリシー</button>
+        <button onClick={() => onLegal("terms")}>利用規約</button>
+      </div>
     </main>
   );
 }
@@ -469,7 +511,13 @@ function Plushes({ plushes }: { plushes: Plush[] }) {
     </>
   );
 }
-function SettingsView({ settings }: { settings: Settings }) {
+function SettingsView({
+  settings,
+  onLegal,
+}: {
+  settings: Settings;
+  onLegal: (kind: LegalKind) => void;
+}) {
   const [boundary, setBoundary] = useState(settings.dayBoundaryTime);
   const [prompt, setPrompt] = useState(settings.journalPromptTime);
   const [message, setMessage] = useState("");
@@ -533,6 +581,10 @@ function SettingsView({ settings }: { settings: Settings }) {
       <section className="danger">
         <h2>すべてのデータを削除</h2>
         <button onClick={clear}>全データを削除する</button>
+      </section>
+      <section className="legal-links settings-links" aria-label="法務情報">
+        <button onClick={() => onLegal("privacy")}>プライバシーポリシー</button>
+        <button onClick={() => onLegal("terms")}>利用規約</button>
       </section>
     </>
   );

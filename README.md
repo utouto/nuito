@@ -30,11 +30,13 @@ npm run dev
 
 環境ごとに `VITE_MAP_TILE_URL` と `VITE_MAP_ATTRIBUTION` を設定できます。`VITE_` で始まる値はブラウザへ公開されるため、Secretを設定しないでください。
 
+法務ページは `/privacy` と `/terms` で直接表示できます。公開前に各環境の `VITE_OPERATOR_NAME`、`VITE_CONTACT_URL`、`VITE_LEGAL_EFFECTIVE_DATE` を実値へ変更し、[公開チェックリスト](docs/operations/legal-publication-checklist.md)を確認してください。
+
 主な品質確認は `npm run lint`、`npm run typecheck`、`npm test`、`npm run build` です。
 
 フロントエンドだけを起動する場合は `npm run dev:app`、Workerだけは `npm run dev:worker` を使います。ローカルD1 migrationは `npm run db:migrate:local` で再適用できます。`.wrangler/` のローカルD1・R2データはGit管理されません。
 
-- 文書バージョン: `0.2.0-draft`
+- 文書バージョン: `0.3.0-draft`
 - 更新日: `2026-09-15`
 - 対象: 初期リリース（MVP）および将来拡張
 - 正本: [`docs/requirements/README.md`](docs/requirements/README.md)
