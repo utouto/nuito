@@ -1230,6 +1230,7 @@ function SettingsView({
         </p>
       </section>
       <section className="form-card">
+        <h2>一日の切り替わり</h2>
         <label>
           一日の切り替え時刻
           <input
