@@ -947,7 +947,7 @@ function History({
     .reverse();
   return (
     <>
-      <h1>日付から振り返る</h1>
+      <h1 className="page-title">おもいで</h1>
       {dates.length ? (
         dates.map((d) => (
           <button className="history-row" key={d} onClick={() => onOpen(d)}>
@@ -1032,7 +1032,7 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
   }
   return (
     <>
-      <h1>いっしょに出かける子</h1>
+      <h1 className="page-title">ぬいたち</h1>
       <div className="plush-grid">
         {plushes.map((p) => (
           <button key={p.id} className="plush" onClick={() => edit(p)}>
@@ -1222,7 +1222,7 @@ function SettingsView({
   }
   return (
     <>
-      <h1>暮らしの時間に合わせる</h1>
+      <h1 className="page-title">せってい</h1>
       <section className="notice">
         <h2>保存について</h2>
         <p>
@@ -1444,7 +1444,9 @@ export function PostEditor({
         <ArrowBackRoundedIcon aria-hidden="true" />
         戻る
       </button>
-      <h1>思い出を残す</h1>
+      <h1 className="page-title">
+        {post ? "おもいでを編集" : "新しいおもいで"}
+      </h1>
       {error ? (
         <p className="error" role="alert">
           {error}
@@ -1728,7 +1730,10 @@ export function JournalView({
           戻る
         </button>
         <div className="journal-heading-card">
-          <h1 id="journal-heading">{formatDate(date)}</h1>
+          <h1 id="journal-heading" className="page-title">
+            きょうの日記
+          </h1>
+          <p className="journal-date">{formatDate(date)}</p>
           {names.length ? (
             <p className="lead">{names.join("・")}とおでかけ</p>
           ) : null}

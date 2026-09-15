@@ -78,6 +78,9 @@ h1 {
   letter-spacing: 0.02em;
   margin: 4px 0 6px;
 }
+.page-title {
+  color: #8b5e3c;
+}
 h2 {
   font-size: 20px;
   line-height: 1.4;
@@ -378,6 +381,11 @@ h2 {
 }
 .journal-heading-card h1 {
   font-size: 22px;
+}
+.journal-heading-card .journal-date {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
 }
 .journal-heading-card .lead {
   margin-bottom: 0;

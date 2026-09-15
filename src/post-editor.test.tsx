@@ -214,8 +214,9 @@ describe("投稿編集", () => {
       "blob:post-image",
     );
     expect(form.getByRole("textbox", { name: "場所" })).toHaveValue("東京駅");
-    expect(form.getByRole("heading", { name: "思い出を残す" })).toBeVisible();
-    expect(form.queryByText("おもいでを編集")).not.toBeInTheDocument();
+    expect(
+      form.getByRole("heading", { name: "おもいでを編集" }),
+    ).toHaveClass("page-title");
   });
 });
 
@@ -564,6 +565,9 @@ describe("きょうの日記", () => {
     expect(
       view.container.querySelector(".journal-heading-card"),
     ).toHaveTextContent("2026年9月14日");
+    expect(
+      within(view.container).getByRole("heading", { name: "きょうの日記" }),
+    ).toHaveClass("page-title");
     expect(
       within(view.container).getByRole("region", { name: "この日のおもいで" }),
     ).toHaveTextContent("もとのひとこと");

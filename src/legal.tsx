@@ -28,7 +28,7 @@ export function LegalPage({
 export function PrivacyPolicy() {
   return (
     <>
-      <h1>プライバシーポリシー</h1>
+      <h1 className="page-title">プライバシーポリシー</h1>
       <p>制定・施行日：{effectiveDate}</p>
       <p>
         {operatorName}
@@ -98,7 +98,7 @@ export function PrivacyPolicy() {
 export function TermsOfUse() {
   return (
     <>
-      <h1>利用規約</h1>
+      <h1 className="page-title">利用規約</h1>
       <p>制定・施行日：{effectiveDate}</p>
       <p>
         この利用規約（以下「本規約」）は、{operatorName}
