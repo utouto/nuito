@@ -265,7 +265,7 @@ h2 {
 .icon-gesture-surface {
   position: relative;
   width: min(52vw, 220px);
-  height: min(52vw, 220px);
+  aspect-ratio: 1;
   flex: 0 0 auto;
   border-radius: 50%;
   box-shadow: 0 0 0 5px #fff, 0 0 0 7px #d8c5b4;
@@ -294,7 +294,7 @@ h2 {
   transform: translateX(-50%);
   pointer-events: none;
 }
-.icon-preview-row > div {
+.icon-preview-details {
   display: grid;
   justify-items: center;
   gap: 8px;

@@ -54,6 +54,13 @@ describe("ぬいぐるみアイコン調整", () => {
     expect(
       screen.getByAltText("円形アイコンのプレビュー"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByAltText("円形アイコンのプレビュー").parentElement
+        ?.parentElement,
+    ).toHaveClass("icon-gesture-surface");
+    expect(screen.getByText("プレビュー").parentElement).toHaveClass(
+      "icon-preview-details",
+    );
     expect(screen.getByText(/ドラッグして位置/)).toBeInTheDocument();
     fireEvent.change(screen.getByRole("slider", { name: "横の位置" }), {
       target: { value: "75" },

@@ -152,7 +152,7 @@ export function PlushIconEditor({
           <PlushIcon blob={blob} crop={crop} alt="円形アイコンのプレビュー" />
           <span aria-hidden="true">ドラッグ・ピンチで調整</span>
         </div>
-        <div>
+        <div className="icon-preview-details">
           <strong>プレビュー</strong>
           <small>一覧では右の小さいサイズで表示されます</small>
           <PlushIcon
