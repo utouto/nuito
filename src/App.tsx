@@ -852,7 +852,6 @@ export function Today({
         occludedById="today-post-drawer"
       />
       <div className="today-summary">
-        <p className="eyebrow">きょう</p>
         <h1 id="today-heading">{formatDate(date)}</h1>
       </div>
       <button
@@ -948,7 +947,6 @@ function History({
     .reverse();
   return (
     <>
-      <p className="eyebrow">思い出</p>
       <h1>日付から振り返る</h1>
       {dates.length ? (
         dates.map((d) => (
@@ -1034,7 +1032,6 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
   }
   return (
     <>
-      <p className="eyebrow">ぬいたち</p>
       <h1>いっしょに出かける子</h1>
       <div className="plush-grid">
         {plushes.map((p) => (
@@ -1225,7 +1222,6 @@ function SettingsView({
   }
   return (
     <>
-      <p className="eyebrow">設定</p>
       <h1>暮らしの時間に合わせる</h1>
       <section className="notice">
         <h2>保存について</h2>
@@ -1448,7 +1444,6 @@ export function PostEditor({
         <ArrowBackRoundedIcon aria-hidden="true" />
         戻る
       </button>
-      <p className="eyebrow">{post ? "おもいでを編集" : "新しいおもいで"}</p>
       <h1>思い出を残す</h1>
       {error ? (
         <p className="error" role="alert">
@@ -1733,7 +1728,6 @@ export function JournalView({
           戻る
         </button>
         <div className="journal-heading-card">
-          <p className="eyebrow">きょうの日記</p>
           <h1 id="journal-heading">{formatDate(date)}</h1>
           {names.length ? (
             <p className="lead">{names.join("・")}とおでかけ</p>

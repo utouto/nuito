@@ -28,7 +28,6 @@ export function LegalPage({
 export function PrivacyPolicy() {
   return (
     <>
-      <p className="eyebrow">PRIVACY POLICY</p>
       <h1>プライバシーポリシー</h1>
       <p>制定・施行日：{effectiveDate}</p>
       <p>
@@ -99,7 +98,6 @@ export function PrivacyPolicy() {
 export function TermsOfUse() {
   return (
     <>
-      <p className="eyebrow">TERMS OF USE</p>
       <h1>利用規約</h1>
       <p>制定・施行日：{effectiveDate}</p>
       <p>

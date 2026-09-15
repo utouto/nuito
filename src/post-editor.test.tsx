@@ -214,7 +214,8 @@ describe("投稿編集", () => {
       "blob:post-image",
     );
     expect(form.getByRole("textbox", { name: "場所" })).toHaveValue("東京駅");
-    expect(form.getByText("おもいでを編集")).toBeInTheDocument();
+    expect(form.getByRole("heading", { name: "思い出を残す" })).toBeVisible();
+    expect(form.queryByText("おもいでを編集")).not.toBeInTheDocument();
   });
 });
 
