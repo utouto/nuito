@@ -706,6 +706,7 @@ function History({
 }
 export function Plushes({ plushes }: { plushes: Plush[] }) {
   const defaultOpaqueThemeColor = "#9a5438";
+  const themeColorName = useId();
   const [editing, setEditing] = useState<Plush>();
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<Blob>();
@@ -818,6 +819,24 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
         </label>
         <fieldset className="theme-color-field">
           <legend>テーマカラー</legend>
+          <label className="check">
+            <input
+              type="radio"
+              name={themeColorName}
+              checked={themeColor !== DEFAULT_PLUSH_THEME_COLOR}
+              onChange={() => setThemeColor(opaqueThemeColor)}
+            />
+            テーマカラーを設定する
+          </label>
+          <label className="check">
+            <input
+              type="radio"
+              name={themeColorName}
+              checked={themeColor === DEFAULT_PLUSH_THEME_COLOR}
+              onChange={() => setThemeColor(DEFAULT_PLUSH_THEME_COLOR)}
+            />
+            テーマカラーを設定しない
+          </label>
           <label>
             アイコンを囲う色
             <input
@@ -830,20 +849,6 @@ export function Plushes({ plushes }: { plushes: Plush[] }) {
                 setThemeColor(event.target.value);
               }}
             />
-          </label>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={themeColor === DEFAULT_PLUSH_THEME_COLOR}
-              onChange={(event) =>
-                setThemeColor(
-                  event.target.checked
-                    ? DEFAULT_PLUSH_THEME_COLOR
-                    : opaqueThemeColor,
-                )
-              }
-            />
-            囲み線を透明にする
           </label>
         </fieldset>
         {busy ? <p role="status">画像を準備しています…</p> : null}

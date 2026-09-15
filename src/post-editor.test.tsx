@@ -522,20 +522,25 @@ describe("投稿画像の拡大表示", () => {
 });
 
 describe("ぬいぐるみのテーマカラー設定", () => {
-  it("新規登録時は透明で、透明を解除すると色を選択できる", () => {
+  it("新規登録時は設定しないが選ばれ、設定する場合だけ色を選択できる", () => {
     render(<Plushes plushes={[]} />);
 
-    const transparent = screen.getByRole("checkbox", {
-      name: "囲み線を透明にする",
+    const enabled = screen.getByRole("radio", {
+      name: "テーマカラーを設定する",
+    });
+    const disabled = screen.getByRole("radio", {
+      name: "テーマカラーを設定しない",
     });
     const color = screen.getByLabelText("テーマカラー");
 
-    expect(transparent).toBeChecked();
+    expect(disabled).toBeChecked();
+    expect(enabled).not.toBeChecked();
     expect(color).toBeDisabled();
 
-    fireEvent.click(transparent);
+    fireEvent.click(enabled);
 
-    expect(transparent).not.toBeChecked();
+    expect(enabled).toBeChecked();
+    expect(disabled).not.toBeChecked();
     expect(color).toBeEnabled();
     expect(color).toHaveValue("#9a5438");
   });
@@ -560,7 +565,10 @@ describe("ぬいぐるみのテーマカラー設定", () => {
     fireEvent.click(form.getByRole("button", { name: /くま/ }));
 
     expect(
-      form.getByRole("checkbox", { name: "囲み線を透明にする" }),
+      form.getByRole("radio", { name: "テーマカラーを設定する" }),
+    ).toBeChecked();
+    expect(
+      form.getByRole("radio", { name: "テーマカラーを設定しない" }),
     ).not.toBeChecked();
     expect(form.getByLabelText("テーマカラー")).toHaveValue("#3a7bd5");
   });
