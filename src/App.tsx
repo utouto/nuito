@@ -618,6 +618,7 @@ export default function App() {
           <History
             posts={posts}
             journals={journals}
+            plushes={plushes}
             settings={settings}
             onOpen={(historyDate) => openJournal(historyDate, "history")}
           />
@@ -971,14 +972,16 @@ export function Today({
     </section>
   );
 }
-function History({
+export function History({
   posts,
   journals,
+  plushes,
   settings,
   onOpen,
 }: {
   posts: Post[];
   journals: Journal[];
+  plushes: Plush[];
   settings: Settings;
   onOpen: (d: string) => void;
 }) {
@@ -994,20 +997,62 @@ function History({
     <>
       <h1 className="page-title">おもいで</h1>
       {dates.length ? (
-        dates.map((d) => (
-          <button className="history-row" key={d} onClick={() => onOpen(d)}>
-            <span>{formatDate(d)}</span>
-            <small>
-              {
-                posts.filter(
-                  (p) =>
-                    effectiveLogicalDate(p, settings.dayBoundaryTime) === d,
-                ).length
-              }
-              件 {journals.some((j) => j.logicalDate === d) ? "・日記あり" : ""}
-            </small>
-          </button>
-        ))
+        dates.map((d) => {
+          const dayPosts = posts.filter(
+            (post) =>
+              effectiveLogicalDate(post, settings.dayBoundaryTime) === d,
+          );
+          const dayPlushes = [
+            ...new Set(dayPosts.flatMap((post) => post.plushIds)),
+          ]
+            .map((id) => plushes.find((plush) => plush.id === id))
+            .filter((plush): plush is Plush => Boolean(plush));
+          return (
+            <button className="history-row" key={d} onClick={() => onOpen(d)}>
+              <span>{formatDate(d)}</span>
+              <span className="history-summary">
+                {dayPlushes.length ? (
+                  <span
+                    className="history-plushes"
+                    role="img"
+                    aria-label={`${dayPlushes.map((plush) => plush.name).join("、")}といっしょ`}
+                  >
+                    {dayPlushes.map((plush) =>
+                      plush.icon ? (
+                        <PlushIcon
+                          key={plush.id}
+                          blob={plush.icon}
+                          crop={plush.iconCrop}
+                          alt=""
+                          className="history-plush-icon"
+                          themeColor={plush.themeColor}
+                        />
+                      ) : (
+                        <span
+                          key={plush.id}
+                          className="history-plush-icon fallback-icon"
+                          style={{
+                            borderColor:
+                              plush.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
+                          }}
+                          aria-hidden="true"
+                        >
+                          ぬ
+                        </span>
+                      ),
+                    )}
+                  </span>
+                ) : null}
+                <small>
+                  {dayPosts.length}件
+                  {journals.some((j) => j.logicalDate === d)
+                    ? "・日記あり"
+                    : ""}
+                </small>
+              </span>
+            </button>
+          );
+        })
       ) : (
         <div className="empty">まだ思い出はありません。</div>
       )}

@@ -573,6 +573,33 @@ h2 {
 .history-row span {
   font-weight: 700;
 }
+.history-summary,
+.history-plushes {
+  display: flex;
+  align-items: center;
+}
+.history-summary {
+  gap: 8px;
+}
+.history-plushes {
+  padding-left: 4px;
+}
+.plush-icon.history-plush-icon,
+.history-plush-icon.fallback-icon {
+  width: 30px;
+  height: 30px;
+  margin-left: -4px;
+  border: 2px solid white;
+}
+.history-plush-icon.fallback-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #f0dfce;
+  color: #9a5438;
+  font-size: 12px;
+}
 .plush-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

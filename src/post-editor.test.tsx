@@ -11,6 +11,7 @@ import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
   JournalView,
+  History,
   Plushes,
   PostCard,
   PostEditor,
@@ -603,6 +604,40 @@ describe("きょうの日記", () => {
       }),
     ).toHaveClass("page-title");
     expect(view.container.querySelector(".journal-date")).not.toBeInTheDocument();
+  });
+});
+
+describe("おもいで", () => {
+  it("日別の件数の左に、その日に登場したぬいを重複なく表示する", () => {
+    const view = render(
+      <History
+        posts={[post, { ...post, id: "post-2" }]}
+        journals={[]}
+        plushes={[
+          {
+            id: "plush-1",
+            name: "くま",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
+        settings={settings}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const summary = view.container.querySelector(".history-summary");
+    expect(summary).toHaveTextContent("2件");
+    expect(
+      within(summary as HTMLElement).getByRole("img", {
+        name: "くまといっしょ",
+      }),
+    ).toBeVisible();
+    expect(summary?.firstElementChild).toHaveClass("history-plushes");
+    expect(view.container.querySelectorAll(".history-plush-icon")).toHaveLength(
+      1,
+    );
   });
 });
 
