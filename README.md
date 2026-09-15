@@ -13,7 +13,14 @@ npm install
 npm run dev
 ```
 
-表示された `http://localhost:5173` を開いてください。データは同じブラウザ・同じoriginのIndexedDBへ保存されます。
+初回起動時にローカルD1 migrationを適用し、フロントエンドとCloudflare Workerを同時に起動します。
+
+- アプリ: `http://localhost:5173`
+- Worker API: `http://localhost:8787`
+- health check: `http://localhost:5173/api/health`
+- D1・R2確認画面: Worker起動中にターミナルで `e` を押してLocal Explorerを開く
+
+データは現時点では同じブラウザ・同じoriginのIndexedDBへ保存されます。ローカルD1・R2はCloudflare移行用の開発基盤で、認証方式が決まるまで保存APIを公開しません。
 
 ## 環境切り替え
 
@@ -24,6 +31,8 @@ npm run dev
 環境ごとに `VITE_MAP_TILE_URL` と `VITE_MAP_ATTRIBUTION` を設定できます。`VITE_` で始まる値はブラウザへ公開されるため、Secretを設定しないでください。
 
 主な品質確認は `npm run lint`、`npm run typecheck`、`npm test`、`npm run build` です。
+
+フロントエンドだけを起動する場合は `npm run dev:app`、Workerだけは `npm run dev:worker` を使います。ローカルD1 migrationは `npm run db:migrate:local` で再適用できます。`.wrangler/` のローカルD1・R2データはGit管理されません。
 
 - 文書バージョン: `0.2.0-draft`
 - 更新日: `2026-09-15`

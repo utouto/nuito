@@ -2,13 +2,13 @@
 
 外部公開、永続データ、定期処理、または外部サービスを持つプロジェクトでは、初回リリース前にこの文書を具体化します。該当しない項目は理由とともに対象外とします。
 
-- 適用判断:
+- 適用判断: Cloudflare staging・production作成前に適用する。現時点はローカルsimulationのみ。
 - 適用判断の担当:
 - 初回リリース前の確認担当:
-- リリース方式と対象環境:
-- migrationの有無、順序、互換性:
-- health確認とリリース後の主要signal:
-- rollbackまたは前進修正の条件と手順:
+- リリース方式と対象環境: localはWrangler、将来はCloudflare Pages・Workers・D1・R2をstagingとproductionで分離する。
+- migrationの有無、順序、互換性: `migrations/` を番号順に適用する。まずstagingへ適用し、互換性確認後にproductionへ適用する。
+- health確認とリリース後の主要signal: `GET /api/health`。本文、画像、座標、利用者IDをログへ出さない。
+- rollbackまたは前進修正の条件と手順: Worker・Pagesは直前deploymentへrollbackする。D1 migrationは破壊的変更を避け、原則として前進修正する。
 - 障害時の連絡先と初動手順:
 - backup対象、復旧目標、restore検証:
 

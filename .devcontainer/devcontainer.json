@@ -13,7 +13,7 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-  "forwardPorts": [5173],
+  "forwardPorts": [5173, 8787],
 
   "mounts": [
     "source=${localWorkspaceFolderBasename}-node-codex,target=/root/.codex,type=volume",
