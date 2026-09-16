@@ -19,7 +19,11 @@ import {
   Today,
 } from "./App";
 import { plushNameInitial } from "./plush-name";
-import { movePostImage, reorderPostImages } from "./post-images";
+import {
+  movePostImage,
+  photoPinImageStyle,
+  reorderPostImages,
+} from "./post-images";
 import { db } from "./db";
 import type { Plush, Post, Settings } from "./types";
 
@@ -181,9 +185,9 @@ describe("投稿編集", () => {
     const view = render(<Subject />);
     const form = within(view.container);
 
-    expect(
-      view.container.querySelector(".form-card")?.firstElementChild,
-    ).toHaveTextContent("いっしょにいたぬい");
+    expect(view.container.querySelector(".post-photo-editor")).toHaveStyle({
+      order: "-1",
+    });
     expect(form.getByRole("radio", { name: "現在時刻" })).toBeChecked();
     expect(form.queryByLabelText("行動日時")).not.toBeInTheDocument();
     expect(
@@ -784,11 +788,31 @@ describe("日別地図の投稿ピン", () => {
       expect.objectContaining({
         className: "post-map-marker photo-post-map-marker",
         html: expect.stringMatching(
-          /<img src="blob:post-image".*object-position:50% 50%;.*scale\(1\).*<em><i style="background:conic-gradient\(/,
+          /<img src="blob:post-image".*width:133\.333.*height:100%;.*translate\(-50%,-50%\) scale\(1\).*<em><i style="background:conic-gradient\(/,
         ),
         iconSize: [64, 72],
         iconAnchor: [32, 72],
       }),
+    );
+  });
+
+  it("写真ピンの未調整画像は縦横比に応じて短辺を円へ合わせる", () => {
+    expect(photoPinImageStyle({ width: 1600, height: 900 })).toContain(
+      "width:177.77777777777777%;height:100%",
+    );
+    expect(photoPinImageStyle({ width: 900, height: 1600 })).toContain(
+      "width:100%;height:177.77777777777777%",
+    );
+  });
+
+  it("写真ピンの調整済み画像は保存した位置と拡大率を従来どおり適用する", () => {
+    expect(
+      photoPinImageStyle(
+        { width: 1600, height: 900 },
+        { x: 35, y: 60, zoom: 1.4 },
+      ),
+    ).toBe(
+      "width:100%;height:100%;object-fit:cover;object-position:35% 60%;transform:translate(-50%,-50%) scale(1.4);transform-origin:35% 60%",
     );
   });
 

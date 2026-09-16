@@ -1089,6 +1089,10 @@ h2 {
   flex-wrap: wrap;
   gap: 8px;
 }
+.post-photo-editor {
+  display: grid;
+  gap: 8px;
+}
 .photo-file-button {
   display: inline-flex;
   min-height: 44px;

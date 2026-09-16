@@ -56,7 +56,11 @@ import {
 } from "./plush-icon";
 import { DEFAULT_PLUSH_ICON_CROP } from "./plush-icon-crop";
 import { plushNameInitial } from "./plush-name";
-import { movePostImage, reorderPostImages } from "./post-images";
+import {
+  movePostImage,
+  photoPinImageStyle,
+  reorderPostImages,
+} from "./post-images";
 import {
   nfcLink,
   nfcTokenFromUrl,
@@ -318,13 +322,14 @@ export function DayMap({
       const cover = [...p.images].sort((a, b) => a.displayOrder - b.displayOrder)[0];
       const background = postMarkerBackground(p, plushes);
       const crop = cover?.pinCrop ?? DEFAULT_PLUSH_ICON_CROP;
+      const photoStyle = cover ? photoPinImageStyle(cover, crop) : "";
       const photoUrl = cover ? URL.createObjectURL(cover.thumbnail) : undefined;
       if (photoUrl) objectUrls.push(photoUrl);
       const marker = L.marker([p.place!.latitude, p.place!.longitude], {
         icon: L.divIcon({
           className: `post-map-marker${cover ? " photo-post-map-marker" : ""}`,
           html: cover
-            ? `<span><b><img src="${photoUrl}" alt="" style="object-position:${crop.x}% ${crop.y}%;transform:translate(-50%,-50%) scale(${crop.zoom});transform-origin:${crop.x}% ${crop.y}%"></b><em><i style="background:${background}"></i></em></span>`
+            ? `<span><b><img src="${photoUrl}" alt="" style="${photoStyle}"></b><em><i style="background:${background}"></i></em></span>`
             : `<span><i style="background:${background}"></i></span>`,
           iconSize: cover ? [64, 72] : [28, 28],
           iconAnchor: cover ? [32, 72] : [14, 14],
@@ -2078,9 +2083,10 @@ export function PostEditor({
             {body.length} / 300文字
           </small>
         </label>
-        <div className="photo-upload-field">
-          <span>写真（0〜4枚）</span>
-          <div className="photo-input-actions">
+        <div className="post-photo-editor" style={{ order: -1 }}>
+          <div className="photo-upload-field">
+            <span>写真（0〜4枚）</span>
+            <div className="photo-input-actions">
             <label
               className="photo-file-button"
               aria-disabled={images.length >= 4 || busy}
@@ -2111,15 +2117,15 @@ export function PostEditor({
                 onChange={(e) => filesChosen(e.target.files)}
               />
             </label>
+            </div>
           </div>
-        </div>
-        {busy ? <p role="status">画像処理または位置情報を取得中…</p> : null}
-        {images.length > 1 ? (
-          <small className="photo-reorder-help">
-            写真をドラッグ、または左右にスワイプして並び替えられます。1枚目が地図のピンに表示されます。
-          </small>
-        ) : null}
-        <div className="photos editable">
+          {busy ? <p role="status">画像処理または位置情報を取得中…</p> : null}
+          {images.length > 1 ? (
+            <small className="photo-reorder-help">
+              写真をドラッグ、または左右にスワイプして並び替えられます。1枚目が地図のピンに表示されます。
+            </small>
+          ) : null}
+          <div className="photos editable">
           {images.map((im, i) => (
             <div
               key={im.id}
@@ -2187,8 +2193,8 @@ export function PostEditor({
               </button>
             </div>
           ))}
-        </div>
-        {pinCropImageId
+          </div>
+          {pinCropImageId
           ? (() => {
               const image = images.find((item) => item.id === pinCropImageId);
               return image ? (
@@ -2214,7 +2220,8 @@ export function PostEditor({
                 />
               ) : null;
             })()
-          : null}
+            : null}
+        </div>
         <fieldset>
           <legend>行動時刻</legend>
           <label className="check">
