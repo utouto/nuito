@@ -13,6 +13,7 @@ type ImageInput = {
   byteSize: number;
   displayOrder: number;
   isCover: boolean;
+  upload?: boolean;
   pinCrop?: { x: number; y: number; zoom: number };
 };
 
@@ -159,6 +160,7 @@ function validPost(value: unknown): value is PostInput {
       image.byteSize < 1 ||
       image.displayOrder !== index ||
       typeof image.isCover !== "boolean"
+      || (image.upload !== undefined && typeof image.upload !== "boolean")
       || (image.pinCrop !== undefined &&
         (!Number.isFinite(image.pinCrop.x) ||
           !Number.isFinite(image.pinCrop.y) ||
@@ -233,31 +235,70 @@ async function savePost(
       return response({ error: "not_found" }, 404);
   }
 
+  const previous = await env.DB.prepare(
+    "SELECT id,full_object_key,thumbnail_object_key,width,height,mime_type,byte_size FROM post_images WHERE post_id=?",
+  )
+    .bind(postId)
+    .all<{
+      id: string;
+      full_object_key: string;
+      thumbnail_object_key: string;
+      width: number;
+      height: number;
+      mime_type: string;
+      byte_size: number;
+    }>();
+  const previousImages = new Map(
+    previous.results.map((image) => [image.id, image]),
+  );
   const files = input.images.map((image) => ({
     image,
     full: form.get(`full:${image.id}`),
     thumbnail: form.get(`thumbnail:${image.id}`),
+    previous: previousImages.get(image.id),
   }));
   if (
     files.some(
-      ({ image, full, thumbnail }) =>
-        !(full instanceof File) ||
-        !(thumbnail instanceof File) ||
-        !full.type.startsWith("image/") ||
-        !thumbnail.type.startsWith("image/") ||
-        full.size < 1 ||
-        full.size > MAX_FULL_BYTES ||
-        thumbnail.size < 1 ||
-        thumbnail.size > MAX_THUMBNAIL_BYTES ||
-        full.type !== image.mimeType ||
-        full.size !== image.byteSize,
+      ({ image, full, thumbnail, previous }) => {
+        if (image.upload === false)
+          return (
+            !previous ||
+            full instanceof File ||
+            thumbnail instanceof File ||
+            image.width !== previous.width ||
+            image.height !== previous.height ||
+            image.mimeType !== previous.mime_type ||
+            image.byteSize !== previous.byte_size
+          );
+        return (
+          !(full instanceof File) ||
+          !(thumbnail instanceof File) ||
+          !full.type.startsWith("image/") ||
+          !thumbnail.type.startsWith("image/") ||
+          full.size < 1 ||
+          full.size > MAX_FULL_BYTES ||
+          thumbnail.size < 1 ||
+          thumbnail.size > MAX_THUMBNAIL_BYTES ||
+          full.type !== image.mimeType ||
+          full.size !== image.byteSize
+        );
+      },
     )
   )
     return response({ error: "invalid_image" }, 400);
   const validatedFiles = files as Array<{
     image: ImageInput;
-    full: File;
-    thumbnail: File;
+    full: File | FormDataEntryValue | null;
+    thumbnail: File | FormDataEntryValue | null;
+    previous?: {
+      id: string;
+      full_object_key: string;
+      thumbnail_object_key: string;
+      width: number;
+      height: number;
+      mime_type: string;
+      byte_size: number;
+    };
   }>;
   const plushIconFiles = input.plushes.map((plush) => ({
     plush,
@@ -278,6 +319,9 @@ async function savePost(
   const uploaded: string[] = [];
   try {
     for (const { image, full, thumbnail } of validatedFiles) {
+      if (image.upload === false) continue;
+      if (!(full instanceof File) || !(thumbnail instanceof File))
+        throw new Error("validated_image_missing");
       const keys = objectKeys(userId, postId, image.id, input.updatedAt);
       await env.IMAGES.put(keys.full, full.stream(), {
         httpMetadata: { contentType: full.type },
@@ -297,11 +341,6 @@ async function savePost(
       uploaded.push(key);
     }
 
-    const previous = await env.DB.prepare(
-      "SELECT full_object_key,thumbnail_object_key FROM post_images WHERE post_id=?",
-    )
-      .bind(postId)
-      .all<{ full_object_key: string; thumbnail_object_key: string }>();
     const previousPlushIcons = await Promise.all(
       input.plushes.map((plush) =>
         env.DB.prepare(
@@ -362,7 +401,14 @@ async function savePost(
       );
     });
     input.images.forEach((image) => {
-      const keys = objectKeys(userId, postId, image.id, input.updatedAt);
+      const previousImage = previousImages.get(image.id);
+      const keys =
+        image.upload === false && previousImage
+          ? {
+              full: previousImage.full_object_key,
+              thumbnail: previousImage.thumbnail_object_key,
+            }
+          : objectKeys(userId, postId, image.id, input.updatedAt);
       statements.push(
         env.DB.prepare(
           "INSERT INTO post_images(id,post_id,full_object_key,thumbnail_object_key,display_order,is_cover,width,height,mime_type,byte_size,created_at,pin_crop_x,pin_crop_y,pin_crop_zoom) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -385,7 +431,18 @@ async function savePost(
       );
     });
     await env.DB.batch(statements);
-    const retained = new Set(uploaded);
+    const retained = new Set([
+      ...uploaded,
+      ...input.images.flatMap((image) => {
+        const previousImage = previousImages.get(image.id);
+        return image.upload === false && previousImage
+          ? [
+              previousImage.full_object_key,
+              previousImage.thumbnail_object_key,
+            ]
+          : [];
+      }),
+    ]);
     await Promise.all(
       [
         ...previous.results.flatMap((image) => [

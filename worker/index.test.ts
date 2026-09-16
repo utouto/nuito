@@ -156,6 +156,105 @@ describe("投稿保存API", () => {
     expect(bindings.DB.batch).toHaveBeenCalledOnce();
   });
 
+  it("投稿編集時は変更していない画像をR2へ再アップロードしない", async () => {
+    const bindings = env();
+    bindings.DB.prepare = vi.fn((sql: string) => ({
+      bind() {
+        return this;
+      },
+      first: vi.fn().mockResolvedValue(
+        sql.includes("SELECT user_id FROM posts")
+          ? { user_id: "user-1" }
+          : null,
+      ),
+      all: vi.fn().mockResolvedValue(
+        sql.includes("SELECT id,full_object_key,thumbnail_object_key")
+          ? {
+              results: [
+                {
+                  id: "image-1",
+                  full_object_key: "user-1/posts/post-1/image-1/old/full",
+                  thumbnail_object_key:
+                    "user-1/posts/post-1/image-1/old/thumbnail",
+                  width: 1200,
+                  height: 800,
+                  mime_type: "image/webp",
+                  byte_size: 4,
+                },
+              ],
+            }
+          : { results: [] },
+      ),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+      sql,
+    })) as never;
+    const form = new FormData();
+    form.set(
+      "metadata",
+      JSON.stringify({
+        ...post,
+        body: "本文だけ変更",
+        images: post.images.map((image) => ({ ...image, upload: false })),
+      }),
+    );
+
+    const response = await handlePosts(
+      new Request("http://local/api/posts/post-1", {
+        method: "PUT",
+        body: form,
+      }),
+      bindings as never,
+      "user-1",
+    );
+
+    expect(response.status).toBe(200);
+    expect(bindings.IMAGES.put).not.toHaveBeenCalled();
+    expect(bindings.IMAGES.delete).not.toHaveBeenCalledWith(
+      "user-1/posts/post-1/image-1/old/full",
+    );
+    expect(bindings.IMAGES.delete).not.toHaveBeenCalledWith(
+      "user-1/posts/post-1/image-1/old/thumbnail",
+    );
+    expect(bindings.DB.batch).toHaveBeenCalledOnce();
+  });
+
+  it("未保存の画像を再利用しようとする投稿編集を拒否する", async () => {
+    const bindings = env();
+    bindings.DB.prepare = vi.fn((sql: string) => ({
+      bind() {
+        return this;
+      },
+      first: vi.fn().mockResolvedValue(
+        sql.includes("SELECT user_id FROM posts")
+          ? { user_id: "user-1" }
+          : null,
+      ),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+    })) as never;
+    const form = new FormData();
+    form.set(
+      "metadata",
+      JSON.stringify({
+        ...post,
+        images: post.images.map((image) => ({ ...image, upload: false })),
+      }),
+    );
+
+    const response = await handlePosts(
+      new Request("http://local/api/posts/post-1", {
+        method: "PUT",
+        body: form,
+      }),
+      bindings as never,
+      "user-1",
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "invalid_image" });
+    expect(bindings.DB.batch).not.toHaveBeenCalled();
+  });
+
   it("画像が5枚ある投稿を拒否する", async () => {
     const input = {
       ...post,

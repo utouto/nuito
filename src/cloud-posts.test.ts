@@ -61,7 +61,24 @@ describe("クラウド投稿クライアント", () => {
       id: "post-1",
       body: "公園へ行った",
       plushes: [{ id: "plush-1", name: "くま", hasIcon: true }],
-      images: [{ id: "image-1", byteSize: 4 }],
+      images: [{ id: "image-1", byteSize: 4, upload: true }],
+    });
+  });
+
+  it("編集で変更していない写真のバイナリを再送しない", async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response("{}"));
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(
+      saveCloudPost(post, [plush], new Set(["image-1"])),
+    ).resolves.toBe(true);
+
+    const [, init] = fetch.mock.calls[0] as [string, RequestInit];
+    const form = init.body as FormData;
+    expect(form.get("full:image-1")).toBeNull();
+    expect(form.get("thumbnail:image-1")).toBeNull();
+    expect(JSON.parse(form.get("metadata") as string)).toMatchObject({
+      images: [{ id: "image-1", upload: false }],
     });
   });
 

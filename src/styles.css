@@ -119,6 +119,10 @@ main {
 .app > main {
   padding-bottom: calc(90px + env(safe-area-inset-bottom));
 }
+.app > main.today-main,
+.app > main.journal-main {
+  padding: 0;
+}
 #root > main {
   height: 100%;
 }
@@ -319,7 +323,6 @@ h2 {
 }
 .journal-main {
   height: calc(100dvh - 126px - env(safe-area-inset-bottom));
-  padding: 0;
   overflow: hidden;
 }
 .today-map-view {

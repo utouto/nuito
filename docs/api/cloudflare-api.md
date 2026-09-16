@@ -28,7 +28,7 @@ HttpOnly・Secure・SameSite=Lax cookieのsessionを確認または破棄しま�
 
 ### `PUT /api/posts/:postId`
 
-`multipart/form-data`で`metadata`、元画像、サムネイル、投稿に紐づくぬいアイコンを受け取ります。本文300文字、画像4枚、写真順、写真ピンの表示位置・拡大率、日時・座標・MIME type・byte size等を検証し、投稿メタデータをD1、画像を所有者名前空間の非公開R2へ保存します。同じIDは所有者本人だけが更新できます。
+`multipart/form-data`で`metadata`、新規または差し替え対象の元画像・サムネイル、投稿に紐づくぬいアイコンを受け取ります。本文300文字、画像4枚、写真順、写真ピンの表示位置・拡大率、日時・座標・MIME type・byte size等を検証し、投稿メタデータをD1、画像を所有者名前空間の非公開R2へ保存します。編集時に`metadata.images[].upload`が`false`の画像は、同じ投稿に保存済みの所有画像が存在する場合に限りR2オブジェクトを再利用し、バイナリの再送を不要とします。同じIDは所有者本人だけが更新できます。
 
 ### `DELETE /api/posts/:postId`
 

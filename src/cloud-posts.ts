@@ -85,7 +85,11 @@ async function checkedFetch(input: RequestInfo | URL, init?: RequestInit) {
   return response;
 }
 
-export async function saveCloudPost(post: Post, plushes: Plush[]) {
+export async function saveCloudPost(
+  post: Post,
+  plushes: Plush[],
+  unchangedImageIds: ReadonlySet<string> = new Set(),
+) {
   const form = new FormData();
   const companions = post.plushIds
     .map((id) => plushes.find((plush) => plush.id === id))
@@ -114,10 +118,12 @@ export async function saveCloudPost(post: Post, plushes: Plush[]) {
         displayOrder: image.displayOrder,
         isCover: image.isCover,
         pinCrop: image.pinCrop,
+        upload: !unchangedImageIds.has(image.id),
       })),
     }),
   );
   post.images.forEach((image) => {
+    if (unchangedImageIds.has(image.id)) return;
     form.set(`full:${image.id}`, image.full, `${image.id}-full`);
     form.set(
       `thumbnail:${image.id}`,

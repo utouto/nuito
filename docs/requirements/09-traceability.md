@@ -19,7 +19,7 @@
 | きょうの日記 | FR-120〜FR-158 | SC-05 | DailyJournal, Post, PostImage, Location | AC-050〜AC-054 |
 | 履歴 | FR-160〜FR-169 | SC-06, SC-05 | Post, DailyJournal, Plush | AC-080 |
 | ローカル保存 | FR-170〜FR-181 | SC-01, SC-08 | 全データ | AC-002, AC-072, AC-087 |
-| クラウド保存 | FR-182〜FR-189 | SC-01, SC-03, SC-05, SC-07, SC-08 | User, Session, Post, PostImage, Plush, DailyJournal, UserSettings | AC-085, AC-087 |
+| クラウド保存 | FR-182〜FR-189 | SC-01, SC-03, SC-05, SC-07, SC-08 | User, Session, Post, PostImage, Plush, DailyJournal, UserSettings | AC-085, AC-087, AC-090 |
 | 印刷・PDF | FR-190〜FR-196 | SC-09 | DailyJournal, Post, PostImage | 将来追加 |
 | 共通画面構成・製品アイコン | FR-197〜FR-199, FR-201 | SC-01〜SC-09 | なし | AC-081, AC-082, AC-084, AC-089 |
 | PWA | FR-200, NFR-014, NFR-064 | SC-01〜SC-09 | なし | AC-088 |
@@ -30,7 +30,7 @@
 |---|---|---|
 | 操作性 | NFR-001〜NFR-007 | 投稿、日記、エラー処理 |
 | レスポンシブ | NFR-010〜NFR-014 | 全画面 |
-| 性能 | NFR-020〜NFR-024 | 画像、地図、日別表示 |
+| 性能 | NFR-020〜NFR-025 | 画像、地図、日別表示、投稿編集時のクラウド保存 |
 | セキュリティ | NFR-030〜NFR-036 | 権限、入力、外部サービス、クラウド保存 |
 | プライバシー | NFR-040〜NFR-046 | 地図、位置、ローカル保存、非公開画像 |
 | 信頼性 | NFR-050〜NFR-055 | 投稿保存、バックアップ |

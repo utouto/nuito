@@ -1700,7 +1700,11 @@ export function PostEditor({
       updatedAt: now,
     };
     try {
-      const savedToCloud = await saveCloudPost(value, plushes);
+      const savedToCloud = await saveCloudPost(
+        value,
+        plushes,
+        new Set(post?.images.map((image) => image.id)),
+      );
       if (cloudEnabled && !savedToCloud) throw new Error("cloud_session_expired");
       await db.posts.put(value);
       onDone();
