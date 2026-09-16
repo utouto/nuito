@@ -82,14 +82,19 @@ curl --fail-with-body https://<STAGING_HOST>/api/health
 
 staging確認後に同じ手順で`nuito-production`と`nuito-images-production`を作り、`wrangler.production.example.jsonc`を`wrangler.production.jsonc`へコピーします。production Worker名は`app`とします。production専用のD1 ID、Workers subdomain、Secretを設定してください。stagingのD1、R2、Secretを流用しません。
 
+公開前にproduction設定のD1・R2 binding名とIDが前回リリースと一致することを確認します。D1の利用者、ぬい、投稿、画像の件数を記録し、migrationを適用する場合は事前にD1をアクセス制限された場所へexportします。exportには個人データが含まれるため、Git管理や共有ストレージへ置きません。
+
 ```bash
 npm run check:deploy:production
 npx wrangler d1 migrations list nuito-production --remote --config wrangler.production.jsonc
+npx wrangler d1 execute nuito-production --remote --config wrangler.production.jsonc --command "SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM plushes) AS plushes, (SELECT COUNT(*) FROM posts) AS posts, (SELECT COUNT(*) FROM post_images) AS images;"
+# migrationがある場合だけ、/secure/pathを実在する安全なパスへ置き換えて実行する
+npx wrangler d1 export nuito-production --remote --config wrangler.production.jsonc --output /secure/path/nuito-production.sql
 npx wrangler d1 migrations apply nuito-production --remote --config wrangler.production.jsonc
 npx wrangler deploy --config wrangler.production.jsonc
 ```
 
-公開後はproduction URLの`/api/health`、法務ページ、LINE認証をstagingと同じ観点で確認します。あいことばは招待相手だけに安全な経路で共有します。
+公開後は同じ件数確認を再実行し、デプロイ前より意図せず減っていた場合は公開完了とせず、書き込みを伴う操作を止めて調査します。production URLの`/api/health`、法務ページ、LINE認証と、登録済みのぬい一覧をstagingと同じ観点で確認します。あいことばは招待相手だけに安全な経路で共有します。
 
 ## 7. custom domainへ切り替える場合
 

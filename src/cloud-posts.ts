@@ -186,6 +186,18 @@ async function imageBlob(
   return response.blob();
 }
 
+export async function resolveCloudPlushIcon(
+  plushId: string,
+  localIcon?: Blob,
+) {
+  try {
+    return await imageBlob(plushId, "plush");
+  } catch {
+    // アイコン1件の取得失敗で、ぬいの名前を含む一覧全体を復元不能にしない。
+    return localIcon;
+  }
+}
+
 export async function syncCloudPosts() {
   const response = await checkedFetch("/api/posts");
   if (!response) return false;
@@ -211,7 +223,9 @@ export async function syncCloudPosts() {
           ...local,
           id: row.id,
           name: row.name,
-          icon: row.has_icon ? await imageBlob(row.id, "plush") : undefined,
+          icon: row.has_icon
+            ? await resolveCloudPlushIcon(row.id, local?.icon)
+            : undefined,
           iconCrop:
             row.icon_crop_x !== null &&
             row.icon_crop_y !== null &&

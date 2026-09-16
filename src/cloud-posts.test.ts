@@ -3,6 +3,7 @@ import {
   deleteCloudAccount,
   deleteCloudPlush,
   deleteCloudPost,
+  resolveCloudPlushIcon,
   saveCloudPost,
 } from "./cloud-posts";
 import type { Plush, Post } from "./types";
@@ -87,6 +88,21 @@ describe("クラウド投稿クライアント", () => {
     await expect(saveCloudPost(post, [plush])).rejects.toThrow(
       "cloud_request_failed:503",
     );
+  });
+
+  it("ぬいアイコンを取得できなくても端末内アイコンを維持する", async () => {
+    const localIcon = new Blob(["local-icon"], { type: "image/webp" });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({ error: "not_found" }, { status: 404 }),
+      ),
+    );
+
+    await expect(resolveCloudPlushIcon("plush-1", localIcon)).resolves.toBe(
+      localIcon,
+    );
+    await expect(resolveCloudPlushIcon("plush-2")).resolves.toBeUndefined();
   });
 
   it("ぬい削除とアカウント削除を専用APIへ送信する", async () => {
