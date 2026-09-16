@@ -2070,9 +2070,19 @@ export function JournalView({
   cloudEnabled?: boolean;
   onEdit: (p: Post) => void;
 }) {
-  const [body, setBody] = useState(journal?.body ?? "");
+  const journalBody = journal?.body ?? "";
+  const journalUpdatedAt = journal?.updatedAt;
+  const hasJournal = Boolean(journal);
+  const [body, setBody] = useState(journalBody);
+  const [isEditing, setIsEditing] = useState(!hasJournal);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  useEffect(() => {
+    setBody(journalBody);
+    setIsEditing(!hasJournal);
+    setMessage("");
+    setError("");
+  }, [date, hasJournal, journalBody, journalUpdatedAt]);
   const names = [
     ...new Set(
       posts
@@ -2105,6 +2115,7 @@ export function JournalView({
       if (cloudEnabled && !savedToCloud) throw new Error("cloud_session_expired");
       await db.journals.put(value);
       setMessage("日記を保存しました。");
+      setIsEditing(false);
     } catch {
       setError("日記を保存できませんでした。通信状態を確認して、もう一度お試しください。");
     }
@@ -2143,23 +2154,38 @@ export function JournalView({
         ))}
       </section>
       <section className="form-card journal-compose">
-        <h2>きょうのにっき</h2>
-        <textarea
-          rows={8}
-          value={body}
-          maxLength={1001}
-          onChange={(e) => setBody(e.target.value)}
-        />
-        <small className={body.length > 1000 ? "over" : ""}>
-          {body.length} / 1000文字
-        </small>
-        <button
-          className="primary"
-          disabled={body.length > 1000}
-          onClick={save}
-        >
-          日記を保存
-        </button>
+        <div className="journal-compose-heading">
+          <h2>きょうのにっき</h2>
+          {journal && !isEditing ? (
+            <button type="button" onClick={() => setIsEditing(true)}>
+              <EditRoundedIcon aria-hidden="true" />
+              編集
+            </button>
+          ) : null}
+        </div>
+        {isEditing ? (
+          <>
+            <textarea
+              aria-label="きょうのにっき"
+              rows={8}
+              value={body}
+              maxLength={1001}
+              onChange={(e) => setBody(e.target.value)}
+            />
+            <small className={body.length > 1000 ? "over" : ""}>
+              {body.length} / 1000文字
+            </small>
+            <button
+              className="primary"
+              disabled={body.length > 1000}
+              onClick={save}
+            >
+              日記を保存
+            </button>
+          </>
+        ) : (
+          <p className="journal-body">{body}</p>
+        )}
         {message ? <p role="status">{message}</p> : null}
         {error ? <p className="error" role="alert">{error}</p> : null}
         {journal ? (

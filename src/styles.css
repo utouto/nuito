@@ -478,6 +478,31 @@ h2 {
 .journal-compose h2 {
   margin: -12px 0 0;
 }
+.journal-compose-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.journal-compose-heading h2 {
+  margin: -12px 0 0;
+}
+.journal-compose-heading button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: #7e4c30;
+}
+.journal-compose-heading .MuiSvgIcon-root {
+  font-size: 20px;
+}
+.journal-body {
+  min-height: 4em;
+  margin: 8px 0;
+  white-space: pre-wrap;
+}
 .stack {
   display: grid;
   gap: 12px;
@@ -515,11 +540,19 @@ h2 {
   font-size: 22px;
 }
 .post-card-footer {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 10px;
+  padding-right: 44px;
+  padding-top: 8px;
+}
+.post-card-footer .card-action {
+  position: absolute;
+  top: calc(50% + 4px);
+  right: 0;
+  transform: translateY(-50%);
 }
 .post-meta {
   display: flex;
@@ -539,8 +572,18 @@ h2 {
   font-size: 15px;
 }
 .post-body {
+  margin: 0;
   white-space: pre-wrap;
   line-height: 1.7;
+}
+.post-card > .with,
+.post-card > .post-body,
+.post-card > .photos {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.post-card > .with {
+  padding-top: 0;
 }
 .with {
   display: flex;

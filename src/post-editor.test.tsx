@@ -813,6 +813,38 @@ describe("きょうの日記", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("保存済みの日記は編集ボタンを押したときだけ編集できる", () => {
+    const view = render(
+      <JournalView
+        date="2026-09-14"
+        posts={[]}
+        plushes={[]}
+        journal={{
+          logicalDate: "2026-09-14",
+          body: "たのしい一日でした。",
+          createdAt: "2026-09-14T12:00:00.000Z",
+          updatedAt: "2026-09-14T12:00:00.000Z",
+        }}
+        onEdit={() => undefined}
+      />,
+    );
+    const page = within(view.container);
+
+    expect(page.getByText("たのしい一日でした。")).toHaveClass(
+      "journal-body",
+    );
+    expect(
+      page.queryByRole("textbox", { name: "きょうのにっき" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(page.getByRole("button", { name: "編集" }));
+
+    expect(page.getByRole("textbox", { name: "きょうのにっき" })).toHaveValue(
+      "たのしい一日でした。",
+    );
+    expect(page.getByRole("button", { name: "日記を保存" })).toBeVisible();
+  });
+
   it("思い出から開いた日記は日付を見出しにする", () => {
     const view = render(
       <JournalView
