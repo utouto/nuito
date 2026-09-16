@@ -323,6 +323,18 @@ export function DayMap({
   onPostSelectRef.current = onPostSelect;
   const onFocusCompleteRef = useRef(onFocusComplete);
   onFocusCompleteRef.current = onFocusComplete;
+  const postLayerVersion = posts
+    .map((post) => `${post.id}:${post.updatedAt}`)
+    .join("|");
+  const plushLayerVersion = plushes
+    .map((plush) => `${plush.id}:${plush.updatedAt}`)
+    .join("|");
+  const pickLayerVersion = pick
+    ? `${pick.latitude}:${pick.longitude}:${pick.name}:${pick.source}`
+    : "";
+  const layerDataRef = useRef({ posts, plushes, pick });
+  layerDataRef.current = { posts, plushes, pick };
+  const editable = Boolean(onPick);
   useEffect(() => {
     if (!element.current) return;
     const initial = initialMapState.current;
@@ -411,6 +423,7 @@ export function DayMap({
   useEffect(() => {
     const map = mapInstance.current;
     if (!map) return;
+    const { posts, plushes, pick } = layerDataRef.current;
     const located = posts.filter((post) => post.place);
     const all = [
       ...located.map(
@@ -474,15 +487,15 @@ export function DayMap({
       });
       const pin = L.marker([pick.latitude, pick.longitude], {
         icon: selectionIcon,
-        draggable: Boolean(onPick),
-        title: onPick ? "選択中の場所。ドラッグして移動" : "選択中の場所",
+        draggable: editable,
+        title: editable ? "選択中の場所。ドラッグして移動" : "選択中の場所",
         alt: "選択中の場所",
       }).addTo(map);
       layers.push(pin);
-      if (onPick)
+      if (editable)
         pin.on("dragend", () => {
           const position = pin.getLatLng();
-          onPick({
+          onPickRef.current?.({
             ...pick,
             latitude: position.lat,
             longitude: position.lng,
@@ -499,7 +512,7 @@ export function DayMap({
     if (shouldFocusPick) {
       map.setView([pick!.latitude, pick!.longitude], currentLocationZoom);
       appliedPickFocusRequest.current = pickFocusRequest;
-    } else if (!onPick && nextLocationSignature !== locationSignature.current) {
+    } else if (!editable && nextLocationSignature !== locationSignature.current) {
       if (all.length > 1)
         map.fitBounds(L.latLngBounds(all), {
           padding: [24, 24],
@@ -513,10 +526,10 @@ export function DayMap({
       layers.forEach((layer) => layer.remove());
     };
   }, [
-    posts,
-    plushes,
-    pick,
-    onPick,
+    postLayerVersion,
+    plushLayerVersion,
+    pickLayerVersion,
+    editable,
     showCompanionIcons,
     pickFocusRequest,
   ]);

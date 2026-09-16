@@ -498,7 +498,7 @@ describe("きょうの投稿ドロワー", () => {
     expect(leafletMap).toHaveBeenCalledTimes(initialMapCalls);
   });
 
-  it("初回同期で投稿データが更新されても地図本体を作り直さない", () => {
+  it("初回同期で同じ投稿データが届いても地図と写真ピンを作り直さない", () => {
     const props = {
       date: "2026-09-14",
       posts: [post],
@@ -517,6 +517,21 @@ describe("きょうの投稿ドロワー", () => {
         posts={[{ ...post }]}
         plushes={[]}
         settings={{ ...settings }}
+      />,
+    );
+
+    expect(leafletMap).toHaveBeenCalledTimes(initialMapCalls);
+    expect(leafletMarker).toHaveBeenCalledTimes(initialMarkerCalls);
+
+    view.rerender(
+      <Today
+        {...props}
+        posts={[
+          {
+            ...post,
+            updatedAt: "2026-09-14T07:00:00.000Z",
+          },
+        ]}
       />,
     );
 
