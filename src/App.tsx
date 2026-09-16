@@ -71,7 +71,6 @@ const geolocationOptions: PositionOptions = {
   timeout: 10000,
 };
 const defaultPlaceName = "ここで遊んだよ";
-const postMarkerBorderColor = "#8b5e3c";
 const emptyPosts: Post[] = [];
 
 function placeFromPosition(position: GeolocationPosition): Place {
@@ -313,8 +312,8 @@ export function DayMap({
         icon: L.divIcon({
           className: `post-map-marker${cover ? " photo-post-map-marker" : ""}`,
           html: cover
-            ? `<span><b><img src="${photoUrl}" alt="" style="object-position:${crop.x}% ${crop.y}%;transform:translate(-50%,-50%) scale(${crop.zoom});transform-origin:${crop.x}% ${crop.y}%"></b><em style="background:${postMarkerBorderColor}"><i style="background:${background}"></i></em></span>`
-            : `<span style="background:${postMarkerBorderColor}"><i style="background:${background}"></i></span>`,
+            ? `<span><b><img src="${photoUrl}" alt="" style="object-position:${crop.x}% ${crop.y}%;transform:translate(-50%,-50%) scale(${crop.zoom});transform-origin:${crop.x}% ${crop.y}%"></b><em><i style="background:${background}"></i></em></span>`
+            : `<span><i style="background:${background}"></i></span>`,
           iconSize: cover ? [64, 72] : [28, 28],
           iconAnchor: cover ? [32, 72] : [14, 14],
         }),
@@ -626,7 +625,9 @@ export default function App() {
     setView("journal");
   };
   return (
-    <div className={`app${view === "today" ? " today-app" : ""}`}>
+    <div
+      className={`app${view === "today" ? " today-app" : ""}${view === "journal" ? " journal-app" : ""}`}
+    >
       <header className="app-header">
         <img src="/icons/nuito-icon.png" alt="" width="48" height="48" />
         <strong>ぬいと</strong>
@@ -636,7 +637,15 @@ export default function App() {
           {cloudError}
         </p>
       ) : null}
-      <main className={view === "today" ? "today-main" : undefined}>
+      <main
+        className={
+          view === "today"
+            ? "today-main"
+            : view === "journal"
+              ? "journal-main"
+              : undefined
+        }
+      >
         {view === "today" ? (
           <Today
             date={today}
@@ -687,12 +696,6 @@ export default function App() {
             posts={dayPosts}
             plushes={plushes}
             journal={journals.find((j) => j.logicalDate === date)}
-            title={
-              journalSource === "today"
-                ? "きょうの日記"
-                : `${formatDate(date)}の日記`
-            }
-            showDate={journalSource === "today"}
             cloudEnabled={cloudEnabled}
             onEdit={openEditor}
           />
@@ -2056,8 +2059,6 @@ export function JournalView({
   posts,
   plushes,
   journal,
-  title = "きょうの日記",
-  showDate = true,
   cloudEnabled = false,
   onEdit,
 }: {
@@ -2065,8 +2066,6 @@ export function JournalView({
   posts: Post[];
   plushes: Plush[];
   journal?: Journal;
-  title?: string;
-  showDate?: boolean;
   cloudEnabled?: boolean;
   onEdit: (p: Post) => void;
 }) {
@@ -2083,14 +2082,13 @@ export function JournalView({
     setMessage("");
     setError("");
   }, [date, hasJournal, journalBody, journalUpdatedAt]);
-  const names = [
+  const dayPlushes = [
     ...new Set(
-      posts
-        .flatMap((p) => p.plushIds)
-        .map((id) => plushes.find((x) => x.id === id)?.name)
-        .filter(Boolean),
+      posts.flatMap((post) => post.plushIds),
     ),
-  ];
+  ]
+    .map((id) => plushes.find((plush) => plush.id === id))
+    .filter((plush): plush is Plush => Boolean(plush));
   const latest = posts
     .map((p) => p.updatedAt)
     .sort()
@@ -2099,6 +2097,9 @@ export function JournalView({
     journal?.lastPostChangeAtAtSave &&
     latest &&
     latest > journal.lastPostChangeAtAtSave;
+  const journalDate = formatDate(date)
+    .replace("(", "（")
+    .replace(")", "）");
   async function save() {
     if (body.length > 1000) return;
     const now = new Date().toISOString();
@@ -2130,30 +2131,61 @@ export function JournalView({
             場所付きのおもいでがないため、地図は空です。
           </div>
         )}
-        <div className="journal-heading-card">
-          <h1 id="journal-heading" className="page-title">
-            {title}
-          </h1>
-          {showDate ? <p className="journal-date">{formatDate(date)}</p> : null}
-          {names.length ? (
-            <p className="lead">{names.join("・")}とおでかけ</p>
-          ) : null}
-        </div>
       </div>
-      {changed ? (
-        <p className="notice">日記の保存後に記録が更新されています。</p>
-      ) : null}
-      <section className="stack journal-posts" aria-label="この日のおもいで">
-        {posts.map((p) => (
-          <PostCard
-            key={p.id}
-            post={p}
-            plushes={plushes}
-            onEdit={() => onEdit(p)}
-          />
-        ))}
-      </section>
-      <section className="form-card journal-compose">
+      <div className="journal-scroll">
+        {changed ? (
+          <p className="notice">日記の保存後に記録が更新されています。</p>
+        ) : null}
+        <section className="stack journal-posts" aria-label="この日のおもいで">
+        <header className="journal-posts-heading">
+          <h1 id="journal-heading" className="page-title">
+            {journalDate}の日記
+          </h1>
+          {dayPlushes.length ? (
+            <div
+              className="journal-companions"
+              aria-label={`${dayPlushes.map((plush) => plush.name).join("、")}とおでかけ`}
+            >
+              <span className="companion-icons" aria-hidden="true">
+                {dayPlushes.map((plush) =>
+                  plush.icon ? (
+                    <PlushIcon
+                      key={plush.id}
+                      blob={plush.icon}
+                      crop={plush.iconCrop}
+                      alt=""
+                      className="journal-companion-icon"
+                      themeColor={plush.themeColor}
+                    />
+                  ) : (
+                    <span
+                      key={plush.id}
+                      className="journal-companion-icon fallback-icon"
+                      style={{
+                        borderColor:
+                          plush.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
+                      }}
+                      aria-hidden="true"
+                    >
+                      {plushNameInitial(plush.name)}
+                    </span>
+                  ),
+                )}
+              </span>
+              <span aria-hidden="true">とおでかけ</span>
+            </div>
+          ) : null}
+        </header>
+          {posts.map((p) => (
+            <PostCard
+              key={p.id}
+              post={p}
+              plushes={plushes}
+              onEdit={() => onEdit(p)}
+            />
+          ))}
+        </section>
+        <section className="form-card journal-compose">
         <div className="journal-compose-heading">
           <h2>きょうのにっき</h2>
           {journal && !isEditing ? (
@@ -2193,7 +2225,8 @@ export function JournalView({
             最終更新: {new Date(journal.updatedAt).toLocaleString("ja-JP")}
           </small>
         ) : null}
-      </section>
+        </section>
+      </div>
     </section>
   );
 }

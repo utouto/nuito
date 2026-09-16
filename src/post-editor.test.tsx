@@ -688,10 +688,30 @@ describe("日別地図の投稿ピン", () => {
       expect.objectContaining({
         className: "post-map-marker photo-post-map-marker",
         html: expect.stringMatching(
-          /<img src="blob:post-image".*object-position:50% 50%;.*scale\(1\).*<em style="background:#8b5e3c"><i style="background:conic-gradient\(/,
+          /<img src="blob:post-image".*object-position:50% 50%;.*scale\(1\).*<em><i style="background:conic-gradient\(/,
         ),
         iconSize: [64, 72],
         iconAnchor: [32, 72],
+      }),
+    );
+  });
+
+  it("写真なし投稿の地点円は茶色い外枠を使わない", () => {
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[{ ...post, images: [] }]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+
+    expect(leafletDivIcon).toHaveBeenCalledWith(
+      expect.objectContaining({
+        className: "post-map-marker",
+        html: '<span><i style="background:#687076"></i></span>',
       }),
     );
   });
@@ -785,7 +805,15 @@ describe("きょうの日記", () => {
       <JournalView
         date="2026-09-14"
         posts={[post]}
-        plushes={[]}
+        plushes={[
+          {
+            id: "plush-1",
+            name: "くま",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
         onEdit={() => undefined}
       />,
     );
@@ -793,12 +821,22 @@ describe("きょうの日記", () => {
     expect(
       view.container.querySelector(".journal-hero .journal-map"),
     ).toBeVisible();
+    expect(view.container.querySelector(".journal-hero .journal-scroll")).not.toBeInTheDocument();
+    expect(view.container.querySelector(".journal-scroll .journal-posts")).toBeVisible();
     expect(
       view.container.querySelector(".journal-heading-card"),
-    ).toHaveTextContent("2026年9月14日");
+    ).not.toBeInTheDocument();
     expect(
-      within(view.container).getByRole("heading", { name: "きょうの日記" }),
+      within(view.container).getByRole("heading", {
+        name: "2026年9月14日（月）の日記",
+      }),
     ).toHaveClass("page-title");
+    expect(view.container.querySelector(".journal-posts-heading")).toHaveTextContent(
+      "とおでかけ",
+    );
+    expect(
+      view.container.querySelector(".journal-companion-icon"),
+    ).toHaveTextContent("く");
     expect(
       within(view.container).getByRole("region", { name: "この日のおもいで" }),
     ).toHaveTextContent("もとのひとこと");
@@ -845,24 +883,22 @@ describe("きょうの日記", () => {
     expect(page.getByRole("button", { name: "日記を保存" })).toBeVisible();
   });
 
-  it("思い出から開いた日記は日付を見出しにする", () => {
+  it("日記は曜日付きの日付を投稿一覧の見出しにする", () => {
     const view = render(
       <JournalView
         date="2026-09-14"
         posts={[]}
         plushes={[]}
-        title="2026年9月14日の日記"
-        showDate={false}
         onEdit={() => undefined}
       />,
     );
 
     expect(
       within(view.container).getByRole("heading", {
-        name: "2026年9月14日の日記",
+        name: "2026年9月14日（月）の日記",
       }),
     ).toHaveClass("page-title");
-    expect(view.container.querySelector(".journal-date")).not.toBeInTheDocument();
+    expect(view.container.querySelector(".journal-posts-heading")).toBeVisible();
   });
 });
 

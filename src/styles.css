@@ -49,6 +49,12 @@ textarea:focus-visible {
   padding-bottom: 0;
   overflow: hidden;
 }
+.app.journal-app {
+  height: 100dvh;
+  min-height: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
 .app-header {
   position: sticky;
   top: 0;
@@ -198,12 +204,14 @@ h2 {
   display: grid;
   width: 28px;
   height: 28px;
-  padding: 3px;
+  padding: 0;
   border-radius: 50%;
   box-shadow: 0 2px 8px #3e332c70;
 }
 .post-map-marker i {
   display: block;
+  width: 100%;
+  height: 100%;
   border: 2px solid white;
   border-radius: 50%;
 }
@@ -250,7 +258,7 @@ h2 {
   display: grid;
   width: 28px;
   height: 28px;
-  padding: 3px;
+  padding: 0;
   border-radius: 50%;
   font-style: normal;
 }
@@ -277,6 +285,11 @@ h2 {
 }
 .today-main {
   padding: 0;
+}
+.journal-main {
+  height: calc(100dvh - 126px - env(safe-area-inset-bottom));
+  padding: 0;
+  overflow: hidden;
 }
 .today-map-view {
   position: relative;
@@ -411,18 +424,18 @@ h2 {
   scrollbar-gutter: stable;
 }
 .journal-view {
-  margin: -24px -18px 0;
-  padding-bottom: 24px;
+  display: grid;
+  grid-template-rows: 50% minmax(0, 1fr);
+  height: 100%;
   background: #fffaf4;
 }
 .journal-hero {
-  position: relative;
-  min-height: 330px;
+  min-height: 0;
 }
 .journal-map,
 .journal-map .map-stage,
 .journal-map .map {
-  height: 330px;
+  height: 100%;
 }
 .journal-map {
   margin: 0;
@@ -436,44 +449,62 @@ h2 {
 }
 .journal-map-empty {
   display: grid;
-  min-height: 330px;
+  height: 100%;
   place-items: center;
   padding: 90px 24px 24px;
   background: #eee6db;
   color: #665950;
 }
-.journal-heading-card {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  left: 14px;
-  z-index: 500;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: #fffdf9eb;
-  box-shadow: 0 5px 20px #3e332c2b;
-  backdrop-filter: blur(8px);
+.journal-scroll {
+  min-height: 0;
+  padding: 18px 0 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
-.journal-heading-card h1 {
-  font-size: 22px;
-}
-.journal-heading-card .journal-date {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-.journal-heading-card .lead {
-  margin-bottom: 0;
-}
-.journal-view > .notice,
+.journal-scroll > .notice,
 .journal-posts,
 .journal-compose {
   margin-right: 18px;
   margin-left: 18px;
 }
+.journal-posts {
+  margin-top: 0;
+}
 .journal-posts .post-card,
 .journal-compose {
   box-shadow: 0 5px 18px #3e332c14;
+}
+.journal-posts-heading {
+  display: grid;
+  gap: 5px;
+  padding: 0 4px 4px;
+}
+.journal-posts-heading h1 {
+  margin: 0;
+  font-size: clamp(20px, 6vw, 26px);
+}
+.journal-companions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9a5438;
+  font-size: 14px;
+}
+.plush-icon.journal-companion-icon,
+.journal-companion-icon.fallback-icon {
+  width: 32px;
+  height: 32px;
+  margin-left: -4px;
+  border: 2px solid white;
+}
+.journal-companion-icon.fallback-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #f0dfce;
+  font-weight: 700;
 }
 .journal-compose h2 {
   margin: -12px 0 0;
