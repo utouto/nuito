@@ -62,6 +62,8 @@ export function PlushIconEditor({
   onCancel,
   themeColor = DEFAULT_PLUSH_THEME_COLOR,
   subject = "アイコン",
+  applyLabel = "この位置にする",
+  hideCancel = false,
 }: {
   blob: Blob;
   crop: PlushIconCrop;
@@ -70,6 +72,8 @@ export function PlushIconEditor({
   onCancel: () => void;
   themeColor?: string;
   subject?: string;
+  applyLabel?: string;
+  hideCancel?: boolean;
 }) {
   type Point = { x: number; y: number };
   type Gesture = {
@@ -215,11 +219,13 @@ export function PlushIconEditor({
         />
       </label>
       <div className="icon-editor-actions">
-        <button type="button" onClick={onCancel}>
-          キャンセル
-        </button>
+        {hideCancel ? null : (
+          <button type="button" onClick={onCancel}>
+            キャンセル
+          </button>
+        )}
         <button type="button" className="primary" onClick={onApply}>
-          この位置にする
+          {applyLabel}
         </button>
       </div>
     </fieldset>

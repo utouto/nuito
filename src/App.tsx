@@ -1511,7 +1511,6 @@ export function PostEditor({
     y: number;
   } | undefined>(undefined);
   const [pinCropImageId, setPinCropImageId] = useState<string>();
-  const [draftPinCrop, setDraftPinCrop] = useState(DEFAULT_PLUSH_ICON_CROP);
   const [place, setPlace] = useState<Place | undefined>(post?.place);
   const [recordPlace, setRecordPlace] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -1866,7 +1865,6 @@ export function PostEditor({
                   type="button"
                   onClick={() => {
                     setPinCropImageId(im.id);
-                    setDraftPinCrop(im.pinCrop ?? DEFAULT_PLUSH_ICON_CROP);
                   }}
                   aria-label="ピンに表示する画像を調整"
                 >
@@ -1900,20 +1898,23 @@ export function PostEditor({
               return image ? (
                 <PlushIconEditor
                   blob={image.thumbnail}
-                  crop={draftPinCrop}
-                  onChange={setDraftPinCrop}
-                  onApply={() => {
+                  crop={image.pinCrop ?? DEFAULT_PLUSH_ICON_CROP}
+                  onChange={(pinCrop) => {
                     setImages(
                       images.map((item) =>
                         item.id === image.id
-                          ? { ...item, pinCrop: draftPinCrop }
+                          ? { ...item, pinCrop }
                           : item,
                       ),
                     );
+                  }}
+                  onApply={() => {
                     setPinCropImageId(undefined);
                   }}
                   onCancel={() => setPinCropImageId(undefined)}
                   subject="ピンに表示する画像"
+                  applyLabel="調整を終わる"
+                  hideCancel
                 />
               ) : null;
             })()

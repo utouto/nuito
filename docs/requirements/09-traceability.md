@@ -22,6 +22,7 @@
 | クラウド保存 | FR-182〜FR-189 | SC-01, SC-03, SC-05, SC-07, SC-08 | User, Session, Post, PostImage, Plush, DailyJournal, UserSettings | AC-085, AC-087 |
 | 印刷・PDF | FR-190〜FR-196 | SC-09 | DailyJournal, Post, PostImage | 将来追加 |
 | 共通画面構成・製品アイコン | FR-197〜FR-199 | SC-01〜SC-09 | なし | AC-081, AC-082, AC-084 |
+| PWA | FR-200, NFR-014, NFR-064 | SC-01〜SC-09 | なし | AC-088 |
 
 ## 非機能要件との対応
 

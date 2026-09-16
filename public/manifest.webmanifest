@@ -1,0 +1,25 @@
+{
+  "name": "ぬいと",
+  "short_name": "ぬいと",
+  "description": "ぬいぐるみとのお出かけを写真・場所・日記で記録するアプリ",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffaf4",
+  "theme_color": "#8b5e3c",
+  "icons": [
+    {
+      "src": "/icons/nuito-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/nuito-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

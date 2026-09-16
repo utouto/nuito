@@ -20,6 +20,7 @@ import {
 } from "./App";
 import { plushNameInitial } from "./plush-name";
 import { movePostImage, reorderPostImages } from "./post-images";
+import { db } from "./db";
 import type { Plush, Post, Settings } from "./types";
 
 const {
@@ -220,6 +221,35 @@ describe("投稿編集", () => {
     expect(form.getByLabelText("横の位置")).toHaveValue("50");
     expect(form.getByLabelText("縦の位置")).toHaveValue("50");
     expect(view.container).not.toHaveTextContent("写真ピン");
+  });
+
+  it("画像位置の調整を投稿保存時にそのまま保存する", async () => {
+    const put = vi.spyOn(db.posts, "put").mockResolvedValue("post-1");
+    const request = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 401 }));
+    const view = render(<Subject postToEdit={post} />);
+    const form = within(view.container);
+
+    fireEvent.click(
+      form.getByRole("button", { name: "ピンに表示する画像を調整" }),
+    );
+    fireEvent.change(form.getByLabelText("横の位置"), {
+      target: { value: "35" },
+    });
+    expect(
+      form.queryByRole("button", { name: "この位置にする" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(form.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() => expect(put).toHaveBeenCalled());
+    expect(put.mock.calls[0][0].images[0].pinCrop).toEqual({
+      x: 35,
+      y: 50,
+      zoom: 1,
+    });
+    put.mockRestore();
+    request.mockRestore();
   });
 
   it("きょう画面の編集ボタンから対象の投稿を渡す", () => {
@@ -658,7 +688,7 @@ describe("日別地図の投稿ピン", () => {
       expect.objectContaining({
         className: "post-map-marker photo-post-map-marker",
         html: expect.stringMatching(
-          /<img src="blob:post-image".*<em style="background:#8b5e3c"><i style="background:conic-gradient\(/,
+          /<img src="blob:post-image".*object-position:50% 50%;.*scale\(1\).*<em style="background:#8b5e3c"><i style="background:conic-gradient\(/,
         ),
         iconSize: [64, 72],
         iconAnchor: [32, 72],

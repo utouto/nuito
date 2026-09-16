@@ -40,7 +40,7 @@ textarea:focus-visible {
   min-height: 100vh;
   margin: auto;
   background: #fffaf4;
-  padding-bottom: 90px;
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
   box-shadow: 0 0 40px #6d4c3520;
 }
 .app.today-app {
@@ -280,7 +280,7 @@ h2 {
 }
 .today-map-view {
   position: relative;
-  height: calc(100dvh - 126px);
+  height: calc(100dvh - 126px - env(safe-area-inset-bottom));
   min-height: 430px;
   overflow: hidden;
 }
@@ -301,6 +301,10 @@ h2 {
 }
 .today-map .leaflet-control-attribution {
   margin-top: 6px;
+  font-size: clamp(8px, 2.5vw, 11px);
+  line-height: 1.2;
+  text-align: right;
+  white-space: nowrap;
 }
 .today-map .leaflet-control-zoom {
   position: fixed;
@@ -315,7 +319,7 @@ h2 {
 }
 .today-summary {
   position: absolute;
-  top: 14px;
+  top: 34px;
   left: 14px;
   z-index: 500;
   width: max-content;
@@ -327,8 +331,10 @@ h2 {
   backdrop-filter: blur(8px);
 }
 .today-summary h1 {
-  font-size: 22px;
+  font-size: clamp(14px, 5vw, 22px);
+  line-height: 1.2;
   margin: 0;
+  white-space: nowrap;
 }
 .today-journal-button {
   position: absolute;
@@ -703,8 +709,11 @@ h2 {
   background: #f0dfce;
 }
 .plush-icon-fallback {
+  display: grid;
   border: 3px solid transparent;
   box-sizing: border-box;
+  line-height: 1;
+  place-items: center;
 }
 .plush-icon img {
   position: absolute;
@@ -1055,7 +1064,7 @@ h2 {
 .fab {
   position: fixed;
   right: max(22px, calc((100vw - 720px) / 2));
-  bottom: 74px;
+  bottom: calc(74px + env(safe-area-inset-bottom));
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -1068,10 +1077,13 @@ h2 {
   transition: bottom 220ms ease;
 }
 .fab.today-drawer-open {
-  bottom: min(calc(62vh + 80px), 640px);
+  bottom: min(
+    calc(62vh + 80px + env(safe-area-inset-bottom)),
+    calc(640px + env(safe-area-inset-bottom))
+  );
 }
 .fab.today-view:not(.today-drawer-open) {
-  bottom: 148px;
+  bottom: calc(148px + env(safe-area-inset-bottom));
 }
 nav {
   position: fixed;
@@ -1079,7 +1091,7 @@ nav {
   left: 50%;
   transform: translateX(-50%);
   width: min(100%, 760px);
-  height: 66px;
+  height: calc(66px + env(safe-area-inset-bottom));
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   background: #fff;
@@ -1095,6 +1107,8 @@ nav button {
   background: none;
   color: #71645b;
   font-size: 14px;
+  line-height: 1.25;
+  padding: 6px 4px 4px;
 }
 nav button .MuiSvgIcon-root {
   font-size: 22px;
