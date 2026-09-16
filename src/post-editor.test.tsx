@@ -764,6 +764,8 @@ describe("日別地図の投稿ピン", () => {
           {
             id: "plush-1",
             name: "くま",
+            icon: new Blob(["bear-icon"], { type: "image/webp" }),
+            iconCrop: { x: 35, y: 60, zoom: 1.4 },
             themeColor: "#3a7bd5",
             hidden: false,
             createdAt: "2026-09-01T00:00:00.000Z",
@@ -788,7 +790,7 @@ describe("日別地図の投稿ピン", () => {
       expect.objectContaining({
         className: "post-map-marker photo-post-map-marker",
         html: expect.stringMatching(
-          /<img src="blob:post-image".*width:133\.333.*height:100%;.*translate\(-50%,-50%\) scale\(1\).*<em><i style="background:conic-gradient\(/,
+          /map-companion-icons.*border-color:#3a7bd5.*object-position:35% 60%;.*scale\(1\.4\).*border-color:#d55a87.*<strong>う<\/strong>.*<b><img src="blob:post-image".*width:133\.333.*height:100%;.*translate\(-50%,-50%\) scale\(1\).*<em><i style="background:conic-gradient\(/,
         ),
         iconSize: [64, 72],
         iconAnchor: [32, 72],

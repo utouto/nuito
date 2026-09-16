@@ -54,7 +54,10 @@ import {
   PlushIcon,
   PlushIconEditor,
 } from "./plush-icon";
-import { DEFAULT_PLUSH_ICON_CROP } from "./plush-icon-crop";
+import {
+  clampPlushIconCrop,
+  DEFAULT_PLUSH_ICON_CROP,
+} from "./plush-icon-crop";
 import { plushNameInitial } from "./plush-name";
 import {
   movePostImage,
@@ -118,6 +121,46 @@ function postMarkerBackground(post: Post, plushes: Plush[]): string {
   ]);
   stops.push(`${colors[0]} 360deg`);
   return `conic-gradient(from -2deg, ${stops.join(", ")})`;
+}
+
+function escapeMarkerText(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[character] ?? character,
+  );
+}
+
+function mapCompanionHtml(
+  post: Post,
+  plushes: Plush[],
+  objectUrls: string[],
+): string {
+  const companions = post.plushIds
+    .map((id) => plushes.find((plush) => plush.id === id))
+    .filter((plush): plush is Plush => Boolean(plush));
+  if (!companions.length) return "";
+  const icons = companions.map((plush) => {
+    const borderColor =
+      plush.themeColor && /^#[0-9a-f]{6}$/i.test(plush.themeColor)
+        ? plush.themeColor
+        : "transparent";
+    if (!plush.icon)
+      return `<span class="map-companion-icon" style="border-color:${borderColor}"><strong>${escapeMarkerText(plushNameInitial(plush.name))}</strong></span>`;
+    const iconUrl = URL.createObjectURL(plush.icon);
+    objectUrls.push(iconUrl);
+    const crop = clampPlushIconCrop(
+      plush.iconCrop ?? DEFAULT_PLUSH_ICON_CROP,
+    );
+    return `<span class="map-companion-icon" style="border-color:${borderColor}"><img src="${iconUrl}" alt="" style="object-position:${crop.x}% ${crop.y}%;transform:translate(-50%,-50%) scale(${crop.zoom});transform-origin:${crop.x}% ${crop.y}%"></span>`;
+  });
+  return `<small class="map-companion-icons" aria-hidden="true">${icons.join("")}</small>`;
 }
 
 function curvedRoute(points: L.LatLngTuple[]): L.LatLngTuple[] {
@@ -325,11 +368,14 @@ export function DayMap({
       const photoStyle = cover ? photoPinImageStyle(cover, crop) : "";
       const photoUrl = cover ? URL.createObjectURL(cover.thumbnail) : undefined;
       if (photoUrl) objectUrls.push(photoUrl);
+      const companionHtml = cover
+        ? mapCompanionHtml(p, plushes, objectUrls)
+        : "";
       const marker = L.marker([p.place!.latitude, p.place!.longitude], {
         icon: L.divIcon({
           className: `post-map-marker${cover ? " photo-post-map-marker" : ""}`,
           html: cover
-            ? `<span><b><img src="${photoUrl}" alt="" style="${photoStyle}"></b><em><i style="background:${background}"></i></em></span>`
+            ? `<span>${companionHtml}<b><img src="${photoUrl}" alt="" style="${photoStyle}"></b><em><i style="background:${background}"></i></em></span>`
             : `<span><i style="background:${background}"></i></span>`,
           iconSize: cover ? [64, 72] : [28, 28],
           iconAnchor: cover ? [32, 72] : [14, 14],
