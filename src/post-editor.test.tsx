@@ -88,7 +88,12 @@ vi.mock("leaflet", () => ({
     latLngBounds: vi.fn((points) => points),
     polyline: (...args: unknown[]) => {
       leafletPolyline(...args);
-      return { addTo: vi.fn() };
+      return {
+        addTo: vi.fn(function (this: unknown) {
+          return this;
+        }),
+        remove: vi.fn(),
+      };
     },
     marker: (...args: unknown[]) => {
       leafletMarker(...args);
@@ -110,6 +115,7 @@ vi.mock("leaflet", () => ({
         getElement() {
           return document.createElement("div");
         },
+        remove: vi.fn(),
       };
     },
   },
@@ -490,6 +496,32 @@ describe("きょうの投稿ドロワー", () => {
     );
 
     expect(leafletMap).toHaveBeenCalledTimes(initialMapCalls);
+  });
+
+  it("初回同期で投稿データが更新されても地図本体を作り直さない", () => {
+    const props = {
+      date: "2026-09-14",
+      posts: [post],
+      plushes: [] as Plush[],
+      settings,
+      onNew: () => undefined,
+      onJournal: () => undefined,
+    };
+    const view = render(<Today {...props} />);
+    const initialMapCalls = leafletMap.mock.calls.length;
+    const initialMarkerCalls = leafletMarker.mock.calls.length;
+
+    view.rerender(
+      <Today
+        {...props}
+        posts={[{ ...post }]}
+        plushes={[]}
+        settings={{ ...settings }}
+      />,
+    );
+
+    expect(leafletMap).toHaveBeenCalledTimes(initialMapCalls);
+    expect(leafletMarker.mock.calls.length).toBeGreaterThan(initialMarkerCalls);
   });
 
   it("場所付き投稿を選ぶと現在の縮尺を保って投稿地点を中央にする", () => {
@@ -1354,11 +1386,12 @@ describe("投稿の場所選択", () => {
     const dragEnd = markerOn.mock.calls.find(
       ([eventName]) => eventName === "dragend",
     )?.[1] as (() => void) | undefined;
+    const setViewCalls = mapSetView.mock.calls.length;
 
     expect(dragEnd).toBeDefined();
     act(() => dragEnd?.());
 
-    expect(mapSetView).toHaveBeenLastCalledWith([35.68, 139.76], 16);
+    expect(mapSetView).toHaveBeenCalledTimes(setViewCalls);
     mapGetCenter.mockReturnValue({ lat: 35.6812, lng: 139.7671 });
     mapGetZoom.mockReturnValue(11);
   });

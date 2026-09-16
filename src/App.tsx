@@ -308,45 +308,62 @@ export function DayMap({
 }) {
   const element = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | undefined>(undefined);
-  const editableMapView = useRef<{
-    center: L.LatLngTuple;
-    zoom: number;
-  } | undefined>(undefined);
   const appliedPickFocusRequest = useRef(0);
+  const initialMapState = useRef({
+    posts,
+    pick,
+    className,
+    centerOnCurrentWhenEmpty,
+    pickFocusRequest,
+  });
+  const locationSignature = useRef("");
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
   const onPostSelectRef = useRef(onPostSelect);
   onPostSelectRef.current = onPostSelect;
   const onFocusCompleteRef = useRef(onFocusComplete);
   onFocusCompleteRef.current = onFocusComplete;
   useEffect(() => {
     if (!element.current) return;
-    const located = posts.filter((p) => p.place);
+    const initial = initialMapState.current;
+    const located = initial.posts.filter((post) => post.place);
     const all = [
       ...located.map(
-        (p) => [p.place!.latitude, p.place!.longitude] as L.LatLngTuple,
+        (post) =>
+          [post.place!.latitude, post.place!.longitude] as L.LatLngTuple,
       ),
-      ...(pick ? [[pick.latitude, pick.longitude] as L.LatLngTuple] : []),
+      ...(initial.pick
+        ? [
+            [
+              initial.pick.latitude,
+              initial.pick.longitude,
+            ] as L.LatLngTuple,
+          ]
+        : []),
     ];
-    const preservedView = onPick ? editableMapView.current : undefined;
     const shouldFocusPick = Boolean(
-      pick && pickFocusRequest > appliedPickFocusRequest.current,
+      initial.pick && initial.pickFocusRequest > appliedPickFocusRequest.current,
     );
     const map = L.map(element.current, { scrollWheelZoom: false }).setView(
       shouldFocusPick
-        ? [pick!.latitude, pick!.longitude]
-        : preservedView?.center ?? all[0] ?? [35.6812, 139.7671],
+        ? [initial.pick!.latitude, initial.pick!.longitude]
+        : all[0] ?? [35.6812, 139.7671],
       shouldFocusPick
         ? currentLocationZoom
-        : preservedView?.zoom ?? (all.length ? 13 : 5),
+        : all.length
+          ? 13
+          : 5,
     );
-    if (shouldFocusPick) appliedPickFocusRequest.current = pickFocusRequest;
+    if (shouldFocusPick)
+      appliedPickFocusRequest.current = initial.pickFocusRequest;
     mapInstance.current = map;
-    if (className === "today-map") {
+    if (initial.className === "today-map") {
       map.attributionControl.setPosition("topright");
       map.zoomControl.setPosition("topright");
     }
     let active = true;
     if (
-      centerOnCurrentWhenEmpty &&
+      initial.centerOnCurrentWhenEmpty &&
       !all.length &&
       navigator.geolocation &&
       navigator.permissions
@@ -371,15 +388,47 @@ export function DayMap({
     }
     if (tileUrl && navigator.onLine)
       L.tileLayer(tileUrl, { attribution }).addTo(map);
+    if (all.length > 1)
+      map.fitBounds(L.latLngBounds(all), { padding: [24, 24], maxZoom: 15 });
+    map.on("click", (event: L.LeafletMouseEvent) =>
+      onPickRef.current?.({
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng,
+        name: defaultPlaceName,
+        source: "map",
+      }),
+    );
+    locationSignature.current = all
+      .map(([latitude, longitude]) => `${latitude},${longitude}`)
+      .join("|");
+    return () => {
+      active = false;
+      if (mapInstance.current === map) mapInstance.current = undefined;
+      map.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map) return;
+    const located = posts.filter((post) => post.place);
+    const all = [
+      ...located.map(
+        (post) =>
+          [post.place!.latitude, post.place!.longitude] as L.LatLngTuple,
+      ),
+      ...(pick ? [[pick.latitude, pick.longitude] as L.LatLngTuple] : []),
+    ];
     const route = sortPosts(located.filter((p) => p.timeMode === "known")).map(
       (p) => [p.place!.latitude, p.place!.longitude] as L.LatLngTuple,
     );
+    const layers: L.Layer[] = [];
     if (route.length > 1)
-      L.polyline(curvedRoute(route), {
+      layers.push(L.polyline(curvedRoute(route), {
         dashArray: "7 10",
         color: "#8b5e3c",
         weight: 4,
-      }).addTo(map);
+      }).addTo(map));
     const objectUrls: string[] = [];
     let selectedMarker: L.Marker | undefined;
     located.forEach((p) => {
@@ -403,6 +452,7 @@ export function DayMap({
         }),
       });
       marker.bindTooltip(p.place!.name || "記録した場所").addTo(map);
+      layers.push(marker);
       if (onPostSelectRef.current)
         marker.on("click", () => {
           selectedMarker?.setZIndexOffset(0);
@@ -428,6 +478,7 @@ export function DayMap({
         title: onPick ? "選択中の場所。ドラッグして移動" : "選択中の場所",
         alt: "選択中の場所",
       }).addTo(map);
+      layers.push(pin);
       if (onPick)
         pin.on("dragend", () => {
           const position = pin.getLatLng();
@@ -439,37 +490,33 @@ export function DayMap({
           });
         });
     }
-    if (all.length > 1)
-      map.fitBounds(L.latLngBounds(all), { padding: [24, 24], maxZoom: 15 });
-    if (onPick)
-      map.on("click", (e) =>
-        onPick({
-          latitude: e.latlng.lat,
-          longitude: e.latlng.lng,
-          name: defaultPlaceName,
-          source: "map",
-        }),
-      );
+    const nextLocationSignature = all
+      .map(([latitude, longitude]) => `${latitude},${longitude}`)
+      .join("|");
+    const shouldFocusPick = Boolean(
+      pick && pickFocusRequest > appliedPickFocusRequest.current,
+    );
+    if (shouldFocusPick) {
+      map.setView([pick!.latitude, pick!.longitude], currentLocationZoom);
+      appliedPickFocusRequest.current = pickFocusRequest;
+    } else if (!onPick && nextLocationSignature !== locationSignature.current) {
+      if (all.length > 1)
+        map.fitBounds(L.latLngBounds(all), {
+          padding: [24, 24],
+          maxZoom: 15,
+        });
+      else if (all.length === 1) map.setView(all[0], 13);
+    }
+    locationSignature.current = nextLocationSignature;
     return () => {
-      active = false;
-      if (onPick) {
-        const center = map.getCenter();
-        editableMapView.current = {
-          center: [center.lat, center.lng],
-          zoom: map.getZoom(),
-        };
-      }
       objectUrls.forEach(URL.revokeObjectURL);
-      if (mapInstance.current === map) mapInstance.current = undefined;
-      map.remove();
+      layers.forEach((layer) => layer.remove());
     };
   }, [
     posts,
     plushes,
     pick,
     onPick,
-    className,
-    centerOnCurrentWhenEmpty,
     showCompanionIcons,
     pickFocusRequest,
   ]);
