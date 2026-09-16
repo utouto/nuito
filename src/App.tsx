@@ -559,6 +559,10 @@ export default function App() {
   const [cloudError, setCloudError] = useState("");
   const [cloudSaveStatus, setCloudSaveStatus] =
     useState<CloudSaveStatus>("checking");
+  const mainElement = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (mainElement.current) mainElement.current.scrollTop = 0;
+  }, [view]);
   useEffect(() => {
     void syncCloudPosts()
       .then(async (enabled) => {
@@ -635,6 +639,7 @@ export default function App() {
         </p>
       ) : null}
       <main
+        ref={mainElement}
         className={
           view === "today"
             ? "today-main"

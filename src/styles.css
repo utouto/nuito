@@ -9,12 +9,24 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
   min-width: 320px;
+  overscroll-behavior: none;
+}
+#root {
+  position: fixed;
+  inset: 0;
 }
 button,
 input,
@@ -36,11 +48,17 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 .app {
+  position: relative;
+  display: grid;
+  grid-template-rows: 60px minmax(0, 1fr);
+  width: 100%;
   max-width: 760px;
-  min-height: 100vh;
+  height: 100%;
+  height: 100dvh;
+  min-height: 0;
   margin: auto;
   background: #fffaf4;
-  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  overflow: hidden;
   box-shadow: 0 0 40px #6d4c3520;
 }
 .app.today-app {
@@ -56,8 +74,7 @@ textarea:focus-visible {
   overflow: hidden;
 }
 .app-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 1001;
   display: flex;
   align-items: center;
@@ -91,6 +108,19 @@ textarea:focus-visible {
 }
 main {
   padding: 24px 18px;
+}
+.app > main,
+#root > main {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.app > main {
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+}
+#root > main {
+  height: 100%;
 }
 h1 {
   font-size: clamp(26px, 7vw, 30px);
@@ -285,6 +315,7 @@ h2 {
 }
 .today-main {
   padding: 0;
+  overflow: hidden;
 }
 .journal-main {
   height: calc(100dvh - 126px - env(safe-area-inset-bottom));
@@ -1199,7 +1230,7 @@ h2 {
   bottom: calc(148px + env(safe-area-inset-bottom));
 }
 nav {
-  position: fixed;
+  position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
