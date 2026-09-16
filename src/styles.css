@@ -362,7 +362,7 @@ h2 {
   transition: top 220ms ease;
 }
 .today-map-view.drawer-open .leaflet-control-zoom {
-  top: calc(50dvh - 3px - min(31vh, 280px));
+  top: calc(50dvh - 3px - min(25vh, 280px));
 }
 .today-summary {
   position: absolute;
@@ -404,7 +404,7 @@ h2 {
   font-size: 30px;
 }
 .today-journal-button.drawer-open {
-  bottom: min(calc(62vh + 14px), 574px);
+  bottom: min(calc(50vh + 14px), 574px);
 }
 .today-journal-button.prompt {
   background: #d96337;
@@ -416,7 +416,7 @@ h2 {
   bottom: 0;
   left: 0;
   z-index: 505;
-  height: min(62vh, 560px);
+  height: min(50vh, 560px);
   overflow: hidden;
   border-radius: 22px 22px 0 0;
   background: #fffaf4f7;
@@ -522,28 +522,6 @@ h2 {
 .journal-posts-heading h1 {
   margin: 0;
   font-size: clamp(18px, 5.5vw, 23px);
-}
-.journal-companions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #9a5438;
-  font-size: 13px;
-}
-.plush-icon.journal-companion-icon,
-.journal-companion-icon.fallback-icon {
-  width: 32px;
-  height: 32px;
-  margin-left: -4px;
-  border: 2px solid white;
-}
-.journal-companion-icon.fallback-icon {
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: #f0dfce;
-  font-weight: 700;
 }
 .journal-compose h2 {
   margin: -6px 0 0;
@@ -668,9 +646,9 @@ h2 {
 }
 .plush-icon.companion-icon,
 .companion-icon.fallback-icon {
-  width: 32px;
-  height: 32px;
-  margin-left: -4px;
+  width: 45px;
+  height: 45px;
+  margin-left: -6px;
   border: 2px solid white;
 }
 .companion-icon.fallback-icon {
@@ -768,9 +746,9 @@ h2 {
 }
 .plush-icon.history-plush-icon,
 .history-plush-icon.fallback-icon {
-  width: 30px;
-  height: 30px;
-  margin-left: -4px;
+  width: 42px;
+  height: 42px;
+  margin-left: -6px;
   border: 2px solid white;
 }
 .history-plush-icon.fallback-icon {
@@ -1225,7 +1203,7 @@ h2 {
 }
 .fab.today-drawer-open {
   bottom: min(
-    calc(62vh + 80px + env(safe-area-inset-bottom)),
+    calc(50vh + 80px + env(safe-area-inset-bottom)),
     calc(640px + env(safe-area-inset-bottom))
   );
 }

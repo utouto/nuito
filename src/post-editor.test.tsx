@@ -860,11 +860,14 @@ describe("きょうの日記", () => {
         name: "2026年9月14日（月）の日記",
       }),
     ).toHaveClass("page-title");
-    expect(view.container.querySelector(".journal-posts-heading")).toHaveTextContent(
+    expect(view.container.querySelector(".journal-posts-heading")).not.toHaveTextContent(
       "とおでかけ",
     );
     expect(
       view.container.querySelector(".journal-companion-icon"),
+    ).not.toBeInTheDocument();
+    expect(
+      view.container.querySelector(".journal-posts .companion-icon"),
     ).toHaveTextContent("く");
     expect(
       within(view.container).getByRole("region", { name: "この日のおもいで" }),

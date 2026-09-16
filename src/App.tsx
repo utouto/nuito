@@ -2101,13 +2101,6 @@ export function JournalView({
     setMessage("");
     setError("");
   }, [date, hasJournal, journalBody, journalUpdatedAt]);
-  const dayPlushes = [
-    ...new Set(
-      posts.flatMap((post) => post.plushIds),
-    ),
-  ]
-    .map((id) => plushes.find((plush) => plush.id === id))
-    .filter((plush): plush is Plush => Boolean(plush));
   const latest = posts
     .map((p) => p.updatedAt)
     .sort()
@@ -2152,40 +2145,6 @@ export function JournalView({
           <h1 id="journal-heading" className="page-title">
             {journalDate}の日記
           </h1>
-          {dayPlushes.length ? (
-            <div
-              className="journal-companions"
-              aria-label={`${dayPlushes.map((plush) => plush.name).join("、")}とおでかけ`}
-            >
-              <span className="companion-icons" aria-hidden="true">
-                {dayPlushes.map((plush) =>
-                  plush.icon ? (
-                    <PlushIcon
-                      key={plush.id}
-                      blob={plush.icon}
-                      crop={plush.iconCrop}
-                      alt=""
-                      className="journal-companion-icon"
-                      themeColor={plush.themeColor}
-                    />
-                  ) : (
-                    <span
-                      key={plush.id}
-                      className="journal-companion-icon fallback-icon"
-                      style={{
-                        borderColor:
-                          plush.themeColor ?? DEFAULT_PLUSH_THEME_COLOR,
-                      }}
-                      aria-hidden="true"
-                    >
-                      {plushNameInitial(plush.name)}
-                    </span>
-                  ),
-                )}
-              </span>
-              <span aria-hidden="true">とおでかけ</span>
-            </div>
-          ) : null}
         </header>
         <div className="journal-scroll">
           <section className="stack journal-posts" aria-label="この日のおもいで">
