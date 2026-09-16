@@ -691,12 +691,12 @@ describe("日別地図の投稿ピン", () => {
     expect(markerBindTooltip).not.toHaveBeenCalled();
   });
 
-  it("きょう画面以外の日別地図では場所名のツールチップを維持する", () => {
+  it("日記側を含む日別地図でも場所名のツールチップを付けない", () => {
     markerBindTooltip.mockClear();
 
     render(<DayMap posts={[post]} />);
 
-    expect(markerBindTooltip).toHaveBeenCalledWith("東京駅");
+    expect(markerBindTooltip).not.toHaveBeenCalled();
   });
 
   it("後から選択した投稿ピンを最前面に切り替える", () => {
