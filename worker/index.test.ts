@@ -415,6 +415,40 @@ describe("データ削除API", () => {
   });
 });
 
+describe("ぬいアイコン取得API", () => {
+  it("写真の更新後に古いアイコンを再利用しないcache headerを返す", async () => {
+    const bindings = env();
+    bindings.DB.prepare = vi.fn(() => ({
+      bind() {
+        return this;
+      },
+      first: vi.fn().mockResolvedValue({
+        icon_object_key: "user-1/plushes/plush-1/version/icon",
+      }),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+    })) as never;
+    Object.assign(bindings.IMAGES, {
+      get: vi.fn().mockResolvedValue({
+        body: new Blob(["new icon"], { type: "image/webp" }).stream(),
+        writeHttpMetadata(headers: Headers) {
+          headers.set("content-type", "image/webp");
+        },
+      }),
+    });
+
+    const response = await handlePosts(
+      new Request("http://local/api/plush-icons/plush-1"),
+      bindings as never,
+      "user-1",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("content-type")).toBe("image/webp");
+  });
+});
+
 describe("プロフィールデータAPI", () => {
   it("設定と日記を所有者ID付きで保存する", async () => {
     const bindings = env();

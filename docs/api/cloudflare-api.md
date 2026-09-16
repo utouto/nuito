@@ -40,7 +40,7 @@ HttpOnly・Secure・SameSite=Lax cookieのsessionを確認または破棄しま�
 
 ### `GET /api/plush-icons/:plushId`
 
-所有者確認後、ぬいアイコンを非公開R2から返します。
+所有者確認後、ぬいアイコンを非公開R2から返します。アイコン差し替え後に同じURLから古い画像が表示されないよう、responseは`Cache-Control: private, no-store`とします。
 
 ### `PUT /api/plushes/:plushId`
 

@@ -537,7 +537,8 @@ async function plushIconResponse(
   const object = await env.IMAGES.get(plush.icon_object_key);
   if (!object) return response({ error: "not_found" }, 404);
   const headers = new Headers({
-    "cache-control": "private, max-age=31536000, immutable",
+    // ぬいアイコンのURLは画像を差し替えても変わらないため、古い画像を再利用させない。
+    "cache-control": "private, no-store",
     "x-content-type-options": "nosniff",
   });
   object.writeHttpMetadata(headers);
