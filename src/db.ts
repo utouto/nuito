@@ -1,11 +1,12 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Journal, Plush, Post, Settings } from "./types";
+import type { Journal, Plush, Post, PostDraft, Settings } from "./types";
 import { DEFAULT_SETTINGS } from "./domain";
 class NuitoDatabase extends Dexie {
   posts!: EntityTable<Post, "id">;
   plushes!: EntityTable<Plush, "id">;
   journals!: EntityTable<Journal, "logicalDate">;
   settings!: EntityTable<Settings, "id">;
+  postDrafts!: EntityTable<PostDraft, "id">;
   constructor() {
     super("nuito");
     this.version(1).stores({
@@ -13,6 +14,13 @@ class NuitoDatabase extends Dexie {
       plushes: "id,name,hidden",
       journals: "logicalDate,updatedAt",
       settings: "id",
+    });
+    this.version(2).stores({
+      posts: "id,createdAt,updatedAt,timeMode,manualLogicalDate",
+      plushes: "id,name,hidden,nfcToken",
+      journals: "logicalDate,updatedAt",
+      settings: "id",
+      postDrafts: "id,updatedAt",
     });
   }
 }
@@ -31,12 +39,14 @@ export async function deleteAllData() {
     db.plushes,
     db.journals,
     db.settings,
+    db.postDrafts,
     async () => {
       await Promise.all([
         db.posts.clear(),
         db.plushes.clear(),
         db.journals.clear(),
         db.settings.clear(),
+        db.postDrafts.clear(),
       ]);
       await db.settings.put(DEFAULT_SETTINGS);
     },

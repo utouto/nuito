@@ -13,6 +13,8 @@ import L from "leaflet";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import CameraAltRoundedIcon from "@mui/icons-material/CameraAltRounded";
+import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
@@ -23,6 +25,8 @@ import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import KeyboardArrowLeftRoundedIcon from "@mui/icons-material/KeyboardArrowLeftRounded";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
 import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
+import NfcRoundedIcon from "@mui/icons-material/NfcRounded";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import PetsRoundedIcon from "@mui/icons-material/PetsRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
@@ -53,7 +57,14 @@ import {
 import { DEFAULT_PLUSH_ICON_CROP } from "./plush-icon-crop";
 import { plushNameInitial } from "./plush-name";
 import { movePostImage, reorderPostImages } from "./post-images";
-import type { Journal, Place, Plush, Post, PostImage, Settings } from "./types";
+import {
+  nfcLink,
+  nfcTokenFromUrl,
+  removeNfcTokenFromUrl,
+  supportsWebNfc,
+  writeNfcLink,
+} from "./nfc";
+import type { Journal, Place, Plush, Post, PostDraft, PostImage, Settings } from "./types";
 type View =
   | "today"
   | "history"
@@ -72,6 +83,7 @@ const geolocationOptions: PositionOptions = {
 };
 const defaultPlaceName = "ここで遊んだよ";
 const emptyPosts: Post[] = [];
+const emptyPlushes: Plush[] = [];
 
 function placeFromPosition(position: GeolocationPosition): Place {
   return {
@@ -544,13 +556,20 @@ export function PostCard({
 export default function App() {
   const settings = useLiveQuery(() => getSettings(), []);
   const posts = useLiveQuery(() => db.posts.toArray(), []) ?? emptyPosts;
-  const plushes = useLiveQuery(() => db.plushes.toArray(), []) ?? [];
+  const plushes = useLiveQuery(() => db.plushes.toArray(), []) ?? emptyPlushes;
   const journals = useLiveQuery(() => db.journals.toArray(), []) ?? [];
   const [view, setView] = useState<View>(() => {
     if (location.pathname === "/privacy") return "privacy";
     if (location.pathname === "/terms") return "terms";
-    return "today";
+    return new URLSearchParams(location.search).has("nfc")
+      ? "editor"
+      : "today";
   });
+  const [pendingNfcToken, setPendingNfcToken] = useState<
+    string | null | undefined
+  >(() => nfcTokenFromUrl(location.href));
+  const [nfcPlushId, setNfcPlushId] = useState<string>();
+  const [nfcMessage, setNfcMessage] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [journalSource, setJournalSource] =
     useState<JournalSource>("today");
@@ -576,6 +595,53 @@ export default function App() {
         );
       });
   }, []);
+  useEffect(() => {
+    if (pendingNfcToken === undefined) return;
+    if (pendingNfcToken === null) {
+      setNfcMessage("このNFCタグ用リンクは正しくありません。");
+      setPendingNfcToken(undefined);
+      history.replaceState({}, "", removeNfcTokenFromUrl(location.href));
+      return;
+    }
+    const plush = plushes.find((item) => item.nfcToken === pendingNfcToken);
+    const openNfcPost = (target: Plush) => {
+      setEditing(undefined);
+      setNfcPlushId(target.id);
+      setNfcMessage(`「${target.name}」を追加しました。`);
+      setView("editor");
+      setPendingNfcToken(undefined);
+      history.replaceState({}, "", removeNfcTokenFromUrl(location.href));
+    };
+    if (plush) {
+      openNfcPost(plush);
+      return;
+    }
+    if (cloudSaveStatus !== "checking") {
+      let active = true;
+      void db.plushes
+        .filter((item) => item.nfcToken === pendingNfcToken)
+        .first()
+        .then((savedPlush) => {
+          if (!active) return;
+          if (savedPlush) openNfcPost(savedPlush);
+          else {
+            setNfcMessage(
+              "このNFCタグに対応するぬいが見つかりません。リンクが再発行または削除されている可能性があります。",
+            );
+            setView("editor");
+            setPendingNfcToken(undefined);
+            history.replaceState(
+              {},
+              "",
+              removeNfcTokenFromUrl(location.href),
+            );
+          }
+        });
+      return () => {
+        active = false;
+      };
+    }
+  }, [cloudSaveStatus, pendingNfcToken, plushes]);
   const cloudEnabled = cloudSaveStatus === "cloud";
   const today = settings ? todayLogicalDate(settings.dayBoundaryTime) : "";
   const date = selectedDate || today;
@@ -682,12 +748,19 @@ export default function App() {
             key={editing?.id ?? "new"}
             post={editing}
             plushes={plushes.filter(
-              (p) => !p.hidden || editing?.plushIds.includes(p.id),
+              (p) =>
+                !p.hidden ||
+                editing?.plushIds.includes(p.id) ||
+                p.id === nfcPlushId,
             )}
             settings={settings}
             cloudEnabled={cloudEnabled}
+            initialPlushId={editing ? undefined : nfcPlushId}
+            initialMessage={editing ? undefined : nfcMessage}
             onDone={() => {
               setEditing(undefined);
+              setNfcPlushId(undefined);
+              setNfcMessage("");
               setView("today");
             }}
           />
@@ -1128,6 +1201,7 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
   const [draftCrop, setDraftCrop] = useState(DEFAULT_PLUSH_ICON_CROP);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [nfcStatus, setNfcStatus] = useState("");
   const edit = (p?: Plush) => {
     setEditing(p);
     setName(p?.name ?? "");
@@ -1142,6 +1216,7 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
     );
     setDraftIcon(undefined);
     setError("");
+    setNfcStatus("");
   };
   async function chooseIcon(file?: File) {
     if (!file) return;
@@ -1167,6 +1242,7 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
     const value: Plush = {
       id: editing?.id ?? crypto.randomUUID(),
       name: name.trim(),
+      nfcToken: editing?.nfcToken,
       icon: nextIcon,
       iconCrop: nextIcon ? nextIconCrop : undefined,
       themeColor,
@@ -1205,6 +1281,56 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
       setError(
         "ぬいを削除できませんでした。通信状態を確認して、もう一度お試しください。",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function updateNfcToken(token: string) {
+    if (!editing) return;
+    const value: Plush = {
+      ...editing,
+      nfcToken: token,
+      updatedAt: new Date().toISOString(),
+    };
+    setBusy(true);
+    setError("");
+    setNfcStatus("");
+    try {
+      const savedToCloud = await saveCloudPlush(value);
+      if (cloudEnabled && !savedToCloud) throw new Error("cloud_session_expired");
+      await db.plushes.put(value);
+      setEditing(value);
+      setNfcStatus(
+        editing.nfcToken
+          ? "NFCタグ用リンクを再発行しました。以前のリンクは利用できません。"
+          : "NFCタグ用リンクを発行しました。",
+      );
+    } catch {
+      setError("NFCタグ用リンクを保存できませんでした。通信状態を確認してください。");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function copyNfcLink() {
+    if (!editing?.nfcToken) return;
+    try {
+      await navigator.clipboard.writeText(nfcLink(editing.nfcToken));
+      setNfcStatus("NFCタグ用リンクをコピーしました。");
+    } catch {
+      setError("リンクをコピーできませんでした。URLを選択してコピーしてください。");
+    }
+  }
+  async function writeLinkToNfc() {
+    if (!editing?.nfcToken) return;
+    setBusy(true);
+    setError("");
+    setNfcStatus("NFCタグをスマートフォンへ近づけてください…。");
+    try {
+      await writeNfcLink(nfcLink(editing.nfcToken));
+      setNfcStatus("NFCタグへリンクを書き込みました。");
+    } catch {
+      setError("NFCタグへ書き込めませんでした。タグを近づけて、もう一度お試しください。");
+      setNfcStatus("");
     } finally {
       setBusy(false);
     }
@@ -1300,7 +1426,7 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
             />
           </label>
         </div>
-        {busy ? <p role="status">画像を準備しています…</p> : null}
+        {busy ? <p role="status">処理中…</p> : null}
         {error ? (
           <p className="error" role="alert">
             {error}
@@ -1343,6 +1469,68 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
               画像を削除
             </button>
           </div>
+        ) : null}
+        {editing ? (
+          <fieldset className="nfc-settings">
+            <legend>NFCタグ（ベータ）</legend>
+            <p>
+              このぬいを選択した投稿画面を開くリンクをNFCタグに設定できます。
+            </p>
+            {editing.nfcToken ? (
+              <>
+                <label>
+                  NFCタグ用リンク
+                  <input
+                    readOnly
+                    value={nfcLink(editing.nfcToken)}
+                    onFocus={(event) => event.currentTarget.select()}
+                  />
+                </label>
+                <div className="nfc-actions">
+                  <button type="button" onClick={copyNfcLink} disabled={busy}>
+                    <ContentCopyRoundedIcon aria-hidden="true" />
+                    リンクをコピー
+                  </button>
+                  {supportsWebNfc() ? (
+                    <button type="button" onClick={writeLinkToNfc} disabled={busy}>
+                      <NfcRoundedIcon aria-hidden="true" />
+                      NFCタグに書き込む
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "リンクを再発行すると、以前のNFCタグ用リンクは利用できなくなります。続けますか？",
+                        )
+                      )
+                        void updateNfcToken(crypto.randomUUID());
+                    }}
+                    disabled={busy}
+                  >
+                    <RefreshRoundedIcon aria-hidden="true" />
+                    リンクを再発行
+                  </button>
+                </div>
+                {!supportsWebNfc() ? (
+                  <small>
+                    コピーしたURLを、市販のNFCタグ書き込みアプリでタグへ書き込んでください。
+                  </small>
+                ) : null}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void updateNfcToken(crypto.randomUUID())}
+                disabled={busy}
+              >
+                <NfcRoundedIcon aria-hidden="true" />
+                NFCタグ用リンクを発行
+              </button>
+            )}
+            {nfcStatus ? <p role="status">{nfcStatus}</p> : null}
+          </fieldset>
         ) : null}
         {editing ? (
           <label className="check">
@@ -1490,12 +1678,16 @@ export function PostEditor({
   plushes,
   settings,
   cloudEnabled = false,
+  initialPlushId,
+  initialMessage = "",
   onDone,
 }: {
   post?: Post;
   plushes: Plush[];
   settings: Settings;
   cloudEnabled?: boolean;
+  initialPlushId?: string;
+  initialMessage?: string;
   onDone: () => void;
 }) {
   type TimeChoice = "current" | "manual" | "unknown";
@@ -1523,26 +1715,99 @@ export function PostEditor({
   const [place, setPlace] = useState<Place | undefined>(post?.place);
   const [recordPlace, setRecordPlace] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialMessage);
+  const [draftReady, setDraftReady] = useState(Boolean(post));
   useEffect(() => {
-    setBody(post?.body ?? "");
-    setMode(post?.timeMode ?? "known");
-    setTimeChoice(
-      post ? (post.timeMode === "known" ? "manual" : "unknown") : "current",
+    let active = true;
+    if (post) {
+      setBody(post.body);
+      setMode(post.timeMode);
+      setTimeChoice(post.timeMode === "known" ? "manual" : "unknown");
+      setDateTime(post.occurredLocalDateTime ?? localDateTime());
+      setManualDate(
+        post.manualLogicalDate ?? todayLogicalDate(settings.dayBoundaryTime),
+      );
+      setSelected(post.plushIds);
+      setImages(post.images);
+      setPlace(post.place);
+      setRecordPlace(true);
+      setError("");
+      setDraftReady(true);
+      return () => {
+        active = false;
+      };
+    }
+    setDraftReady(false);
+    void db.postDrafts
+      .get("new")
+      .catch(() => undefined)
+      .then((draft) => {
+      if (!active) return;
+      const selectedPlushes = draft?.plushIds ?? [];
+      setBody(draft?.body ?? "");
+      setTimeChoice(draft?.timeChoice ?? "current");
+      setMode(draft?.timeChoice === "unknown" ? "unknown" : "known");
+      setDateTime(draft?.dateTime ?? localDateTime());
+      setManualDate(
+        draft?.manualDate ?? todayLogicalDate(settings.dayBoundaryTime),
+      );
+      setSelected(
+        initialPlushId && !selectedPlushes.includes(initialPlushId)
+          ? [...selectedPlushes, initialPlushId]
+          : selectedPlushes,
+      );
+      setImages(draft?.images ?? []);
+      setPlace(draft?.place);
+      setRecordPlace(draft?.recordPlace ?? true);
+      setError(initialMessage);
+      setDraftReady(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [initialMessage, initialPlushId, post, settings.dayBoundaryTime]);
+  useEffect(() => {
+    if (!initialPlushId || post || !draftReady) return;
+    setSelected((current) =>
+      current.includes(initialPlushId)
+        ? current
+        : [...current, initialPlushId],
     );
-    setDateTime(post?.occurredLocalDateTime ?? localDateTime());
-    setManualDate(
-      post?.manualLogicalDate ?? todayLogicalDate(settings.dayBoundaryTime),
-    );
-    setSelected(post?.plushIds ?? []);
-    setImages(post?.images ?? []);
-    setPlace(post?.place);
-    setRecordPlace(true);
-    setError("");
-  }, [post, settings.dayBoundaryTime]);
+    if (initialMessage) setError(initialMessage);
+  }, [draftReady, initialMessage, initialPlushId, post]);
+  useEffect(() => {
+    if (post || !draftReady) return;
+    const draft: PostDraft = {
+      id: "new",
+      body,
+      plushIds: selected,
+      images,
+      timeChoice,
+      dateTime,
+      manualDate,
+      place,
+      recordPlace,
+      updatedAt: new Date().toISOString(),
+    };
+    void db.postDrafts.put(draft).catch(() => {
+      // 下書き保存の失敗は投稿操作を妨げず、明示保存時のエラー処理へ委ねる。
+    });
+  }, [
+    body,
+    dateTime,
+    draftReady,
+    images,
+    manualDate,
+    place,
+    post,
+    recordPlace,
+    selected,
+    timeChoice,
+  ]);
   useEffect(() => {
     if (
       post ||
+      !draftReady ||
       !recordPlace ||
       !navigator.geolocation ||
       !navigator.permissions
@@ -1572,7 +1837,7 @@ export function PostEditor({
     return () => {
       active = false;
     };
-  }, [post, recordPlace]);
+  }, [draftReady, post, recordPlace]);
   const valid = body.trim() || images.length || place;
   async function filesChosen(files: FileList | null) {
     if (!files) return;
@@ -1707,6 +1972,7 @@ export function PostEditor({
       );
       if (cloudEnabled && !savedToCloud) throw new Error("cloud_session_expired");
       await db.posts.put(value);
+      if (!post) await db.postDrafts.delete("new");
       onDone();
     } catch {
       setError(
@@ -1814,21 +2080,38 @@ export function PostEditor({
         </label>
         <div className="photo-upload-field">
           <span>写真（0〜4枚）</span>
-          <label
-            className="photo-file-button"
-            aria-disabled={images.length >= 4 || busy}
-          >
-            <AddAPhotoIcon aria-hidden="true" />
-            <span>写真を追加</span>
-            <input
-              className="photo-file-input"
-              type="file"
-              accept="image/*"
-              multiple
-              disabled={images.length >= 4 || busy}
-              onChange={(e) => filesChosen(e.target.files)}
-            />
-          </label>
+          <div className="photo-input-actions">
+            <label
+              className="photo-file-button"
+              aria-disabled={images.length >= 4 || busy}
+            >
+              <AddAPhotoIcon aria-hidden="true" />
+              <span>写真を追加</span>
+              <input
+                className="photo-file-input"
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={images.length >= 4 || busy}
+                onChange={(e) => filesChosen(e.target.files)}
+              />
+            </label>
+            <label
+              className="photo-file-button"
+              aria-disabled={images.length >= 4 || busy}
+            >
+              <CameraAltRoundedIcon aria-hidden="true" />
+              <span>カメラを起動</span>
+              <input
+                className="photo-file-input"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                disabled={images.length >= 4 || busy}
+                onChange={(e) => filesChosen(e.target.files)}
+              />
+            </label>
+          </div>
         </div>
         {busy ? <p role="status">画像処理または位置情報を取得中…</p> : null}
         {images.length > 1 ? (

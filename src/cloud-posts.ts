@@ -18,6 +18,7 @@ type CloudPostRow = {
 type CloudPlushRow = {
   id: string;
   name: string;
+  nfc_token: string | null;
   theme_color: string | null;
   has_icon: number;
   icon_crop_x: number | null;
@@ -101,6 +102,7 @@ export async function saveCloudPost(
       plushes: companions.map((plush) => ({
         id: plush.id,
         name: plush.name,
+        nfcToken: plush.nfcToken,
         themeColor: plush.themeColor,
         hasIcon: Boolean(plush.icon),
         iconCrop: plush.iconCrop,
@@ -229,6 +231,7 @@ export async function syncCloudPosts() {
           ...local,
           id: row.id,
           name: row.name,
+          nfcToken: row.nfc_token ?? undefined,
           icon: row.has_icon
             ? await resolveCloudPlushIcon(row.id, local?.icon)
             : undefined,

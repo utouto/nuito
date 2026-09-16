@@ -323,6 +323,34 @@ describe("投稿保存API", () => {
     expect(response.status).toBe(200);
     expect(bindings.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO plushes"));
   });
+
+  it("NFCタグ用識別子の形式が不正なぬいを拒否する", async () => {
+    const form = new FormData();
+    form.set(
+      "metadata",
+      JSON.stringify({
+        id: "plush-standalone",
+        name: "くま",
+        nfcToken: "predictable-token",
+        hasIcon: false,
+        hidden: false,
+        createdAt: "2026-09-15T10:00:00.000Z",
+        updatedAt: "2026-09-15T11:00:00.000Z",
+      }),
+    );
+
+    const response = await handlePosts(
+      new Request("http://local/api/plushes/plush-standalone", {
+        method: "PUT",
+        body: form,
+      }),
+      env() as never,
+      "user-1",
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "invalid_request" });
+  });
 });
 
 describe("データ削除API", () => {

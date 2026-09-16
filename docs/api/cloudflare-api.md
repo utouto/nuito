@@ -44,7 +44,7 @@ HttpOnly・Secure・SameSite=Lax cookieのsessionを確認または破棄しま�
 
 ### `PUT /api/plushes/:plushId`
 
-`multipart/form-data`でぬいのmetadataと任意のアイコンを受け取り、投稿との関連がないぬいもD1と非公開R2へ保存します。同じIDは所有者本人だけが更新できます。
+`multipart/form-data`でぬいのmetadataと任意のアイコンを受け取り、投稿との関連がないぬいもD1と非公開R2へ保存します。任意のNFCタグ用識別子はUUID v4形式を検証し、D1上で一意に保持します。同じIDは所有者本人だけが更新できます。
 
 ### `DELETE /api/plushes/:plushId`
 

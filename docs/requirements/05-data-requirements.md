@@ -14,6 +14,7 @@
 | DailyJournal | 論理日付ごとの一日のまとめ |
 | UserSettings | 一日の切り替え時刻等の設定 |
 | AppMetadata | データ形式版、アプリ版等 |
+| PostDraft | NFC起動や再読み込みに備えた新規投稿の端末内下書き |
 
 ## 2. Plush
 
@@ -21,6 +22,7 @@
 |---|---|---:|---|
 | id | UUID/string | Yes | 一意なID |
 | name | string | Yes | 表示名 |
+| nfcToken | UUID/string/null | No | NFCタグ用リンクに含めるランダムな識別子。D1ではNULLを除き一意 |
 | iconImageId | string/null | No | アイコン画像 |
 | iconCropX | number | No | 円形表示の横位置。0〜100、初期値50 |
 | iconCropY | number | No | 円形表示の縦位置。0〜100、初期値50 |
@@ -38,6 +40,8 @@
 - テーマカラーがない既存データは透明として表示する。
 - 非表示にしても、過去のPostPlushを削除しない。
 - ぬいぐるみを明示的に削除する場合はPostを保持し、対象のPostPlushを削除する。
+- NFCタグ用識別子はぬい情報を取得する認可情報として扱わず、本人の端末内または認証済み同期データとの照合だけに使用する。
+- NFCタグ用リンクの再発行では識別子を差し替え、以前の識別子を保持しない。
 - 完全削除を行う場合の過去表示は未決事項とする。
 
 ## 3. Post
@@ -167,6 +171,24 @@ effectiveLogicalDate(post, settings):
 | imageMaxLongEdge | integer | 2048（暫定） | 保存画像の長辺上限 |
 | imageQuality | number | TBD | 圧縮画質 |
 | schemaVersion | integer/string | 実装値 | データ形式版 |
+
+## 9.1 PostDraft
+
+| 項目 | 型の例 | 必須 | 説明 |
+|---|---|---:|---|
+| id | string | Yes | 新規投稿下書きでは`new`固定 |
+| body | string | Yes | 入力中の本文 |
+| plushIds | string[] | Yes | 入力中のぬい選択 |
+| images | PostImage[] | Yes | 入力中の画像Blobと表示順 |
+| timeChoice | enum | Yes | 現在時刻、手動時刻、時刻なし |
+| dateTime | local datetime | Yes | 入力中の行動日時 |
+| manualDate | local date | Yes | 入力中の論理日付 |
+| place | Location/null | No | 入力中の場所 |
+| recordPlace | boolean | Yes | 場所を記録するか |
+| updatedAt | datetime | Yes | 下書き更新日時 |
+
+- PostDraftはIndexedDBだけへ保存し、クラウド同期しない。
+- 投稿の保存完了時に対応する新規投稿下書きを削除する。
 
 ## 10. 投稿一覧のソート
 

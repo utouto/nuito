@@ -13,6 +13,7 @@
 - `src/domain.ts`: 論理日付、投稿順、日記案内時刻の純粋なドメイン規則。
 - `src/db.ts`: DexieによるIndexedDB schemaとtransaction境界。
 - `src/image.ts`: Canvasによる画像の向き補正、リサイズ、WebP圧縮、サムネイル生成。
+- `src/nfc.ts`: NFCタグ用HTTPSリンクの生成・検証と、対応ブラウザーでのWeb NFC書き込み境界。
 - `src/App.tsx`: 画面と利用者操作。domainとDBを利用し、背景地図には日記本文やぬい情報を渡さない。
 - Vite modeと `.env.local`、`.env.staging`、`.env.production` で配置環境を切り替える。
 
@@ -23,6 +24,7 @@
 - IndexedDBは全データの端末保存とキャッシュを担う。LINEログイン中の構造化データはD1、画像は非公開R2にも保存する。
 - WorkerがOAuth callback、招待制登録、session、記録データAPIの所有者認可を担う。地図タイル提供者へ投稿データは送信しない。
 - 文字数、画像形式・枚数、空投稿をUIと保存前で検証する。
+- NFCタグ用識別子は公開データを取得するtokenにせず、本人の端末内または認証済みで同期したぬいとの照合にだけ使用する。
 
 ## 品質上の制約
 

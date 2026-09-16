@@ -13,12 +13,25 @@ export interface Settings {
 export interface Plush {
   id: string;
   name: string;
+  nfcToken?: string;
   icon?: Blob;
   iconCrop?: PlushIconCrop;
   themeColor?: string;
   createdAt: string;
   updatedAt: string;
   hidden: boolean;
+}
+export interface PostDraft {
+  id: "new";
+  body: string;
+  plushIds: string[];
+  images: PostImage[];
+  timeChoice: "current" | "manual" | "unknown";
+  dateTime: string;
+  manualDate: string;
+  place?: Place;
+  recordPlace: boolean;
+  updatedAt: string;
 }
 export interface PlushIconCrop {
   x: number;

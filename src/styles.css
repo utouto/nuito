@@ -1084,6 +1084,11 @@ h2 {
   display: block;
   margin-bottom: 6px;
 }
+.photo-input-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .photo-file-button {
   display: inline-flex;
   min-height: 44px;
@@ -1112,6 +1117,30 @@ h2 {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+.nfc-settings > p {
+  margin: 0 0 10px;
+  color: #71645b;
+}
+.nfc-settings > label {
+  margin-bottom: 10px;
+}
+.nfc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.nfc-settings button,
+.nfc-actions button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.nfc-settings button svg {
+  font-size: 20px;
 }
 .editable button {
   position: absolute;

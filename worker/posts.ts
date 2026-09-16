@@ -20,6 +20,7 @@ type ImageInput = {
 type PlushInput = {
   id: string;
   name: string;
+  nfcToken?: string;
   themeColor?: string;
   hasIcon: boolean;
   iconCrop?: { x: number; y: number; zoom: number };
@@ -53,6 +54,7 @@ const MAX_FULL_BYTES = 12 * 1024 * 1024;
 const MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024;
 const MAX_PLUSH_ICON_BYTES = 5 * 1024 * 1024;
 const THEME_COLOR = /^(transparent|#[0-9A-Fa-f]{6})$/;
+const NFC_TOKEN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const response = (body: unknown, status = 200) =>
   Response.json(body, {
@@ -128,6 +130,7 @@ function validPost(value: unknown): value is PostInput {
         typeof plush.name !== "string" ||
         plush.name.length < 1 ||
         plush.name.length > 60 ||
+        (plush.nfcToken !== undefined && !NFC_TOKEN.test(plush.nfcToken)) ||
         (plush.themeColor !== undefined &&
           !THEME_COLOR.test(plush.themeColor)) ||
         typeof plush.hidden !== "boolean" ||
@@ -376,14 +379,15 @@ async function savePost(
     input.plushes.forEach((plush, index) => {
       statements.push(
         env.DB.prepare(
-          `INSERT INTO plushes(id,user_id,name,icon_object_key,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at)
-           VALUES(?,?,?,?,?,?,?,?,?,?,?)
-           ON CONFLICT(id) DO UPDATE SET name=excluded.name,icon_object_key=excluded.icon_object_key,theme_color=excluded.theme_color,icon_crop_x=excluded.icon_crop_x,icon_crop_y=excluded.icon_crop_y,icon_crop_zoom=excluded.icon_crop_zoom,hidden=excluded.hidden,updated_at=excluded.updated_at
+          `INSERT INTO plushes(id,user_id,name,nfc_token,icon_object_key,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at)
+           VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
+           ON CONFLICT(id) DO UPDATE SET name=excluded.name,nfc_token=excluded.nfc_token,icon_object_key=excluded.icon_object_key,theme_color=excluded.theme_color,icon_crop_x=excluded.icon_crop_x,icon_crop_y=excluded.icon_crop_y,icon_crop_zoom=excluded.icon_crop_zoom,hidden=excluded.hidden,updated_at=excluded.updated_at
            WHERE plushes.user_id=excluded.user_id`,
         ).bind(
           plush.id,
           userId,
           plush.name,
+          plush.nfcToken ?? null,
           plush.hasIcon
             ? plushIconKey(userId, plush.id, plush.updatedAt)
             : null,
@@ -469,7 +473,7 @@ async function listPosts(env: PostsEnv, userId: string) {
       .bind(userId)
       .all<Record<string, unknown>>(),
     env.DB.prepare(
-      "SELECT id,name,icon_object_key IS NOT NULL AS has_icon,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at FROM plushes WHERE user_id=?",
+      "SELECT id,name,nfc_token,icon_object_key IS NOT NULL AS has_icon,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at FROM plushes WHERE user_id=?",
     )
       .bind(userId)
       .all<Record<string, unknown>>(),
@@ -610,6 +614,7 @@ async function savePlush(
     typeof plush.name !== "string" ||
     plush.name.length < 1 ||
     plush.name.length > 60 ||
+    (plush.nfcToken !== undefined && !NFC_TOKEN.test(plush.nfcToken)) ||
     typeof plush.hasIcon !== "boolean" ||
     typeof plush.hidden !== "boolean" ||
     (plush.themeColor !== undefined && !THEME_COLOR.test(plush.themeColor)) ||
@@ -648,10 +653,10 @@ async function savePlush(
         httpMetadata: { contentType: icon.type },
       });
     await env.DB.prepare(
-      `INSERT INTO plushes(id,user_id,name,icon_object_key,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at)
-       VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,icon_object_key=excluded.icon_object_key,theme_color=excluded.theme_color,icon_crop_x=excluded.icon_crop_x,icon_crop_y=excluded.icon_crop_y,icon_crop_zoom=excluded.icon_crop_zoom,hidden=excluded.hidden,updated_at=excluded.updated_at WHERE plushes.user_id=excluded.user_id`,
+      `INSERT INTO plushes(id,user_id,name,nfc_token,icon_object_key,theme_color,icon_crop_x,icon_crop_y,icon_crop_zoom,hidden,created_at,updated_at)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,nfc_token=excluded.nfc_token,icon_object_key=excluded.icon_object_key,theme_color=excluded.theme_color,icon_crop_x=excluded.icon_crop_x,icon_crop_y=excluded.icon_crop_y,icon_crop_zoom=excluded.icon_crop_zoom,hidden=excluded.hidden,updated_at=excluded.updated_at WHERE plushes.user_id=excluded.user_id`,
     )
-      .bind(plush.id, userId, plush.name, key, plush.themeColor ?? null, plush.iconCrop?.x ?? null, plush.iconCrop?.y ?? null, plush.iconCrop?.zoom ?? null, plush.hidden ? 1 : 0, plush.createdAt, plush.updatedAt)
+      .bind(plush.id, userId, plush.name, plush.nfcToken ?? null, key, plush.themeColor ?? null, plush.iconCrop?.x ?? null, plush.iconCrop?.y ?? null, plush.iconCrop?.zoom ?? null, plush.hidden ? 1 : 0, plush.createdAt, plush.updatedAt)
       .run();
     if (existing?.icon_object_key && existing.icon_object_key !== key)
       await env.IMAGES.delete(existing.icon_object_key);

@@ -241,6 +241,79 @@ describe("投稿編集", () => {
     expect(view.container).not.toHaveTextContent("写真ピン");
   });
 
+  it("写真ライブラリと背面カメラから写真を追加できる", () => {
+    const view = render(<Subject />);
+    const form = within(view.container);
+    const libraryInput = form.getByLabelText("写真を追加");
+    const cameraInput = form.getByLabelText("カメラを起動");
+
+    expect(libraryInput).toHaveAttribute("accept", "image/*");
+    expect(libraryInput).toHaveAttribute("multiple");
+    expect(cameraInput).toHaveAttribute("accept", "image/*");
+    expect(cameraInput).toHaveAttribute("capture", "environment");
+    expect(cameraInput).not.toHaveAttribute("multiple");
+    expect(
+      cameraInput
+        .closest("label")
+        ?.querySelector("[data-testid='CameraAltRoundedIcon']"),
+    ).toBeInTheDocument();
+  });
+
+  it("NFC起動時は保存済み下書きを復元して対象のぬいを追加する", async () => {
+    const get = vi.spyOn(db.postDrafts, "get").mockResolvedValue({
+      id: "new",
+      body: "書きかけ",
+      plushIds: ["plush-1"],
+      images: [],
+      timeChoice: "manual",
+      dateTime: "2026-09-16T12:00",
+      manualDate: "2026-09-16",
+      recordPlace: false,
+      updatedAt: "2026-09-16T12:01:00.000Z",
+    });
+    const put = vi.spyOn(db.postDrafts, "put").mockResolvedValue("new");
+    const view = render(
+      <PostEditor
+        plushes={[
+          {
+            id: "plush-1",
+            name: "くま",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+          {
+            id: "plush-2",
+            name: "うさぎ",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
+        settings={settings}
+        initialPlushId="plush-2"
+        initialMessage="「うさぎ」を追加しました。"
+        onDone={() => undefined}
+      />,
+    );
+    const form = within(view.container);
+
+    await waitFor(() => {
+      expect(form.getByRole("textbox", { name: /ひとこと/ })).toHaveValue(
+        "書きかけ",
+      );
+      expect(form.getByRole("checkbox", { name: "くま" })).toBeChecked();
+      expect(form.getByRole("checkbox", { name: "うさぎ" })).toBeChecked();
+    });
+    expect(form.getByLabelText("行動日時")).toHaveValue(
+      "2026-09-16T12:00",
+    );
+    expect(form.getByText("「うさぎ」を追加しました。")).toBeVisible();
+    expect(put).toHaveBeenCalled();
+    get.mockRestore();
+    put.mockRestore();
+  });
+
   it("画像位置の調整を投稿保存時にそのまま保存する", async () => {
     const put = vi.spyOn(db.posts, "put").mockResolvedValue("post-1");
     const request = vi
@@ -1352,6 +1425,56 @@ describe("ぬいぐるみのテーマカラー設定", () => {
     expect(enabled.closest("label")?.nextElementSibling).toContainElement(
       color,
     );
+  });
+
+  it("保存済みのぬいへNFCタグ用リンクを発行してコピーできる", async () => {
+    const token = "123e4567-e89b-42d3-a456-426614174000";
+    const randomUUID = vi.spyOn(crypto, "randomUUID").mockReturnValue(token);
+    const request = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 401 }));
+    const put = vi.spyOn(db.plushes, "put").mockResolvedValue("plush-1");
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText },
+    });
+    const view = render(
+      <Plushes
+        plushes={[
+          {
+            id: "plush-1",
+            name: "くま",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
+      />,
+    );
+
+    const form = within(view.container);
+    const expectedLink = `${location.origin}/?nfc=${token}`;
+    fireEvent.click(form.getByRole("button", { name: /くま/ }));
+    expect(form.getByText("NFCタグ（ベータ）")).toBeVisible();
+    fireEvent.click(
+      form.getByRole("button", { name: "NFCタグ用リンクを発行" }),
+    );
+
+    await waitFor(() =>
+      expect(form.getByLabelText("NFCタグ用リンク")).toHaveValue(expectedLink),
+    );
+    fireEvent.click(form.getByRole("button", { name: "リンクをコピー" }));
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(expectedLink),
+    );
+    expect(put).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "plush-1", nfcToken: token }),
+    );
+    vi.unstubAllGlobals();
+    randomUUID.mockRestore();
+    request.mockRestore();
+    put.mockRestore();
   });
 
   it("アイコン調整を画像選択の直下に表示し、そのまま保存できる", async () => {
