@@ -82,6 +82,37 @@ curl --fail-with-body https://<STAGING_HOST>/api/health
 
 staging確認後に同じ手順で`nuito-production`と`nuito-images-production`を作り、`wrangler.production.example.jsonc`を`wrangler.production.jsonc`へコピーします。production Worker名は`app`とします。production専用のD1 ID、Workers subdomain、Secretを設定してください。stagingのD1、R2、Secretを流用しません。
 
+### 6.1 通常リリースの順序
+
+本番へ正式リリースする場合は、次の順序で進めます。
+
+1. 前回タグ以降の変更を確認し、Semantic Versioningに従って次のバージョンを決める。互換性を保つ修正はpatch、後方互換な機能追加はminor、破壊的変更はmajorを上げる。
+2. `package.json`と`package-lock.json`のバージョンを同時に更新する。
+3. lint、typecheck、test、本番buildを実行し、バージョン更新をコミットする。
+4. 現在の依頼でproductionデプロイが明示的に許可されていることを確認し、後述の事前確認と本番デプロイを実行する。
+5. health、主要ページ、LINE認証、クラウド上のぬい・投稿・画像の表示と、公開前後のD1件数を確認する。
+6. 本番確認が完了したコミットへ`v<version>`形式のannotated tagを作成する。
+7. ブランチとタグを手動でpushする。AIエージェントは`git push`を実行しない。
+
+例として`0.2.1`から互換性を保つ修正を公開する場合は、次のように`0.2.2`へ更新します。
+
+```bash
+npm version 0.2.2 --no-git-tag-version
+npm run lint
+npm run typecheck
+npm test
+npm run build
+git add package.json package-lock.json
+git commit -m "バージョンを0.2.2へ更新"
+
+# 本番デプロイと確認が完了した後に実行する
+git tag -a v0.2.2 -m "v0.2.2"
+
+# 次のpushは担当者が手動で実行する
+git push origin main
+git push origin v0.2.2
+```
+
 公開前にproduction設定のD1・R2 binding名とIDが前回リリースと一致することを確認します。D1の利用者、ぬい、投稿、画像の件数を記録し、migrationを適用する場合は事前にD1をアクセス制限された場所へexportします。exportには個人データが含まれるため、Git管理や共有ストレージへ置きません。
 
 ```bash
