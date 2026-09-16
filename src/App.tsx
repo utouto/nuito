@@ -284,6 +284,7 @@ export function DayMap({
   className,
   centerOnCurrentWhenEmpty = false,
   showCompanionIcons = false,
+  showPlaceTooltips = true,
   pickFocusRequest = 0,
   focusPostId,
   focusRequest = 0,
@@ -299,6 +300,7 @@ export function DayMap({
   className?: string;
   centerOnCurrentWhenEmpty?: boolean;
   showCompanionIcons?: boolean;
+  showPlaceTooltips?: boolean;
   pickFocusRequest?: number;
   focusPostId?: string;
   focusRequest?: number;
@@ -464,7 +466,9 @@ export function DayMap({
           iconAnchor: cover ? [32, 72] : [14, 14],
         }),
       });
-      marker.bindTooltip(p.place!.name || "記録した場所").addTo(map);
+      if (showPlaceTooltips)
+        marker.bindTooltip(p.place!.name || "記録した場所");
+      marker.addTo(map);
       layers.push(marker);
       if (onPostSelectRef.current)
         marker.on("click", () => {
@@ -531,6 +535,7 @@ export function DayMap({
     pickLayerVersion,
     editable,
     showCompanionIcons,
+    showPlaceTooltips,
     pickFocusRequest,
   ]);
   useEffect(() => {
@@ -1176,6 +1181,7 @@ export function Today({
         plushes={plushes}
         className="today-map"
         showCompanionIcons={settings.showMapCompanionIcons !== false}
+        showPlaceTooltips={false}
         centerOnCurrentWhenEmpty
         focusPostId={focusedPostId}
         focusRequest={focusRequest}

@@ -10,6 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  DayMap,
   JournalView,
   History,
   Plushes,
@@ -35,6 +36,7 @@ const {
   mapGetCenter,
   mapGetZoom,
   markerOn,
+  markerBindTooltip,
   leafletPolyline,
   mapOn,
   mapPanBy,
@@ -54,6 +56,7 @@ const {
   mapGetCenter: vi.fn(() => ({ lat: 35.6812, lng: 139.7671 })),
   mapGetZoom: vi.fn(() => 11),
   markerOn: vi.fn(),
+  markerBindTooltip: vi.fn(),
   leafletPolyline: vi.fn(),
 }));
 
@@ -105,7 +108,8 @@ vi.mock("leaflet", () => ({
           markerOn(...args);
           return this;
         },
-        bindTooltip() {
+        bindTooltip(...args: unknown[]) {
+          markerBindTooltip(...args);
           return this;
         },
         getLatLng() {
@@ -670,6 +674,31 @@ describe("きょうの投稿ドロワー", () => {
 });
 
 describe("日別地図の投稿ピン", () => {
+  it("きょう画面ではピンに場所名のツールチップを付けない", () => {
+    markerBindTooltip.mockClear();
+
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[]}
+        settings={settings}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+
+    expect(markerBindTooltip).not.toHaveBeenCalled();
+  });
+
+  it("きょう画面以外の日別地図では場所名のツールチップを維持する", () => {
+    markerBindTooltip.mockClear();
+
+    render(<DayMap posts={[post]} />);
+
+    expect(markerBindTooltip).toHaveBeenCalledWith("東京駅");
+  });
+
   it("後から選択した投稿ピンを最前面に切り替える", () => {
     markerSetZIndexOffset.mockClear();
     const second = {
