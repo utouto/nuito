@@ -349,7 +349,14 @@ export function DayMap({
         });
     });
     if (pick) {
+      const selectionIcon = L.divIcon({
+        className: "place-selection-marker",
+        html: "<span><i></i></span>",
+        iconSize: [36, 44],
+        iconAnchor: [18, 44],
+      });
       const pin = L.marker([pick.latitude, pick.longitude], {
+        icon: selectionIcon,
         draggable: Boolean(onPick),
         title: onPick ? "選択中の場所。ドラッグして移動" : "選択中の場所",
         alt: "選択中の場所",

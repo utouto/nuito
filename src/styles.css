@@ -230,6 +230,28 @@ h2 {
 .map-location-button .MuiSvgIcon-root {
   font-size: 22px;
 }
+.place-selection-marker {
+  border: 0;
+  background: transparent;
+  filter: drop-shadow(0 3px 4px #3e332c70);
+}
+.place-selection-marker span {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 36px;
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 0;
+  background: #9d4d2c;
+  transform: rotate(-45deg);
+}
+.place-selection-marker i {
+  position: absolute;
+  inset: 9px;
+  display: block;
+  border-radius: 50%;
+  background: #fffaf4;
+}
 .post-map-marker {
   border: 0;
   background: transparent;

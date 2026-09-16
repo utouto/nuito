@@ -1221,9 +1221,18 @@ describe("投稿の場所選択", () => {
 
     expect(getCurrentPosition).toHaveBeenCalledOnce();
     expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 13);
+    expect(leafletDivIcon).toHaveBeenCalledWith({
+      className: "place-selection-marker",
+      html: "<span><i></i></span>",
+      iconSize: [36, 44],
+      iconAnchor: [18, 44],
+    });
     expect(leafletMarker).toHaveBeenLastCalledWith(
       [35.6812, 139.7671],
-      expect.objectContaining({ draggable: true }),
+      expect.objectContaining({
+        draggable: true,
+        icon: expect.objectContaining({ className: "place-selection-marker" }),
+      }),
     );
     expect(form.getByRole("textbox", { name: "場所" })).toHaveValue(
       "ここで遊んだよ",
