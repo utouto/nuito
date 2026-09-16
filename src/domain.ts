@@ -3,6 +3,7 @@ export const DEFAULT_SETTINGS = {
   id: "settings" as const,
   dayBoundaryTime: "00:00",
   journalPromptTime: "21:00",
+  showMapCompanionIcons: true,
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   imageMaxLongEdge: 2048,
   imageQuality: 0.82,

@@ -167,6 +167,7 @@ effectiveLogicalDate(post, settings):
 |---|---|---|---|
 | dayBoundaryTime | local time | 00:00 | 一日の切り替え時刻 |
 | journalPromptTime | local time | 21:00 | 日記案内時刻 |
+| showMapCompanionIcons | boolean | true | 「きょう」の写真ピンに同行したぬいのアイコンを表示するか |
 | timezone | string | 端末値 | タイムゾーン識別子。扱いは一部未決 |
 | imageMaxLongEdge | integer | 2048（暫定） | 保存画像の長辺上限 |
 | imageQuality | number | TBD | 圧縮画質 |

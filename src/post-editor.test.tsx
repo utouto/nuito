@@ -125,6 +125,7 @@ const settings: Settings = {
   id: "settings",
   dayBoundaryTime: "00:00",
   journalPromptTime: "21:00",
+  showMapCompanionIcons: true,
   timezone: "Asia/Tokyo",
   imageMaxLongEdge: 2048,
   imageQuality: 0.82,
@@ -807,6 +808,33 @@ describe("日別地図の投稿ピン", () => {
     );
   });
 
+  it("設定で写真ピンのぬいアイコンを非表示にできる", () => {
+    leafletDivIcon.mockClear();
+    render(
+      <Today
+        date="2026-09-14"
+        posts={[post]}
+        plushes={[
+          {
+            id: "plush-1",
+            name: "くま",
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
+        settings={{ ...settings, showMapCompanionIcons: false }}
+        onNew={() => undefined}
+        onJournal={() => undefined}
+      />,
+    );
+
+    const photoPin = leafletDivIcon.mock.calls
+      .map(([options]) => options)
+      .find((options) => options.className === "post-map-marker photo-post-map-marker");
+    expect(photoPin?.html).not.toContain("map-companion-icons");
+  });
+
   it("写真ピンの調整済み画像は保存した位置と拡大率を従来どおり適用する", () => {
     expect(
       photoPinImageStyle(
@@ -1090,6 +1118,36 @@ describe("設定画面の保存状態", () => {
     );
 
     expect(screen.getByText(message, { exact: false })).toBeVisible();
+  });
+
+  it("写真ピンのぬい表示を切り替えて保存できる", async () => {
+    const request = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 401 }));
+    const put = vi.spyOn(db.settings, "put").mockResolvedValue("settings");
+    const view = render(
+      <SettingsView
+        settings={settings}
+        cloudSaveStatus="local"
+        onLegal={() => undefined}
+      />,
+    );
+
+    const form = within(view.container);
+    const toggle = form.getByRole("checkbox", {
+      name: "写真ピンに一緒にいたぬいを表示する",
+    });
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
+    fireEvent.click(form.getByRole("button", { name: "設定を保存" }));
+
+    await waitFor(() =>
+      expect(put).toHaveBeenCalledWith(
+        expect.objectContaining({ showMapCompanionIcons: false }),
+      ),
+    );
+    request.mockRestore();
+    put.mockRestore();
   });
 });
 

@@ -3,6 +3,7 @@ export interface Settings {
   id: "settings";
   dayBoundaryTime: string;
   journalPromptTime: string;
+  showMapCompanionIcons?: boolean;
   timezone: string;
   imageMaxLongEdge: number;
   imageQuality: number;

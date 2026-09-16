@@ -280,6 +280,7 @@ export function DayMap({
   control,
   className,
   centerOnCurrentWhenEmpty = false,
+  showCompanionIcons = false,
   focusPostId,
   focusRequest = 0,
   occludedById,
@@ -293,6 +294,7 @@ export function DayMap({
   control?: ReactNode;
   className?: string;
   centerOnCurrentWhenEmpty?: boolean;
+  showCompanionIcons?: boolean;
   focusPostId?: string;
   focusRequest?: number;
   occludedById?: string;
@@ -368,7 +370,7 @@ export function DayMap({
       const photoStyle = cover ? photoPinImageStyle(cover, crop) : "";
       const photoUrl = cover ? URL.createObjectURL(cover.thumbnail) : undefined;
       if (photoUrl) objectUrls.push(photoUrl);
-      const companionHtml = cover
+      const companionHtml = cover && showCompanionIcons
         ? mapCompanionHtml(p, plushes, objectUrls)
         : "";
       const marker = L.marker([p.place!.latitude, p.place!.longitude], {
@@ -435,7 +437,15 @@ export function DayMap({
       if (mapInstance.current === map) mapInstance.current = undefined;
       map.remove();
     };
-  }, [posts, plushes, pick, onPick, className, centerOnCurrentWhenEmpty]);
+  }, [
+    posts,
+    plushes,
+    pick,
+    onPick,
+    className,
+    centerOnCurrentWhenEmpty,
+    showCompanionIcons,
+  ]);
   useEffect(() => {
     if (!focusPostId || !mapInstance.current) return;
     const focused = posts.find((post) => post.id === focusPostId && post.place);
@@ -1078,6 +1088,7 @@ export function Today({
         posts={posts}
         plushes={plushes}
         className="today-map"
+        showCompanionIcons={settings.showMapCompanionIcons !== false}
         centerOnCurrentWhenEmpty
         focusPostId={focusedPostId}
         focusRequest={focusRequest}
@@ -1630,6 +1641,9 @@ export function SettingsView({
   const cloudEnabled = cloudSaveStatus === "cloud";
   const [boundary, setBoundary] = useState(settings.dayBoundaryTime);
   const [prompt, setPrompt] = useState(settings.journalPromptTime);
+  const [showMapCompanionIcons, setShowMapCompanionIcons] = useState(
+    settings.showMapCompanionIcons !== false,
+  );
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   async function save() {
@@ -1644,6 +1658,7 @@ export function SettingsView({
       ...settings,
       dayBoundaryTime: boundary,
       journalPromptTime: prompt,
+      showMapCompanionIcons,
       updatedAt: new Date().toISOString(),
     };
     setError("");
@@ -1710,6 +1725,17 @@ export function SettingsView({
           />
         </label>
         <small>案内時刻は締切ではありません。通知は送信しません。</small>
+        <h2>地図表示</h2>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={showMapCompanionIcons}
+            onChange={(event) =>
+              setShowMapCompanionIcons(event.target.checked)
+            }
+          />
+          写真ピンに一緒にいたぬいを表示する
+        </label>
         <button className="primary" onClick={save}>
           設定を保存
         </button>

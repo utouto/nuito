@@ -14,7 +14,7 @@ async function readJson(request: Request) { try { return (await request.json()) 
 
 async function listProfileData(env: ProfileDataEnv, userId: string) {
   const [settings, journals] = await Promise.all([
-    env.DB.prepare("SELECT day_boundary_time,journal_prompt_time,timezone,schema_version,updated_at FROM user_settings WHERE user_id=?").bind(userId).first<Record<string, unknown>>(),
+    env.DB.prepare("SELECT day_boundary_time,journal_prompt_time,show_map_companion_icons,timezone,schema_version,updated_at FROM user_settings WHERE user_id=?").bind(userId).first<Record<string, unknown>>(),
     env.DB.prepare("SELECT logical_date,body,last_post_change_at_at_save,created_at,updated_at FROM daily_journals WHERE user_id=? ORDER BY logical_date").bind(userId).all<Record<string, unknown>>(),
   ]);
   return response({ settings: settings ?? null, journals: journals.results });
@@ -22,8 +22,8 @@ async function listProfileData(env: ProfileDataEnv, userId: string) {
 
 async function saveSettings(request: Request, env: ProfileDataEnv, userId: string) {
   const value = await readJson(request);
-  if (!value || typeof value.dayBoundaryTime !== "string" || !TIME.test(value.dayBoundaryTime) || typeof value.journalPromptTime !== "string" || !TIME.test(value.journalPromptTime) || typeof value.timezone !== "string" || value.timezone.length < 1 || value.timezone.length > 100 || !Number.isInteger(value.schemaVersion) || Number(value.schemaVersion) < 1 || Number(value.schemaVersion) > 100 || !timestamp(value.updatedAt)) return response({ error: "invalid_request" }, 400);
-  await env.DB.prepare(`INSERT INTO user_settings(user_id,day_boundary_time,journal_prompt_time,timezone,schema_version,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET day_boundary_time=excluded.day_boundary_time,journal_prompt_time=excluded.journal_prompt_time,timezone=excluded.timezone,schema_version=excluded.schema_version,updated_at=excluded.updated_at`).bind(userId, value.dayBoundaryTime, value.journalPromptTime, value.timezone, value.schemaVersion, value.updatedAt).run();
+  if (!value || typeof value.dayBoundaryTime !== "string" || !TIME.test(value.dayBoundaryTime) || typeof value.journalPromptTime !== "string" || !TIME.test(value.journalPromptTime) || (value.showMapCompanionIcons !== undefined && typeof value.showMapCompanionIcons !== "boolean") || typeof value.timezone !== "string" || value.timezone.length < 1 || value.timezone.length > 100 || !Number.isInteger(value.schemaVersion) || Number(value.schemaVersion) < 1 || Number(value.schemaVersion) > 100 || !timestamp(value.updatedAt)) return response({ error: "invalid_request" }, 400);
+  await env.DB.prepare(`INSERT INTO user_settings(user_id,day_boundary_time,journal_prompt_time,show_map_companion_icons,timezone,schema_version,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET day_boundary_time=excluded.day_boundary_time,journal_prompt_time=excluded.journal_prompt_time,show_map_companion_icons=excluded.show_map_companion_icons,timezone=excluded.timezone,schema_version=excluded.schema_version,updated_at=excluded.updated_at`).bind(userId, value.dayBoundaryTime, value.journalPromptTime, value.showMapCompanionIcons === false ? 0 : 1, value.timezone, value.schemaVersion, value.updatedAt).run();
   return response({ ok: true });
 }
 

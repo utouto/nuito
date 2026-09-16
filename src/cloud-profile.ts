@@ -5,6 +5,7 @@ type ProfileResponse = {
   settings: {
     day_boundary_time: string;
     journal_prompt_time: string;
+    show_map_companion_icons: number;
     timezone: string;
     schema_version: number;
     updated_at: string;
@@ -70,6 +71,8 @@ export async function syncCloudProfile() {
       ...localSettings,
       dayBoundaryTime: cloud.settings.day_boundary_time,
       journalPromptTime: cloud.settings.journal_prompt_time,
+      showMapCompanionIcons:
+        cloud.settings.show_map_companion_icons !== 0,
       timezone: cloud.settings.timezone,
       schemaVersion: cloud.settings.schema_version,
       updatedAt: cloud.settings.updated_at,

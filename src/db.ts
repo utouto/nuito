@@ -26,7 +26,14 @@ class NuitoDatabase extends Dexie {
 }
 export const db = new NuitoDatabase();
 export async function getSettings(): Promise<Settings> {
-  return (await db.settings.get("settings")) ?? DEFAULT_SETTINGS;
+  const stored = await db.settings.get("settings");
+  return stored
+    ? {
+        ...DEFAULT_SETTINGS,
+        ...stored,
+        showMapCompanionIcons: stored.showMapCompanionIcons !== false,
+      }
+    : DEFAULT_SETTINGS;
 }
 export async function initialize() {
   if (!(await db.settings.get("settings")))

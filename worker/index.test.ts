@@ -418,10 +418,15 @@ describe("データ削除API", () => {
 describe("プロフィールデータAPI", () => {
   it("設定と日記を所有者ID付きで保存する", async () => {
     const bindings = env();
-    const settings = await handleProfileData(new Request("http://local/api/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ dayBoundaryTime: "04:00", journalPromptTime: "21:00", timezone: "Asia/Tokyo", schemaVersion: 1, updatedAt: "2026-09-15T10:00:00.000Z" }) }), bindings as never, "user-1");
+    const settings = await handleProfileData(new Request("http://local/api/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ dayBoundaryTime: "04:00", journalPromptTime: "21:00", showMapCompanionIcons: false, timezone: "Asia/Tokyo", schemaVersion: 1, updatedAt: "2026-09-15T10:00:00.000Z" }) }), bindings as never, "user-1");
     const journal = await handleProfileData(new Request("http://local/api/journals/2026-09-15", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ logicalDate: "2026-09-15", body: "日記", createdAt: "2026-09-15T10:00:00.000Z", updatedAt: "2026-09-15T11:00:00.000Z" }) }), bindings as never, "user-1");
     expect(settings.status).toBe(200);
     expect(journal.status).toBe(200);
+  });
+
+  it("ぬいアイコン表示設定の不正な型を拒否する", async () => {
+    const response = await handleProfileData(new Request("http://local/api/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ dayBoundaryTime: "04:00", journalPromptTime: "21:00", showMapCompanionIcons: "false", timezone: "Asia/Tokyo", schemaVersion: 1, updatedAt: "2026-09-15T10:00:00.000Z" }) }), env() as never, "user-1");
+    expect(response.status).toBe(400);
   });
 
   it("1001文字の日記を拒否する", async () => {

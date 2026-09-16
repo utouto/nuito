@@ -1010,6 +1010,17 @@ h2 {
   gap: 7px;
   font-weight: 700;
 }
+.form-card .checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.form-card .checkbox-row input {
+  width: auto;
+  min-width: 20px;
+  height: 20px;
+  margin: 0;
+}
 .form-card input,
 .form-card textarea {
   width: 100%;

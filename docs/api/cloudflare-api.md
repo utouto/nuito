@@ -60,7 +60,7 @@ HttpOnly・Secure・SameSite=Lax cookieのsessionを確認または破棄しま�
 
 ### `PUT /api/settings`
 
-一日の切り替え時刻、日記案内時刻、timezone、schema version、更新日時を検証して所有者の設定として保存します。
+一日の切り替え時刻、日記案内時刻、写真ピン上の同行ぬいアイコン表示、timezone、schema version、更新日時を検証して所有者の設定として保存します。同行ぬいアイコン表示を送信しない旧クライアントは、表示する設定として扱います。
 
 ### `PUT /api/journals/:logicalDate`
 
