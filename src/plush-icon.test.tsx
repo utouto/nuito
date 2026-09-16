@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
@@ -97,6 +97,9 @@ describe("ぬいぐるみアイコン調整", () => {
     expect(screen.getByText("プレビュー").parentElement).toHaveClass(
       "icon-preview-details",
     );
+    expect(
+      screen.queryByText("一覧では右の小さいサイズで表示されます"),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/ドラッグして位置/)).toBeInTheDocument();
     expect(screen.getByText("ドラッグ・ピンチで調整")).toHaveClass(
       "icon-gesture-hint",
@@ -105,6 +108,25 @@ describe("ぬいぐるみアイコン調整", () => {
       target: { value: "75" },
     });
     expect(onChange).toHaveBeenCalledWith({ x: 75, y: 50, zoom: 1 });
+  });
+
+  it("確定ボタンを表示せずに調整できる", () => {
+    const view = render(
+      <PlushIconEditor
+        blob={new Blob(["image"], { type: "image/webp" })}
+        crop={DEFAULT_PLUSH_ICON_CROP}
+        onChange={() => undefined}
+        onApply={() => undefined}
+        onCancel={() => undefined}
+        hideApply
+      />,
+    );
+    const editor = within(view.container);
+
+    expect(
+      editor.queryByRole("button", { name: "この位置にする" }),
+    ).not.toBeInTheDocument();
+    expect(editor.getByRole("button", { name: "キャンセル" })).toBeVisible();
   });
 
   it("操作面での縦ドラッグを位置変更として通知する", () => {

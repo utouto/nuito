@@ -212,7 +212,7 @@ h2 {
   display: block;
   width: 100%;
   height: 100%;
-  border: 2px solid white;
+  border: 3px solid white;
   border-radius: 50%;
 }
 .post-map-marker.selected > span {
@@ -455,9 +455,14 @@ h2 {
   background: #eee6db;
   color: #665950;
 }
+.journal-lower {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
 .journal-scroll {
   min-height: 0;
-  padding: 18px 0 24px;
+  padding: 8px 0 24px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -478,18 +483,18 @@ h2 {
 .journal-posts-heading {
   display: grid;
   gap: 5px;
-  padding: 0 4px 4px;
+  padding: 9px 22px 4px;
 }
 .journal-posts-heading h1 {
   margin: 0;
-  font-size: clamp(20px, 6vw, 26px);
+  font-size: clamp(18px, 5.5vw, 23px);
 }
 .journal-companions {
   display: flex;
   align-items: center;
   gap: 8px;
   color: #9a5438;
-  font-size: 14px;
+  font-size: 13px;
 }
 .plush-icon.journal-companion-icon,
 .journal-companion-icon.fallback-icon {
@@ -507,7 +512,7 @@ h2 {
   font-weight: 700;
 }
 .journal-compose h2 {
-  margin: -12px 0 0;
+  margin: -6px 0 0;
 }
 .journal-compose-heading {
   display: flex;
@@ -516,7 +521,7 @@ h2 {
   gap: 12px;
 }
 .journal-compose-heading h2 {
-  margin: -12px 0 0;
+  margin: -6px 0 0;
 }
 .journal-compose-heading button {
   display: inline-flex;
@@ -890,9 +895,18 @@ h2 {
   width: 72px;
   height: 72px;
 }
-.theme-color-field {
+.form-card .theme-color-field {
   display: grid;
   gap: 10px;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+.form-card .theme-color-field legend {
+  margin-bottom: 10px;
+  padding: 0;
 }
 .theme-color-field label:not(.check) {
   display: flex;
@@ -938,6 +952,9 @@ h2 {
   display: grid;
   gap: 9px;
 }
+.form-card legend {
+  font-weight: 700;
+}
 .form-card .check {
   display: flex;
   align-items: center;
@@ -946,6 +963,28 @@ h2 {
 }
 .form-card .check input {
   width: auto;
+}
+.place-editor {
+  display: grid;
+  gap: 9px;
+  padding-left: 28px;
+}
+.time-choice-detail,
+.place-choice-detail {
+  margin-left: 28px;
+}
+.form-card input.time-choice-detail {
+  width: calc(100% - 28px);
+}
+.place-editor > p {
+  margin: 0;
+}
+.place-editor > .map-wrap {
+  margin: 0;
+}
+.form-card .place-editor > label,
+.form-card .place-editor > label input {
+  font-weight: 400;
 }
 .plush-choices {
   display: grid;

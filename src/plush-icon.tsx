@@ -64,6 +64,7 @@ export function PlushIconEditor({
   subject = "アイコン",
   applyLabel = "この位置にする",
   hideCancel = false,
+  hideApply = false,
 }: {
   blob: Blob;
   crop: PlushIconCrop;
@@ -74,6 +75,7 @@ export function PlushIconEditor({
   subject?: string;
   applyLabel?: string;
   hideCancel?: boolean;
+  hideApply?: boolean;
 }) {
   type Point = { x: number; y: number };
   type Gesture = {
@@ -177,7 +179,6 @@ export function PlushIconEditor({
         </div>
         <div className="icon-preview-details">
           <strong>プレビュー</strong>
-          <small>一覧では右の小さいサイズで表示されます</small>
           <PlushIcon
             blob={blob}
             crop={crop}
@@ -224,9 +225,11 @@ export function PlushIconEditor({
             キャンセル
           </button>
         )}
-        <button type="button" className="primary" onClick={onApply}>
-          {applyLabel}
-        </button>
+        {hideApply ? null : (
+          <button type="button" className="primary" onClick={onApply}>
+            {applyLabel}
+          </button>
+        )}
       </div>
     </fieldset>
   );

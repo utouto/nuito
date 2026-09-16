@@ -186,12 +186,30 @@ describe("投稿編集", () => {
     ).toHaveTextContent("いっしょにいたぬい");
     expect(form.getByRole("radio", { name: "現在時刻" })).toBeChecked();
     expect(form.queryByLabelText("行動日時")).not.toBeInTheDocument();
+    expect(
+      form.getByRole("radio", { name: "現在時刻" }).closest("label")
+        ?.nextElementSibling,
+    ).toHaveTextContent("保存時の現在日時を記録します。");
 
-    fireEvent.click(form.getByRole("radio", { name: "時刻を設定する" }));
-    expect(form.getByLabelText("行動日時")).toBeVisible();
+    const manualChoice = form.getByRole("radio", {
+      name: "時刻を手動設定する",
+    });
+    fireEvent.click(manualChoice);
+    const dateTimeInput = form.getByLabelText("行動日時");
+    expect(dateTimeInput).toBeVisible();
+    expect(manualChoice.closest("label")?.nextElementSibling).toBe(
+      dateTimeInput,
+    );
 
-    fireEvent.click(form.getByRole("radio", { name: "時刻を設定しない" }));
-    expect(form.getByLabelText("論理日付")).toBeVisible();
+    const unknownChoice = form.getByRole("radio", {
+      name: "時刻を設定しない",
+    });
+    fireEvent.click(unknownChoice);
+    const logicalDateInput = form.getByLabelText("論理日付");
+    expect(logicalDateInput).toBeVisible();
+    expect(unknownChoice.closest("label")?.nextElementSibling).toBe(
+      logicalDateInput,
+    );
   });
 
   it("1枚目のピン表示画像を中央から調整できる", () => {
@@ -284,7 +302,9 @@ describe("投稿編集", () => {
     expect(form.getByRole("textbox", { name: /ひとこと/ })).toHaveValue(
       "もとのひとこと",
     );
-    expect(form.getByRole("radio", { name: "時刻を設定する" })).toBeChecked();
+    expect(
+      form.getByRole("radio", { name: "時刻を手動設定する" }),
+    ).toBeChecked();
     expect(form.getByLabelText("行動日時")).toHaveValue("2026-09-14T15:30");
     expect(form.getByRole("checkbox", { name: "くま" })).toBeChecked();
     expect(form.getByAltText("選択写真 1")).toHaveAttribute(
@@ -577,7 +597,7 @@ describe("日別地図の投稿ピン", () => {
       place: { ...post.place!, latitude: 35.72, longitude: 139.8 },
     };
 
-    render(
+    const view = render(
       <Today
         date="2026-09-14"
         posts={[third, post, second]}
@@ -597,6 +617,9 @@ describe("日別地図の投稿ピン", () => {
       139.7671 + (139.75 - 139.7671) / 16,
     ]);
     expect(options).toEqual(expect.objectContaining({ dashArray: "7 10" }));
+    expect(view.container).not.toHaveTextContent(
+      "点線は実際の移動経路ではなく、思い出の順番です。",
+    );
   });
 
   it("投稿がなく位置情報が許可済みなら現在地を中心にする", async () => {
@@ -822,6 +845,12 @@ describe("きょうの日記", () => {
       view.container.querySelector(".journal-hero .journal-map"),
     ).toBeVisible();
     expect(view.container.querySelector(".journal-hero .journal-scroll")).not.toBeInTheDocument();
+    expect(
+      view.container.querySelector(".journal-lower > .journal-posts-heading"),
+    ).toBeVisible();
+    expect(
+      view.container.querySelector(".journal-scroll .journal-posts-heading"),
+    ).not.toBeInTheDocument();
     expect(view.container.querySelector(".journal-scroll .journal-posts")).toBeVisible();
     expect(
       view.container.querySelector(".journal-heading-card"),
@@ -845,6 +874,9 @@ describe("きょうの日記", () => {
     );
     expect(view.container.querySelector(".journal-compose")).not.toHaveTextContent(
       "一日のまとめ",
+    );
+    expect(view.container).not.toHaveTextContent(
+      "日記の保存後に記録が更新されています。",
     );
     expect(
       within(view.container).queryByRole("button", { name: "戻る" }),
@@ -875,7 +907,11 @@ describe("きょうの日記", () => {
       page.queryByRole("textbox", { name: "きょうのにっき" }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(page.getByRole("button", { name: "編集" }));
+    const editButton = page.getByRole("button", {
+      name: "きょうのにっきを編集",
+    });
+    expect(editButton.textContent).toBe("");
+    fireEvent.click(editButton);
 
     expect(page.getByRole("textbox", { name: "きょうのにっき" })).toHaveValue(
       "たのしい一日でした。",
@@ -985,6 +1021,10 @@ describe("投稿の場所選択", () => {
 
     expect(form.getByRole("radio", { name: "場所を記録する" })).toBeChecked();
     expect(form.getByRole("textbox", { name: "場所" })).toHaveValue("東京駅");
+    expect(
+      form.getByRole("radio", { name: "場所を記録する" }).closest("label")
+        ?.nextElementSibling,
+    ).toHaveClass("place-editor");
 
     fireEvent.click(form.getByRole("radio", { name: "場所を記録しない" }));
 
@@ -994,6 +1034,11 @@ describe("投稿の場所選択", () => {
       ).toBeChecked(),
     );
     expect(form.queryByLabelText("場所を選択する地図")).not.toBeInTheDocument();
+    expect(
+      form.queryByText(
+        "地図をタップするか、ピンをドラッグして場所を指定できます。",
+      ),
+    ).not.toBeInTheDocument();
     expect(
       form.queryByRole("textbox", { name: "場所" }),
     ).not.toBeInTheDocument();
@@ -1258,6 +1303,27 @@ describe("ぬいぐるみのテーマカラー設定", () => {
   it("新規登録時は設定しないが選ばれ、設定する場合だけ色を選択できる", () => {
     render(<Plushes plushes={[]} />);
 
+    const iconInput = screen.getByLabelText("画像を選択");
+    expect(iconInput).toHaveClass("photo-file-input");
+    expect(
+      iconInput
+        .closest("label")
+        ?.querySelector("[data-testid='AddAPhotoIcon']"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("テーマカラー").parentElement).toHaveClass(
+      "theme-color-field",
+    );
+    const formCard = screen.getByRole("heading", {
+      name: "新しいぬいを登録",
+    }).parentElement;
+    expect(
+      Array.from(formCard?.children ?? []).slice(1, 4).map((element) =>
+        element.matches("label")
+          ? element.firstChild?.textContent?.trim()
+          : element.querySelector("legend, span")?.textContent?.trim(),
+      ),
+    ).toEqual(["名前", "テーマカラー", "アイコン画像"]);
+
     const enabled = screen.getByRole("radio", {
       name: "テーマカラーを設定する",
     });
@@ -1283,6 +1349,58 @@ describe("ぬいぐるみのテーマカラー設定", () => {
     expect(enabled.closest("label")?.nextElementSibling).toContainElement(
       color,
     );
+  });
+
+  it("アイコン調整を画像選択の直下に表示し、そのまま保存できる", async () => {
+    const icon = new Blob(["icon"], { type: "image/webp" });
+    const put = vi.spyOn(db.plushes, "put").mockResolvedValue("plush-1");
+    const request = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 401 }));
+    const view = render(
+      <Plushes
+        plushes={[
+          {
+            id: "plush-1",
+            name: "くま",
+            icon,
+            iconCrop: { x: 50, y: 50, zoom: 1 },
+            hidden: false,
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ]}
+      />,
+    );
+    const form = within(view.container);
+
+    fireEvent.click(form.getByRole("button", { name: /くま/ }));
+    fireEvent.click(form.getByRole("button", { name: "位置とサイズを調整" }));
+
+    const uploadField = view.container.querySelector(
+      ".plush-icon-upload-field",
+    );
+    expect(uploadField?.nextElementSibling).toHaveClass("icon-editor");
+    expect(
+      form.queryByRole("button", { name: "この位置にする" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(form.getByRole("slider", { name: "横の位置" }), {
+      target: { value: "75" },
+    });
+    expect(form.getByRole("button", { name: "保存" })).toBeEnabled();
+    fireEvent.click(form.getByRole("button", { name: "保存" }));
+
+    await waitFor(() =>
+      expect(put).toHaveBeenCalledWith(
+        expect.objectContaining({
+          icon,
+          iconCrop: { x: 75, y: 50, zoom: 1 },
+        }),
+      ),
+    );
+    put.mockRestore();
+    request.mockRestore();
   });
 
   it("登録済みのテーマカラーを編集画面へ反映する", () => {

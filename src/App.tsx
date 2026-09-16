@@ -404,9 +404,6 @@ export function DayMap({
           オフラインのため背景地図を表示できません。記録済み地点のみ表示します。
         </p>
       ) : null}
-      <p className="map-note">
-        点線は実際の移動経路ではなく、思い出の順番です。
-      </p>
     </div>
   );
 }
@@ -1160,11 +1157,13 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
   async function save() {
     if (!name.trim()) return;
     const now = new Date().toISOString();
+    const nextIcon = draftIcon ?? icon;
+    const nextIconCrop = draftIcon ? draftCrop : iconCrop;
     const value: Plush = {
       id: editing?.id ?? crypto.randomUUID(),
       name: name.trim(),
-      icon,
-      iconCrop: icon ? iconCrop : undefined,
+      icon: nextIcon,
+      iconCrop: nextIcon ? nextIconCrop : undefined,
       themeColor,
       hidden: editing?.hidden ?? false,
       createdAt: editing?.createdAt ?? now,
@@ -1243,19 +1242,6 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
             onChange={(e) => setName(e.target.value)}
           />
         </label>
-        <label>
-          アイコン画像
-          <input
-            type="file"
-            accept="image/*"
-            disabled={busy}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              void chooseIcon(file);
-            }}
-          />
-        </label>
         <fieldset className="theme-color-field">
           <legend>テーマカラー</legend>
           <label className="check">
@@ -1291,6 +1277,24 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
             テーマカラーを設定しない
           </label>
         </fieldset>
+        <div className="photo-upload-field plush-icon-upload-field">
+          <span>アイコン画像</span>
+          <label className="photo-file-button" aria-disabled={busy}>
+            <AddAPhotoIcon aria-hidden="true" />
+            <span>画像を選択</span>
+            <input
+              className="photo-file-input"
+              type="file"
+              accept="image/*"
+              disabled={busy}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                void chooseIcon(file);
+              }}
+            />
+          </label>
+        </div>
         {busy ? <p role="status">画像を準備しています…</p> : null}
         {error ? (
           <p className="error" role="alert">
@@ -1304,11 +1308,8 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
             onChange={setDraftCrop}
             onCancel={() => setDraftIcon(undefined)}
             themeColor={themeColor}
-            onApply={() => {
-              setIcon(draftIcon);
-              setIconCrop(draftCrop);
-              setDraftIcon(undefined);
-            }}
+            onApply={() => undefined}
+            hideApply
           />
         ) : icon ? (
           <div className="saved-icon-preview">
@@ -1352,7 +1353,7 @@ export function Plushes({ plushes, cloudEnabled = false }: { plushes: Plush[]; c
         ) : null}
         <button
           className="primary"
-          disabled={!name.trim() || busy || Boolean(draftIcon)}
+          disabled={!name.trim() || busy}
           onClick={save}
         >
           保存
@@ -1937,6 +1938,11 @@ export function PostEditor({
             />
             現在時刻
           </label>
+          {timeChoice === "current" ? (
+            <small className="time-choice-detail">
+              保存時の現在日時を記録します。
+            </small>
+          ) : null}
           <label className="check">
             <input
               type="radio"
@@ -1947,8 +1953,17 @@ export function PostEditor({
                 setMode("known");
               }}
             />
-            時刻を設定する
+            時刻を手動設定する
           </label>
+          {timeChoice === "manual" ? (
+            <input
+              className="time-choice-detail"
+              aria-label="行動日時"
+              type="datetime-local"
+              value={dateTime}
+              onChange={(e) => setDateTime(e.target.value)}
+            />
+          ) : null}
           <label className="check">
             <input
               type="radio"
@@ -1961,23 +1976,15 @@ export function PostEditor({
             />
             時刻を設定しない
           </label>
-          {timeChoice === "manual" ? (
+          {timeChoice === "unknown" ? (
             <input
-              aria-label="行動日時"
-              type="datetime-local"
-              value={dateTime}
-              onChange={(e) => setDateTime(e.target.value)}
-            />
-          ) : timeChoice === "unknown" ? (
-            <input
+              className="time-choice-detail"
               aria-label="論理日付"
               type="date"
               value={manualDate}
               onChange={(e) => setManualDate(e.target.value)}
             />
-          ) : (
-            <small>保存時の現在日時を記録します。</small>
-          )}
+          ) : null}
         </fieldset>
         <fieldset>
           <legend>場所（任意）</legend>
@@ -1990,20 +1997,8 @@ export function PostEditor({
             />
             場所を記録する
           </label>
-          <label className="check">
-            <input
-              type="radio"
-              name={placeRecordingName}
-              checked={!recordPlace}
-              onChange={() => {
-                setRecordPlace(false);
-                setPlace(undefined);
-              }}
-            />
-            場所を記録しない
-          </label>
           {recordPlace ? (
-            <>
+            <div className="place-editor">
               <p>地図をタップするか、ピンをドラッグして場所を指定できます。</p>
               <DayMap
                 posts={[]}
@@ -2032,10 +2027,25 @@ export function PostEditor({
                   />
                 </label>
               ) : null}
-            </>
-          ) : (
-            <small>このおもいでには場所を保存しません。</small>
-          )}
+            </div>
+          ) : null}
+          <label className="check">
+            <input
+              type="radio"
+              name={placeRecordingName}
+              checked={!recordPlace}
+              onChange={() => {
+                setRecordPlace(false);
+                setPlace(undefined);
+              }}
+            />
+            場所を記録しない
+          </label>
+          {!recordPlace ? (
+            <small className="place-choice-detail">
+              このおもいでには場所を保存しません。
+            </small>
+          ) : null}
         </fieldset>
         <button
           className="primary"
@@ -2093,10 +2103,6 @@ export function JournalView({
     .map((p) => p.updatedAt)
     .sort()
     .at(-1);
-  const changed =
-    journal?.lastPostChangeAtAtSave &&
-    latest &&
-    latest > journal.lastPostChangeAtAtSave;
   const journalDate = formatDate(date)
     .replace("(", "（")
     .replace(")", "）");
@@ -2132,11 +2138,7 @@ export function JournalView({
           </div>
         )}
       </div>
-      <div className="journal-scroll">
-        {changed ? (
-          <p className="notice">日記の保存後に記録が更新されています。</p>
-        ) : null}
-        <section className="stack journal-posts" aria-label="この日のおもいで">
+      <div className="journal-lower">
         <header className="journal-posts-heading">
           <h1 id="journal-heading" className="page-title">
             {journalDate}の日記
@@ -2176,6 +2178,8 @@ export function JournalView({
             </div>
           ) : null}
         </header>
+        <div className="journal-scroll">
+          <section className="stack journal-posts" aria-label="この日のおもいで">
           {posts.map((p) => (
             <PostCard
               key={p.id}
@@ -2184,48 +2188,52 @@ export function JournalView({
               onEdit={() => onEdit(p)}
             />
           ))}
-        </section>
-        <section className="form-card journal-compose">
-        <div className="journal-compose-heading">
-          <h2>きょうのにっき</h2>
-          {journal && !isEditing ? (
-            <button type="button" onClick={() => setIsEditing(true)}>
-              <EditRoundedIcon aria-hidden="true" />
-              編集
-            </button>
-          ) : null}
+          </section>
+          <section className="form-card journal-compose">
+            <div className="journal-compose-heading">
+              <h2>きょうのにっき</h2>
+              {journal && !isEditing ? (
+                <button
+                  type="button"
+                  aria-label="きょうのにっきを編集"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <EditRoundedIcon aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+            {isEditing ? (
+              <>
+                <textarea
+                  aria-label="きょうのにっき"
+                  rows={8}
+                  value={body}
+                  maxLength={1001}
+                  onChange={(e) => setBody(e.target.value)}
+                />
+                <small className={body.length > 1000 ? "over" : ""}>
+                  {body.length} / 1000文字
+                </small>
+                <button
+                  className="primary"
+                  disabled={body.length > 1000}
+                  onClick={save}
+                >
+                  日記を保存
+                </button>
+              </>
+            ) : (
+              <p className="journal-body">{body}</p>
+            )}
+            {message ? <p role="status">{message}</p> : null}
+            {error ? <p className="error" role="alert">{error}</p> : null}
+            {journal ? (
+              <small>
+                最終更新: {new Date(journal.updatedAt).toLocaleString("ja-JP")}
+              </small>
+            ) : null}
+          </section>
         </div>
-        {isEditing ? (
-          <>
-            <textarea
-              aria-label="きょうのにっき"
-              rows={8}
-              value={body}
-              maxLength={1001}
-              onChange={(e) => setBody(e.target.value)}
-            />
-            <small className={body.length > 1000 ? "over" : ""}>
-              {body.length} / 1000文字
-            </small>
-            <button
-              className="primary"
-              disabled={body.length > 1000}
-              onClick={save}
-            >
-              日記を保存
-            </button>
-          </>
-        ) : (
-          <p className="journal-body">{body}</p>
-        )}
-        {message ? <p role="status">{message}</p> : null}
-        {error ? <p className="error" role="alert">{error}</p> : null}
-        {journal ? (
-          <small>
-            最終更新: {new Date(journal.updatedAt).toLocaleString("ja-JP")}
-          </small>
-        ) : null}
-        </section>
       </div>
     </section>
   );
