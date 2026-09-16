@@ -377,7 +377,7 @@ export function DayMap({
         icon: L.divIcon({
           className: `post-map-marker${cover ? " photo-post-map-marker" : ""}`,
           html: cover
-            ? `<span>${companionHtml}<b><img src="${photoUrl}" alt="" style="${photoStyle}"></b><em><i style="background:${background}"></i></em></span>`
+            ? `<span>${companionHtml}<b><img src="${photoUrl}" alt="" style="${photoStyle}"></b><em class="photo-location-dot"><i></i></em></span>`
             : `<span><i style="background:${background}"></i></span>`,
           iconSize: cover ? [64, 72] : [28, 28],
           iconAnchor: cover ? [32, 72] : [14, 14],

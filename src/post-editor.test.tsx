@@ -791,12 +791,16 @@ describe("日別地図の投稿ピン", () => {
       expect.objectContaining({
         className: "post-map-marker photo-post-map-marker",
         html: expect.stringMatching(
-          /map-companion-icons.*border-color:#3a7bd5.*object-position:35% 60%;.*scale\(1\.4\).*border-color:#d55a87.*<strong>う<\/strong>.*<b><img src="blob:post-image".*width:133\.333.*height:100%;.*translate\(-50%,-50%\) scale\(1\).*<em><i style="background:conic-gradient\(/,
+          /map-companion-icons.*border-color:#3a7bd5.*object-position:35% 60%;.*scale\(1\.4\).*border-color:#d55a87.*<strong>う<\/strong>.*<b><img src="blob:post-image".*width:133\.333.*height:100%;.*translate\(-50%,-50%\) scale\(1\).*<em class="photo-location-dot"><i><\/i><\/em>/,
         ),
         iconSize: [64, 72],
         iconAnchor: [32, 72],
       }),
     );
+    const photoPin = leafletDivIcon.mock.calls
+      .map(([options]) => options)
+      .find((options) => options.className === "post-map-marker photo-post-map-marker");
+    expect(photoPin?.html).not.toContain("background:conic-gradient");
   });
 
   it("写真ピンの未調整画像は縦横比に応じて短辺を円へ合わせる", () => {
