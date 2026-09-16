@@ -303,6 +303,10 @@ export function DayMap({
 }) {
   const element = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | undefined>(undefined);
+  const editableMapView = useRef<{
+    center: L.LatLngTuple;
+    zoom: number;
+  } | undefined>(undefined);
   const onPostSelectRef = useRef(onPostSelect);
   onPostSelectRef.current = onPostSelect;
   const onFocusCompleteRef = useRef(onFocusComplete);
@@ -316,9 +320,10 @@ export function DayMap({
       ),
       ...(pick ? [[pick.latitude, pick.longitude] as L.LatLngTuple] : []),
     ];
+    const preservedView = onPick ? editableMapView.current : undefined;
     const map = L.map(element.current, { scrollWheelZoom: false }).setView(
-      all[0] ?? [35.6812, 139.7671],
-      all.length ? 13 : 5,
+      preservedView?.center ?? all[0] ?? [35.6812, 139.7671],
+      preservedView?.zoom ?? (all.length ? 13 : 5),
     );
     mapInstance.current = map;
     if (className === "today-map") {
@@ -433,6 +438,13 @@ export function DayMap({
       );
     return () => {
       active = false;
+      if (onPick) {
+        const center = map.getCenter();
+        editableMapView.current = {
+          center: [center.lat, center.lng],
+          zoom: map.getZoom(),
+        };
+      }
       objectUrls.forEach(URL.revokeObjectURL);
       if (mapInstance.current === map) mapInstance.current = undefined;
       map.remove();

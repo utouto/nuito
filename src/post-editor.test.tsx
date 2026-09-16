@@ -32,6 +32,8 @@ const {
   leafletDivIcon,
   leafletMap,
   leafletMarker,
+  mapGetCenter,
+  mapGetZoom,
   markerOn,
   leafletPolyline,
   mapOn,
@@ -49,6 +51,8 @@ const {
   zoomSetPosition: vi.fn(),
   leafletDivIcon: vi.fn((options) => options),
   leafletMarker: vi.fn(),
+  mapGetCenter: vi.fn(() => ({ lat: 35.6812, lng: 139.7671 })),
+  mapGetZoom: vi.fn(() => 11),
   markerOn: vi.fn(),
   leafletPolyline: vi.fn(),
 }));
@@ -64,7 +68,8 @@ vi.mock("leaflet", () => ({
           mapSetView(...args);
           return this;
         },
-        getZoom: () => 11,
+        getCenter: mapGetCenter,
+        getZoom: mapGetZoom,
         panBy: mapPanBy,
         on: mapOn,
         fitBounds: vi.fn(),
@@ -1212,6 +1217,7 @@ describe("投稿の場所選択", () => {
   });
 
   it("位置情報が許可済みなら現在地を初期場所にする", async () => {
+    mapGetZoom.mockReturnValue(13);
     const getCurrentPosition = vi.fn((success) =>
       success({ coords: { latitude: 35.6812, longitude: 139.7671 } }),
     );
@@ -1236,6 +1242,7 @@ describe("投稿の場所選択", () => {
     expect(query).toHaveBeenCalledWith({ name: "geolocation" });
     expect(getCurrentPosition).toHaveBeenCalledOnce();
     expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 13);
+    mapGetZoom.mockReturnValue(11);
   });
 
   it("位置情報が未許可なら自動で取得を要求しない", async () => {
@@ -1260,6 +1267,7 @@ describe("投稿の場所選択", () => {
   });
 
   it("現在地付近へ移動し、ドラッグ可能なピンを表示する", () => {
+    mapGetZoom.mockReturnValue(13);
     const getCurrentPosition = vi.fn((success) =>
       success({ coords: { latitude: 35.6812, longitude: 139.7671 } }),
     );
@@ -1307,6 +1315,7 @@ describe("投稿の場所選択", () => {
         "地図をタップするか、ピンをドラッグして場所を指定できます。",
       ),
     ).toBeVisible();
+    mapGetZoom.mockReturnValue(11);
   });
 
   it("地図をタップして立てたピンの場所を既定名で表示する", () => {
@@ -1330,6 +1339,28 @@ describe("投稿の場所選択", () => {
       [35.7, 139.8],
       expect.objectContaining({ draggable: true }),
     );
+  });
+
+  it("ピンをドラッグした後も地図の中心と倍率を維持する", () => {
+    markerOn.mockClear();
+    mapSetView.mockClear();
+    mapGetCenter.mockReturnValue({ lat: 35.68, lng: 139.76 });
+    mapGetZoom.mockReturnValue(16);
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query: vi.fn().mockResolvedValue({ state: "prompt" }) },
+    });
+    render(<Subject postToEdit={post} />);
+    const dragEnd = markerOn.mock.calls.find(
+      ([eventName]) => eventName === "dragend",
+    )?.[1] as (() => void) | undefined;
+
+    expect(dragEnd).toBeDefined();
+    act(() => dragEnd?.());
+
+    expect(mapSetView).toHaveBeenLastCalledWith([35.68, 139.76], 16);
+    mapGetCenter.mockReturnValue({ lat: 35.6812, lng: 139.7671 });
+    mapGetZoom.mockReturnValue(11);
   });
 });
 
