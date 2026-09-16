@@ -89,6 +89,7 @@ const geolocationOptions: PositionOptions = {
   timeout: 10000,
 };
 const defaultPlaceName = "ここで遊んだよ";
+const currentLocationZoom = 16;
 const emptyPosts: Post[] = [];
 const emptyPlushes: Plush[] = [];
 
@@ -281,6 +282,7 @@ export function DayMap({
   className,
   centerOnCurrentWhenEmpty = false,
   showCompanionIcons = false,
+  pickFocusRequest = 0,
   focusPostId,
   focusRequest = 0,
   occludedById,
@@ -295,6 +297,7 @@ export function DayMap({
   className?: string;
   centerOnCurrentWhenEmpty?: boolean;
   showCompanionIcons?: boolean;
+  pickFocusRequest?: number;
   focusPostId?: string;
   focusRequest?: number;
   occludedById?: string;
@@ -307,6 +310,7 @@ export function DayMap({
     center: L.LatLngTuple;
     zoom: number;
   } | undefined>(undefined);
+  const appliedPickFocusRequest = useRef(0);
   const onPostSelectRef = useRef(onPostSelect);
   onPostSelectRef.current = onPostSelect;
   const onFocusCompleteRef = useRef(onFocusComplete);
@@ -321,10 +325,18 @@ export function DayMap({
       ...(pick ? [[pick.latitude, pick.longitude] as L.LatLngTuple] : []),
     ];
     const preservedView = onPick ? editableMapView.current : undefined;
-    const map = L.map(element.current, { scrollWheelZoom: false }).setView(
-      preservedView?.center ?? all[0] ?? [35.6812, 139.7671],
-      preservedView?.zoom ?? (all.length ? 13 : 5),
+    const shouldFocusPick = Boolean(
+      pick && pickFocusRequest > appliedPickFocusRequest.current,
     );
+    const map = L.map(element.current, { scrollWheelZoom: false }).setView(
+      shouldFocusPick
+        ? [pick!.latitude, pick!.longitude]
+        : preservedView?.center ?? all[0] ?? [35.6812, 139.7671],
+      shouldFocusPick
+        ? currentLocationZoom
+        : preservedView?.zoom ?? (all.length ? 13 : 5),
+    );
+    if (shouldFocusPick) appliedPickFocusRequest.current = pickFocusRequest;
     mapInstance.current = map;
     if (className === "today-map") {
       map.attributionControl.setPosition("topright");
@@ -457,6 +469,7 @@ export function DayMap({
     className,
     centerOnCurrentWhenEmpty,
     showCompanionIcons,
+    pickFocusRequest,
   ]);
   useEffect(() => {
     if (!focusPostId || !mapInstance.current) return;
@@ -1800,6 +1813,7 @@ export function PostEditor({
     post?.manualLogicalDate ?? todayLogicalDate(settings.dayBoundaryTime),
   );
   const [selected, setSelected] = useState<string[]>(post?.plushIds ?? []);
+  const [placeFocusRequest, setPlaceFocusRequest] = useState(0);
   const [images, setImages] = useState<PostImage[]>(post?.images ?? []);
   const [draggedImageId, setDraggedImageId] = useState<string>();
   const imagePointerStart = useRef<{
@@ -1919,6 +1933,7 @@ export function PostEditor({
           (position) => {
             if (!active) return;
             setPlace(placeFromPosition(position));
+            setPlaceFocusRequest((request) => request + 1);
             setBusy(false);
           },
           () => {
@@ -2024,6 +2039,7 @@ export function PostEditor({
     navigator.geolocation.getCurrentPosition(
       (p) => {
         setPlace(placeFromPosition(p));
+        setPlaceFocusRequest((request) => request + 1);
         setBusy(false);
       },
       () => {
@@ -2394,6 +2410,7 @@ export function PostEditor({
                 posts={[]}
                 pick={place}
                 onPick={setPlace}
+                pickFocusRequest={placeFocusRequest}
                 control={
                   <button
                     className="map-location-button"

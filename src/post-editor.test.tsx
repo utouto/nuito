@@ -1217,7 +1217,7 @@ describe("投稿の場所選択", () => {
   });
 
   it("位置情報が許可済みなら現在地を初期場所にする", async () => {
-    mapGetZoom.mockReturnValue(13);
+    mapGetZoom.mockReturnValue(16);
     const getCurrentPosition = vi.fn((success) =>
       success({ coords: { latitude: 35.6812, longitude: 139.7671 } }),
     );
@@ -1241,7 +1241,7 @@ describe("投稿の場所選択", () => {
     );
     expect(query).toHaveBeenCalledWith({ name: "geolocation" });
     expect(getCurrentPosition).toHaveBeenCalledOnce();
-    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 13);
+    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 16);
     mapGetZoom.mockReturnValue(11);
   });
 
@@ -1267,7 +1267,7 @@ describe("投稿の場所選択", () => {
   });
 
   it("現在地付近へ移動し、ドラッグ可能なピンを表示する", () => {
-    mapGetZoom.mockReturnValue(13);
+    mapGetZoom.mockReturnValue(16);
     const getCurrentPosition = vi.fn((success) =>
       success({ coords: { latitude: 35.6812, longitude: 139.7671 } }),
     );
@@ -1292,7 +1292,7 @@ describe("投稿の場所選択", () => {
     fireEvent.click(locationButton);
 
     expect(getCurrentPosition).toHaveBeenCalledOnce();
-    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 13);
+    expect(mapSetView).toHaveBeenLastCalledWith([35.6812, 139.7671], 16);
     expect(leafletDivIcon).toHaveBeenCalledWith({
       className: "place-selection-marker",
       html: "<span><i></i></span>",
