@@ -751,25 +751,30 @@ h2 {
 }
 .image-lightbox {
   position: fixed;
-  z-index: 1000;
+  z-index: 2000;
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 56px 16px 24px;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  padding: 0;
   background: #1f1814ed;
 }
 .lightbox-image {
+  display: block;
   width: auto;
-  max-width: 100%;
+  max-width: 100vw;
   height: auto;
-  max-height: calc(100dvh - 80px);
-  border-radius: 8px;
+  max-height: 100dvh;
+  border-radius: 0;
   object-fit: contain;
 }
 .lightbox-close {
   position: fixed;
-  top: 12px;
-  right: 12px;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  z-index: 1;
   width: 44px;
   height: 44px;
   padding: 0;

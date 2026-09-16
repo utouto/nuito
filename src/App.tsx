@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import L from "leaflet";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -246,7 +247,7 @@ function ImageLightbox({
       returnFocusTo?.focus();
     };
   }, [onClose, returnFocusTo]);
-  return (
+  return createPortal(
     <div
       className="image-lightbox"
       role="dialog"
@@ -270,7 +271,8 @@ function ImageLightbox({
         alt={`拡大したおもいでの写真 ${imageNumber}`}
         className="lightbox-image"
       />
-    </div>
+    </div>,
+    document.body,
   );
 }
 export function DayMap({

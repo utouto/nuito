@@ -1486,18 +1486,26 @@ describe("投稿画像の拡大表示", () => {
 
     fireEvent.click(trigger);
 
+    const dialog = screen.getByRole("dialog", {
+      name: "おもいでの写真 1の拡大表示",
+    });
+    expect(dialog).toBeVisible();
+    expect(dialog.parentElement).toBe(document.body);
+    expect(screen.getByAltText("拡大したおもいでの写真 1")).toBeVisible();
     expect(
-      card.getByRole("dialog", { name: "おもいでの写真 1の拡大表示" }),
-    ).toBeVisible();
-    expect(card.getByAltText("拡大したおもいでの写真 1")).toBeVisible();
-    expect(
-      card.getByRole("button", { name: "拡大表示を閉じる" }),
+      screen.getByRole("button", { name: "拡大表示を閉じる" }),
     ).toHaveFocus();
+
+    fireEvent.click(dialog);
+    expect(
+      screen.queryByRole("dialog", { name: "おもいでの写真 1の拡大表示" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(trigger);
 
     fireEvent.keyDown(document, { key: "Escape" });
 
     expect(
-      card.queryByRole("dialog", { name: "おもいでの写真 1の拡大表示" }),
+      screen.queryByRole("dialog", { name: "おもいでの写真 1の拡大表示" }),
     ).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });
